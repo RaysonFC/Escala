@@ -339,17 +339,31 @@ const GOSPEL_DB = [
 function gospelSearch(q) {
   const terms = q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().split(/\s+/);
   const norm = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+
   const scored = GOSPEL_DB.map(m => {
-    const hay = norm(m.titulo)+" "+norm(m.artista);
+    const tNorm = norm(m.titulo);
+    const aNorm = norm(m.artista);
     let score = 0;
     for(const t of terms){
-      if(norm(m.titulo).includes(t)) score+=3;
-      if(norm(m.artista).includes(t)) score+=2;
-      if(hay.includes(t)) score+=1;
+      if(tNorm === t || aNorm === t) score += 10;        // match exato
+      if(tNorm.startsWith(t))        score += 6;
+      if(tNorm.includes(t))          score += 3;
+      if(aNorm.includes(t))          score += 2;
     }
     return {...m, score};
   }).filter(m=>m.score>0).sort((a,b)=>b.score-a.score).slice(0,8);
-  return scored.map(m=>({...m, ytUrl:"https://www.youtube.com/watch?v="+m.ytId}));
+
+  // Para cada resultado, gera um link de BUSCA no YouTube (sempre funciona)
+  // e mantém o ytId original apenas como sugestão
+  return scored.map(m => {
+    const ytSearch = "https://www.youtube.com/results?search_query="+encodeURIComponent(m.titulo+" "+m.artista+" gospel");
+    const ytEmbed  = m.ytId ? "https://www.youtube.com/watch?v="+m.ytId : "";
+    return {
+      ...m,
+      ytUrl: ytEmbed,          // link direto (pode estar desatualizado)
+      ytSearchUrl: ytSearch,   // link de busca (sempre funciona)
+    };
+  });
 }
 
 async function aiSearch(query) {
@@ -1500,14 +1514,17 @@ function App() {
         {/* ═ BUSCAR ═ */}
         {tab==="buscar"&&(
           <div style={{animation:"fadeUp 0.3s ease"}}>
-            <div style={{marginBottom:22}}>
+            <div style={{marginBottom:18}}>
               <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:5}}>Banco de Músicas</div>
               <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:30,fontWeight:700,color:"#EAE8F2",margin:0}}>Buscar Louvores</h1>
+              <p style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginTop:6}}>Pesquise no banco local, depois cole o link do YouTube para garantir o vídeo certo.</p>
             </div>
-            <div style={{display:"flex",background:"#161625",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,overflow:"hidden",marginBottom:20}}>
+
+            {/* Barra de busca */}
+            <div style={{display:"flex",background:"#161625",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,overflow:"hidden",marginBottom:12}}>
               <span style={{padding:"0 14px",color:accent.accent,fontSize:17,display:"flex",alignItems:"center"}}>♪</span>
               <input value={sq} onChange={e=>setSq(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doSearch()}
-                placeholder="Nome, artista, tema..."
+                placeholder="Ex: Pra Sempre, Fernandinho, bondade..."
                 style={{flex:1,background:"transparent",border:"none",color:"#EAE8F2",padding:"13px 0",fontSize:14,fontFamily:"inherit",outline:"none"}}/>
               <button onClick={doSearch} style={{...bGold,borderRadius:8,margin:6,padding:"0 20px",boxShadow:"none"}}>
                 {sLoad
@@ -1515,45 +1532,87 @@ function App() {
                   : "Buscar"}
               </button>
             </div>
+
+            {/* Botão busca no YouTube */}
+            {sq.trim()&&(
+              <div style={{marginBottom:20}}>
+                <a href={"https://www.youtube.com/results?search_query="+encodeURIComponent(sq+" gospel")}
+                  target="_blank" rel="noreferrer"
+                  style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(204,0,0,0.12)",
+                    border:"1px solid rgba(204,0,0,0.3)",color:"#ff7b7b",borderRadius:10,
+                    padding:"9px 16px",textDecoration:"none",fontSize:13,fontWeight:700}}>
+                  <span style={{fontSize:16}}>▶</span> Buscar "{sq}" no YouTube
+                  <span style={{fontSize:10,opacity:0.6}}>↗</span>
+                </a>
+                <p style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginTop:6}}>
+                  Achou o vídeo certo? Copie o link e cole na caixa abaixo ↓
+                </p>
+              </div>
+            )}
+
             {sErr&&<div style={{background:"rgba(224,123,138,0.08)",border:"1px solid rgba(224,123,138,0.25)",color:"#E07B8A",borderRadius:10,padding:"10px 15px",fontSize:13,marginBottom:16}}>{sErr}</div>}
+
+            {/* Resultados do banco local */}
             {sRes.length>0&&(
               <>
-                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:12}}>{sRes.length} resultados</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:12,marginBottom:24}} className="gsm">
-                  {sRes.map((r,i)=>{
-                    const id=getYTId(r.ytUrl||"")||r.ytId||"";
-                    const link=r.ytUrl||(id?"https://www.youtube.com/watch?v="+id:"");
-                    return (
-                      <div key={i} className="src" style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,overflow:"hidden",transition:"transform 0.18s"}}>
-                        <YTThumb ytid={id} onPlay={id?()=>setPlayL({...r,ytUrl:link}):undefined}/>
-                        <div style={{padding:"12px 14px"}}>
-                          <div style={{fontSize:14,fontWeight:600,color:"#EAE8F2",marginBottom:2}}>{r.titulo}</div>
-                          <div style={{fontSize:12,color:"rgba(255,255,255,0.38)",marginBottom:8}}>{r.artista}</div>
+                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>
+                  {sRes.length} sugestões do banco local
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24}}>
+                  {sRes.map((r,i)=>(
+                    <div key={i} style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",
+                      borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:14,fontWeight:700,color:"#EAE8F2",marginBottom:2}}>{r.titulo}</div>
+                        <div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:6}}>{r.artista}</div>
+                        <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+                          <TomTag tom={r.tom}/>
                           {r.cifra&&(
-                            <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8,padding:"5px 9px",background:"rgba(255,255,255,0.04)",borderRadius:6}}>
-                              <span style={{fontSize:9,letterSpacing:1.5,color:"#C9A84C",fontWeight:700,textTransform:"uppercase"}}>CIFRA</span>
-                              <span style={{fontSize:13,fontWeight:700,color:"#EAE8F2"}}>{r.cifra}</span>
-                            </div>
+                            <span style={{fontSize:11,color:"rgba(255,255,255,0.3)",background:"rgba(255,255,255,0.05)",
+                              borderRadius:6,padding:"2px 8px"}}>{r.cifra}</span>
                           )}
-                          <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
-                            <TomTag tom={r.tom}/>
-                            {link&&<a href={link} target="_blank" rel="noreferrer" style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,textDecoration:"none"}}>▶ YT</a>}
-                            <button onClick={()=>toggleFav(r)} style={{background:isFav(r)?"rgba(201,168,76,0.15)":"rgba(255,255,255,0.05)",border:isFav(r)?"1px solid rgba(201,168,76,0.35)":"1px solid rgba(255,255,255,0.1)",color:isFav(r)?"#C9A84C":"rgba(255,255,255,0.4)",borderRadius:20,padding:"3px 10px",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700}}>{isFav(r)?"★":"☆"} Fav</button>
-                            <button onClick={()=>useResult(r)} style={{background:"rgba(107,191,163,0.12)",border:"1px solid rgba(107,191,163,0.3)",color:"#6BBFA3",borderRadius:20,padding:"3px 10px",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700}}>+ Culto</button>
-                          </div>
                         </div>
                       </div>
-                    );
-                  })}
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",flexShrink:0}}>
+                        {/* Busca garantida no YouTube */}
+                        <a href={r.ytSearchUrl} target="_blank" rel="noreferrer"
+                          style={{display:"inline-flex",alignItems:"center",gap:5,
+                            background:"rgba(204,0,0,0.15)",border:"1px solid rgba(204,0,0,0.3)",
+                            color:"#ff7b7b",borderRadius:8,padding:"6px 12px",
+                            textDecoration:"none",fontSize:12,fontWeight:700}}>
+                          ▶ YT
+                        </a>
+                        <button onClick={()=>toggleFav(r)}
+                          style={{background:isFav(r)?"rgba(201,168,76,0.15)":"rgba(255,255,255,0.05)",
+                            border:isFav(r)?"1px solid rgba(201,168,76,0.35)":"1px solid rgba(255,255,255,0.1)",
+                            color:isFav(r)?"#C9A84C":"rgba(255,255,255,0.4)",
+                            borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:700}}>
+                          {isFav(r)?"★":"☆"}
+                        </button>
+                        <button onClick={()=>useResult(r)}
+                          style={{background:"rgba(107,191,163,0.12)",border:"1px solid rgba(107,191,163,0.3)",
+                            color:"#6BBFA3",borderRadius:8,padding:"6px 12px",
+                            cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:700}}>
+                          + Culto
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </>
             )}
-            <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"18px"}}>
-              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#EAE8F2",marginBottom:12}}>Colar Link do YouTube</div>
-              <Fld value={paste} placeholder="https://youtu.be/..." onChange={e=>setPaste(e.target.value)}/>
+
+            {/* Colar link do YouTube */}
+            <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"18px"}}>
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#EAE8F2",marginBottom:4}}>
+                📎 Cole o link do YouTube aqui
+              </div>
+              <p style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:12}}>
+                Achou o vídeo certo no YouTube? Cole o link abaixo e o vídeo vai aparecer para confirmar antes de salvar.
+              </p>
+              <Fld value={paste} placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=..." onChange={e=>setPaste(e.target.value)}/>
               {getYTId(paste)?(
                 <div style={{marginTop:14}}>
-                  {/* Iframe player embutido */}
                   <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000",borderRadius:12,overflow:"hidden",marginBottom:12}}>
                     <iframe
                       src={"https://www.youtube.com/embed/"+getYTId(paste)+"?rel=0"}
@@ -1564,30 +1623,44 @@ function App() {
                     />
                   </div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                    <button onClick={()=>setPlayL({titulo:"",artista:"",ytUrl:paste,tom:"",cifra:"",obs:""})}
-                      style={{background:"rgba(204,0,0,0.15)",border:"1px solid rgba(204,0,0,0.3)",
-                        color:"#ff7b7b",borderRadius:8,padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                      ▶ Abrir Player
+                    <button onClick={()=>{
+                      // Tenta pegar dados do banco se o usuário pesquisou antes
+                      const base = sRes[0] || {};
+                      setNLF({
+                        titulo: base.titulo||"",
+                        artista: base.artista||"",
+                        ytUrl: paste,
+                        tom: base.tom||"",
+                        cifra: base.cifra||"",
+                        obs:""
+                      });
+                      setTab("culto");
+                      showToast("Vídeo selecionado — complete e salve no culto");
+                    }} style={{...bGold}}>
+                      + Adicionar ao Culto
                     </button>
-                    <button onClick={()=>{setNLF({titulo:"",artista:"",ytUrl:paste,tom:"",cifra:"",obs:""});setTab("culto");showToast("Link adicionado");}}
-                      style={{background:"rgba(107,191,163,0.12)",border:"1px solid rgba(107,191,163,0.3)",
-                        color:"#6BBFA3",borderRadius:8,padding:"9px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                      + Usar no Culto
+                    <button onClick={()=>{
+                      const base = sRes[0] || {};
+                      const l = {titulo:base.titulo||"",artista:base.artista||"",ytUrl:paste,tom:base.tom||"",cifra:base.cifra||"",obs:""};
+                      toggleFav(l);
+                    }} style={{background:"rgba(201,168,76,0.1)",border:"1px solid rgba(201,168,76,0.3)",
+                      color:"#C9A84C",borderRadius:10,padding:"9px 16px",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700}}>
+                      ★ Favoritar
                     </button>
                   </div>
                 </div>
               ):(
                 paste.length>5&&(
-                  <div style={{marginTop:10,padding:"10px 14px",background:"rgba(224,123,138,0.08)",
-                    border:"1px solid rgba(224,123,138,0.2)",borderRadius:8,
-                    fontSize:12,color:"rgba(224,123,138,0.8)"}}>
-                    Link não reconhecido — cole um link do YouTube válido
+                  <div style={{marginTop:10,fontSize:12,color:"rgba(224,123,138,0.8)"}}>
+                    ⚠ Link não reconhecido. Certifique-se de copiar o link completo do YouTube.
                   </div>
                 )
               )}
             </div>
           </div>
         )}
+
+
 
         {/* ═ FAVORITOS ═ */}
         {tab==="favoritos"&&(
