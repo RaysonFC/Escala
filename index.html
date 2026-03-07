@@ -101,7 +101,7 @@ const daysUntil = (ds) => {
   if(d<0) return null; if(d===0) return "Hoje"; if(d===1) return "Amanhã"; return `em ${d}d`;
 };
 const mkL = (titulo="",artista="",ytUrl="",tom="") => ({id:uid(),titulo,artista,ytUrl,tom,cifra:"",obs:""});
-const mkC = (data,tipo) => ({id:uid(),data,tipo,cantores:[],louvores:[],obs:"",lembrete:false});
+const mkC = (data,tipo,tema="",campanha="") => ({id:uid(),data,tipo,tema,campanha,cantores:[],louvores:[],obs:"",lembrete:false});
 const mkCantor = (nome,emoji="🎤") => ({id:uid(),nome,emoji,louvoresFav:[]});
 const normalizeCantor = (c) => typeof c==="string" ? mkCantor(c) : {louvoresFav:[],...c};
 
@@ -586,7 +586,15 @@ function CultoDetalhe({culto,cantores,favs,newLF,setNLF,accent,bGold,bGhost,bDan
           background:"linear-gradient(90deg,rgba("+cf.rgb+",0.1),transparent)",pointerEvents:"none"}}/>
         <div style={{flex:1,position:"relative"}}>
           <Badge tipo={c.tipo}/>
+          {c.campanha&&(
+            <div style={{display:"inline-flex",alignItems:"center",gap:6,marginLeft:8,
+              background:"rgba("+cf.rgb+",0.1)",border:"1px solid rgba("+cf.rgb+",0.3)",
+              borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700,color:cf.color}}>
+              🔥 {c.campanha}
+            </div>
+          )}
           <h2 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:26,fontWeight:700,color:"#EAE8F2",margin:"8px 0 5px"}}>{fmtDate(c.data)}</h2>
+          {c.tema&&<div style={{fontSize:13,color:"rgba(255,255,255,0.55)",fontStyle:"italic",marginBottom:4}}>📖 {c.tema}</div>}
           {daysUntil(c.data)&&<span style={{fontSize:12,fontWeight:700,
             color:daysUntil(c.data)==="Hoje"?"#6BBFA3":daysUntil(c.data)==="Amanhã"?accent.accent:"rgba(255,255,255,0.4)"}}>
             {daysUntil(c.data)}</span>}
@@ -805,9 +813,30 @@ function App() {
     .filter(c=>c.diff!==null).sort((a,b)=>a.data.localeCompare(b.data)).slice(0,4);
 
   const doAddCulto=()=>{
-    if(!newCultoF?.data||!newCultoF?.tipo)return;
-    setCultos(p=>[...p,mkC(newCultoF.data,newCultoF.tipo)]);
-    setNCF(null); showToast("Culto adicionado ✓");
+    const f=newCultoF;
+    if(!f?.data||!f?.tipo) return;
+    if(f.modo==="campanha"){
+      // Gera N cultos semanais a partir da data inicial
+      const reps=parseInt(f.repeticoes)||1;
+      const novos=[];
+      for(let i=0;i<reps;i++){
+        const d=new Date(f.data+"T12:00");
+        d.setDate(d.getDate()+i*7);
+        const ds=d.toISOString().split("T")[0];
+        const num=reps>1?" ("+(i+1)+"/"+reps+")":"";
+        novos.push({...mkC(ds,f.tipo,f.tema||(f.campanha||""),f.campanha||""),
+          obs:f.campanha?(f.campanha+(f.tema?" — "+f.tema:"")):"" });
+        // set tema no obs para aparecer visível
+        novos[i].tema=(f.tema||"")+(num);
+        novos[i].campanha=f.campanha||"";
+      }
+      setCultos(p=>[...p,...novos]);
+      setNCF(null);
+      showToast(reps>1?reps+" cultos da campanha criados ✓":"Culto criado ✓");
+    } else {
+      setCultos(p=>[...p,mkC(f.data,f.tipo,f.tema||"","")]);
+      setNCF(null); showToast("Culto adicionado ✓");
+    }
   };
   const doDelCulto=id=>{
     setCultos(p=>p.filter(c=>c.id!==id)); setSelId(null); setTab("calendario"); showToast("Culto removido",false);
@@ -994,7 +1023,7 @@ function App() {
                     </button>
                   ))}
                 </div>
-                <button style={bGold} onClick={()=>setNCF({data:today,tipo:"domingo"})}>+ Novo Culto</button>
+                <button style={bGold} onClick={()=>setNCF({data:today,tipo:"domingo",modo:"unico",tema:"",campanha:"",repeticoes:4})}>+ Novo Culto</button>
               </div>
             </div>
             {proximos.length>0&&(
@@ -1010,7 +1039,9 @@ function App() {
                         cursor:"pointer",minWidth:140,transition:"all 0.18s"}}>
                         <div style={{width:7,height:7,borderRadius:2,background:cf.color,flexShrink:0}}/>
                         <div style={{flex:1}}>
-                          <div style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{cf.short}</div>
+                          <div style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{cf.short}{c.campanha?" · 🔥":""}</div>
+                          {c.campanha&&<div style={{fontSize:10,color:cf.color,fontWeight:600}}>{c.campanha}</div>}
+                          {c.tema&&<div style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontStyle:"italic"}}>{c.tema}</div>}
                           <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{fmtDate(c.data)}</div>
                         </div>
                         <div style={{textAlign:"right"}}>
@@ -1056,7 +1087,7 @@ function App() {
                               marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
                               color:CC[c.tipo].color,background:"rgba("+CC[c.tipo].rgb+",0.18)",
                               border:"1px solid rgba("+CC[c.tipo].rgb+",0.3)"}}>
-                              {CC[c.tipo].short}
+                              {c.campanha?"🔥":""}{CC[c.tipo].short}
                             </div>
                           ))}
                         </div>
@@ -1148,7 +1179,7 @@ function App() {
                     {cs.length===0&&<p style={{color:"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Sem cultos</p>}
                     {cs.map(c=>(
                       <div key={c.id} style={{borderRadius:8,padding:"10px",border:"1px solid rgba(255,255,255,0.06)",marginBottom:7,background:"rgba(255,255,255,0.02)"}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                           <span style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{fmtDate(c.data)}</span>
                           <div style={{display:"flex",alignItems:"center",gap:5}}>
                             {daysUntil(c.data)&&<span style={{fontSize:10,fontWeight:700,
@@ -1160,6 +1191,8 @@ function App() {
                             </button>
                           </div>
                         </div>
+                        {c.campanha&&<div style={{fontSize:10,fontWeight:700,color:cf.color,marginBottom:2}}>🔥 {c.campanha}</div>}
+                        {c.tema&&<div style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontStyle:"italic",marginBottom:5}}>📖 {c.tema}</div>}
                         <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:7}}>
                           {cantores.map(ct=>{
                             const on=c.cantores.includes(ct.nome);
@@ -1333,17 +1366,107 @@ function App() {
 
       {/* ═══ MODALS ═══ */}
 
-      {/* Novo culto */}
+      {/* Novo culto / Campanha */}
       {newCultoF&&(
-        <Ovl onClose={()=>setNCF(null)}>
-          <MH title="Novo Culto" onClose={()=>setNCF(null)}/>
-          <Fld label="Data" type="date" value={newCultoF.data} onChange={e=>setNCF(f=>({...f,data:e.target.value}))}/>
-          <Fld label="Tipo" as="select" value={newCultoF.tipo} onChange={e=>setNCF(f=>({...f,tipo:e.target.value}))}>
+        <Ovl onClose={()=>setNCF(null)} wide>
+          <MH title={newCultoF.modo==="campanha"?"🔥 Nova Campanha":"➕ Novo Culto"} onClose={()=>setNCF(null)}/>
+
+          {/* Modo toggle */}
+          <div style={{display:"flex",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,overflow:"hidden"}}>
+            {[{v:"unico",label:"Culto Único",icon:"📅"},{v:"campanha",label:"Campanha / Série",icon:"🔥"}].map(opt=>(
+              <button key={opt.v} onClick={()=>setNCF(f=>({...f,modo:opt.v}))} style={{
+                flex:1,padding:"10px 8px",border:"none",cursor:"pointer",fontFamily:"inherit",
+                fontSize:13,fontWeight:newCultoF.modo===opt.v?700:400,
+                background:newCultoF.modo===opt.v?"rgba("+accent.rgb+",0.2)":"transparent",
+                color:newCultoF.modo===opt.v?accent.accent:"rgba(255,255,255,0.45)",
+                transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                {opt.icon} {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tipo de culto */}
+          <Fld label="Tipo de Culto" as="select" value={newCultoF.tipo} onChange={e=>setNCF(f=>({...f,tipo:e.target.value}))}>
             {Object.entries(CC).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
           </Fld>
-          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+
+          {/* Tema do culto */}
+          <Fld label="Tema do Culto (opcional)" value={newCultoF.tema||""} placeholder="Ex: Fé que move montanhas..."
+            onChange={e=>setNCF(f=>({...f,tema:e.target.value}))}/>
+
+          {newCultoF.modo==="campanha"?(
+            <>
+              {/* Nome da campanha */}
+              <Fld label="Nome da Campanha *" value={newCultoF.campanha||""} placeholder="Ex: Campanha da Fé, Semana Santa..."
+                onChange={e=>setNCF(f=>({...f,campanha:e.target.value}))}/>
+
+              {/* Data do PRIMEIRO culto */}
+              <Fld label="Data do 1º Culto *" type="date" value={newCultoF.data}
+                onChange={e=>setNCF(f=>({...f,data:e.target.value}))}/>
+
+              {/* Quantas repetições */}
+              <div>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>
+                  Quantos cultos na campanha? *
+                </label>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  {[2,3,4,5,6,7,8].map(n=>(
+                    <button key={n} onClick={()=>setNCF(f=>({...f,repeticoes:n}))} style={{
+                      width:48,height:48,borderRadius:10,border:"none",cursor:"pointer",
+                      fontFamily:"inherit",fontSize:15,fontWeight:700,
+                      background:(newCultoF.repeticoes||4)===n?"rgba("+accent.rgb+",0.25)":"rgba(255,255,255,0.06)",
+                      color:(newCultoF.repeticoes||4)===n?accent.accent:"rgba(255,255,255,0.5)",
+                      outline:(newCultoF.repeticoes||4)===n?"2px solid "+accent.accent:"none",
+                      transition:"all 0.15s"}}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preview das datas */}
+              {newCultoF.data&&(
+                <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"12px 14px"}}>
+                  <div style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,marginBottom:8}}>
+                    📅 Cultos que serão criados
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                    {Array.from({length:newCultoF.repeticoes||4},(_,i)=>{
+                      const d=new Date(newCultoF.data+"T12:00");
+                      d.setDate(d.getDate()+i*7);
+                      const ds=d.toISOString().split("T")[0];
+                      const cf=CC[newCultoF.tipo];
+                      return (
+                        <div key={i} style={{display:"flex",alignItems:"center",gap:10}}>
+                          <div style={{width:22,height:22,borderRadius:6,background:"rgba("+cf.rgb+",0.15)",
+                            border:"1px solid rgba("+cf.rgb+",0.3)",display:"flex",alignItems:"center",
+                            justifyContent:"center",fontSize:10,fontWeight:700,color:cf.color,flexShrink:0}}>{i+1}</div>
+                          <span style={{fontSize:13,color:"#EAE8F2",fontWeight:500}}>{fmtDate(ds)}</span>
+                          <span style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>
+                            {["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][d.getDay()]}
+                          </span>
+                          {newCultoF.tema&&<span style={{fontSize:11,color:cf.color,fontStyle:"italic"}}>
+                            {newCultoF.tema} ({i+1}/{newCultoF.repeticoes||4})
+                          </span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          ):(
+            /* Culto único */
+            <Fld label="Data *" type="date" value={newCultoF.data} onChange={e=>setNCF(f=>({...f,data:e.target.value}))}/>
+          )}
+
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:4}}>
             <button style={bGhost} onClick={()=>setNCF(null)}>Cancelar</button>
-            <button style={bGold} onClick={doAddCulto}>Criar</button>
+            <button style={bGold} onClick={doAddCulto}>
+              {newCultoF.modo==="campanha"
+                ? "🔥 Criar "+(newCultoF.repeticoes||4)+" Cultos"
+                : "Criar Culto"}
+            </button>
           </div>
         </Ovl>
       )}
