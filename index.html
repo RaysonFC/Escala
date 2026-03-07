@@ -127,7 +127,13 @@ const CC = {
 const DAYS_PT   = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const MONTHS_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const TONS      = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B","Cm","Dm","Em","Fm","Gm","Am","Bm"];
-const EMOJIS    = ["🎤","🎶","🎵","🎸","🎹","🥁","🎺","🎻","🪗","🪘","🎷","🙏","✝","🌟","💫","🌙","🔥","💎","🌿","🌸","🦋","🎯","🏆","👑","⚡","🌊","🎭","☀","🕊","🎨"];
+const EMOJIS    = [
+  "🎤","🎶","🎵","🎸","🎹","🥁","🎺","🎻","🪗","🪘","🎷","🎼","🎙","📯","🔔","🔕",
+  "🙏","✝","☦","🕊","🌟","💫","✨","⭐","🌙","🌞","☀","🌈","🔥","💡","⚡","🌊",
+  "💎","👑","🏆","🎯","🎭","🎨","🌿","🌸","🌺","🌻","🦋","🕊","🐦","🦅","🦁","🐑",
+  "❤","🧡","💛","💚","💙","💜","🤍","🖤","❤‍🔥","💝","🫶","👐","🤲","🙌","👏","✋",
+  "🌍","🏔","🗻","🏝","🌄","🌅","🌌","🌠","⛪","🕌","🕍","💒","🏛","📖","📜","✍",
+];
 
 const INIT_CANTORES = [
   {id:"c1",nome:"Débora",    emoji:"🎤",louvoresFav:[]},
@@ -573,6 +579,10 @@ function CultoDetalhe({culto,cantores,favs,newLF,setNLF,accent,bGold,bGhost,bDan
   onBack,onDelete,onToggleCantor,onUpdC,onAddLouvor,onRemLouvor,onMoveLouvor,
   onToggleFav,isFav,onToggleLembrete,onPresent,onCopy,onOpenFavPk,onPlay}) {
   const c=culto; const cf=CC[c.tipo];
+  const [editDate,setEditDate]=useState(false);
+  const [editTema,setEditTema]=useState(false);
+  const [temaVal, setTemaVal] =useState(c.tema||"");
+  useEffect(()=>{ setTemaVal(c.tema||""); },[c.tema]);
   return (
     <div style={{animation:"fadeUp 0.3s ease"}}>
       <button onClick={onBack} style={{background:"none",border:"none",color:"rgba(255,255,255,0.35)",
@@ -593,9 +603,47 @@ function CultoDetalhe({culto,cantores,favs,newLF,setNLF,accent,bGold,bGhost,bDan
               🔥 {c.campanha}
             </div>
           )}
-          <h2 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:26,fontWeight:700,color:"#EAE8F2",margin:"8px 0 5px"}}>{fmtDate(c.data)}</h2>
-          {c.tema&&<div style={{fontSize:13,color:"rgba(255,255,255,0.55)",fontStyle:"italic",marginBottom:4}}>📖 {c.tema}</div>}
-          {daysUntil(c.data)&&<span style={{fontSize:12,fontWeight:700,
+          {/* Data editável */}
+          {editDate?(
+            <div style={{display:"flex",alignItems:"center",gap:8,margin:"8px 0 5px"}}>
+              <input type="date" defaultValue={c.data}
+                style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba("+cf.rgb+",0.5)",
+                  borderRadius:8,color:"#EAE8F2",padding:"6px 10px",fontSize:16,fontFamily:"inherit",outline:"none"}}
+                onBlur={e=>{if(e.target.value)onUpdC({...c,data:e.target.value});setEditDate(false);}}
+                autoFocus/>
+              <button onClick={()=>setEditDate(false)} style={{background:"none",border:"none",
+                color:"rgba(255,255,255,0.3)",cursor:"pointer",fontSize:16}}>✕</button>
+            </div>
+          ):(
+            <h2 onClick={()=>setEditDate(true)} title="Toque para editar a data"
+              style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:26,fontWeight:700,
+                color:"#EAE8F2",margin:"8px 0 5px",cursor:"pointer",display:"inline-flex",
+                alignItems:"center",gap:8}}>
+              {fmtDate(c.data)}
+              <span style={{fontSize:13,color:"rgba(255,255,255,0.25)",fontWeight:400}}>✎</span>
+            </h2>
+          )}
+          {/* Tema editável */}
+          {editTema?(
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+              <input value={temaVal} onChange={e=>setTemaVal(e.target.value)}
+                placeholder="Tema do culto..."
+                style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba("+cf.rgb+",0.5)",
+                  borderRadius:8,color:"#EAE8F2",padding:"5px 10px",fontSize:13,fontFamily:"inherit",
+                  outline:"none",flex:1}}
+                onBlur={()=>{onUpdC({...c,tema:temaVal});setEditTema(false);}}
+                autoFocus/>
+              <button onClick={()=>setEditTema(false)} style={{background:"none",border:"none",
+                color:"rgba(255,255,255,0.3)",cursor:"pointer",fontSize:16}}>✕</button>
+            </div>
+          ):(
+            <div onClick={()=>setEditTema(true)} style={{fontSize:13,color:"rgba(255,255,255,0.5)",
+              fontStyle:"italic",marginBottom:4,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6}}>
+              {c.tema?<>📖 {c.tema}</>:<span style={{color:"rgba(255,255,255,0.2)"}}>+ Adicionar tema...</span>}
+              <span style={{fontSize:11,color:"rgba(255,255,255,0.2)"}}>✎</span>
+            </div>
+          )}
+          {daysUntil(c.data)&&<span style={{fontSize:12,fontWeight:700,display:"block",
             color:daysUntil(c.data)==="Hoje"?"#6BBFA3":daysUntil(c.data)==="Amanhã"?accent.accent:"rgba(255,255,255,0.4)"}}>
             {daysUntil(c.data)}</span>}
         </div>
@@ -779,6 +827,7 @@ function App() {
   const [newLF,     setNLF]     = useState(null);
   const [showFavPk, setFavPk]   = useState(false);
   const [showTheme, setShowTheme]= useState(false);
+  const [showMenu,  setShowMenu] = useState(false);
   const [sq,        setSq]      = useState("");
   const [sLoad,     setSLoad]   = useState(false);
   const [sRes,      setSRes]    = useState([]);
@@ -959,7 +1008,7 @@ function App() {
         ".ccard:hover{transform:translateY(-2px);}",
         ".src:hover{transform:translateY(-2px);}",
         ".frow:hover{background:rgba(255,255,255,0.04)!important;}",
-        "@media(max-width:620px){.hsm{display:none!important;}.gsm{grid-template-columns:1fr!important;}.psm{padding:14px 12px!important;}}",
+        "@media(max-width:620px){.hsm{display:none!important;}.gsm{grid-template-columns:1fr!important;}.psm{padding:14px 12px!important;}.nav-mobile{display:flex!important;}.menu-btn{display:flex!important;}}",
       ].join("")}</style>
 
       {presentId&&getC(presentId)&&<PresentMode culto={getC(presentId)} onClose={()=>setPId(null)}/>}
@@ -981,7 +1030,7 @@ function App() {
             <div style={{fontSize:9,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase"}}>Ministério de Música</div>
           </div>
         </div>
-        <nav style={{display:"flex",flex:1}}>
+        <nav style={{display:"flex",flex:1}} className="hsm">
           {[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},
             {id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"★",label:"Favoritos"}].map(n=>(
             <button key={n.id} className="htab" onClick={()=>setTab(n.id)} style={{
@@ -989,16 +1038,60 @@ function App() {
               fontFamily:"inherit",color:tab===n.id?accent.accent:"rgba(255,255,255,0.4)",
               borderBottom:tab===n.id?"2px solid "+accent.accent:"2px solid transparent",
               fontWeight:tab===n.id?600:400,transition:"all 0.2s",display:"flex",alignItems:"center",gap:6}}>
-              <span>{n.icon}</span><span className="hsm">{n.label}</span>
+              <span>{n.icon}</span><span>{n.label}</span>
             </button>
           ))}
         </nav>
-        <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
-          <button onClick={()=>setShowTheme(true)} style={{background:"rgba(255,255,255,0.05)",
+        {/* Mobile nav — ícone que abre menu suspenso */}
+        <div style={{flex:1,display:"none",alignItems:"center"}} className="nav-mobile">
+          <span style={{fontSize:13,fontWeight:600,color:accent.accent}}>
+            {[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},
+              {id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"★",label:"Favoritos"}]
+              .find(n=>n.id===tab)?.icon}{" "}
+            {[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},
+              {id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"★",label:"Favoritos"}]
+              .find(n=>n.id===tab)?.label}
+          </span>
+        </div>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0,position:"relative"}}>
+          {/* Botão menu hamburguer — visível no mobile */}
+          <button onClick={()=>setShowMenu(m=>!m)} style={{background:"rgba(255,255,255,0.05)",
+            border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.6)",
+            borderRadius:8,padding:"7px 11px",cursor:"pointer",fontSize:18,lineHeight:1}} className="menu-btn">☰</button>
+          {/* Tema — visível no desktop */}
+          <button onClick={()=>setShowTheme(true)} className="hsm" style={{background:"rgba(255,255,255,0.05)",
             border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",
             borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:15}}>🎨</button>
           <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",
-            boxShadow:"0 0 8px rgba(76,175,125,0.6)"}} title="Sincronizado com Firebase 🔥"/>
+            boxShadow:"0 0 8px rgba(76,175,125,0.6)"}} title="Sincronizado 🔥"/>
+          {/* Dropdown menu suspenso */}
+          {showMenu&&(
+            <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:200}} />
+          )}
+          {showMenu&&(
+            <div style={{position:"absolute",top:"calc(100% + 8px)",right:0,zIndex:300,
+              background:"#1a1a2e",border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,
+              padding:8,minWidth:180,boxShadow:"0 16px 48px rgba(0,0,0,0.6)",
+              display:"flex",flexDirection:"column",gap:2}}>
+              {[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},
+                {id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"★",label:"Favoritos"}].map(n=>(
+                <button key={n.id} onClick={()=>{setTab(n.id);setShowMenu(false);}} style={{
+                  display:"flex",alignItems:"center",gap:10,padding:"11px 14px",borderRadius:9,border:"none",
+                  cursor:"pointer",fontFamily:"inherit",fontSize:14,textAlign:"left",
+                  background:tab===n.id?"rgba("+accent.rgb+",0.15)":"transparent",
+                  color:tab===n.id?accent.accent:"rgba(255,255,255,0.7)",fontWeight:tab===n.id?700:400}}>
+                  <span style={{fontSize:18}}>{n.icon}</span>{n.label}
+                </button>
+              ))}
+              <div style={{height:1,background:"rgba(255,255,255,0.08)",margin:"4px 0"}}/>
+              <button onClick={()=>{setShowTheme(true);setShowMenu(false);}} style={{
+                display:"flex",alignItems:"center",gap:10,padding:"11px 14px",borderRadius:9,border:"none",
+                cursor:"pointer",fontFamily:"inherit",fontSize:14,
+                background:"transparent",color:"rgba(255,255,255,0.7)"}}>
+                <span style={{fontSize:18}}>🎨</span>Tema
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -1154,16 +1247,18 @@ function App() {
                 {cantores.map((ct,i)=>{
                   const nC=cultos.reduce((a,c)=>a+(c.cantores.includes(ct.nome)?1:0),0);
                   return (
-                    <div key={ct.id} className="ccard" style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",
-                      borderRadius:12,padding:"16px 12px",textAlign:"center",position:"relative",transition:"transform 0.15s"}}>
+                    <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",
+                      borderRadius:12,padding:"16px 12px",textAlign:"center",position:"relative",
+                      transition:"transform 0.15s, border-color 0.15s",cursor:"pointer"}}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba("+accent.rgb+",0.4)";}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.07)";}}>
                       <div style={{fontSize:30,marginBottom:7}}>{ct.emoji}</div>
                       <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",marginBottom:3}}>{ct.nome}</div>
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginBottom:2}}>{nC} culto{nC!==1?"s":""}</div>
                       {(ct.louvoresFav||[]).length>0&&(
                         <div style={{fontSize:10,color:"#C9A84C"}}>★ {ct.louvoresFav.length} louvor{ct.louvoresFav.length!==1?"es":""}</div>
                       )}
-                      <button onClick={()=>setEditCI(i)} style={{position:"absolute",top:8,right:10,
-                        background:"none",border:"none",cursor:"pointer",fontSize:14,color:"rgba(255,255,255,0.3)",padding:2}}>✏</button>
+                      <div style={{position:"absolute",top:7,right:9,fontSize:10,color:"rgba(255,255,255,0.2)"}}>✎</div>
                     </div>
                   );
                 })}
