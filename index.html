@@ -442,7 +442,7 @@ function App(){
   };
   const cultosDia=(d)=>{ if(!d)return[]; const ds=`${calMonth.y}-${String(calMonth.m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`; return cultos.filter(c=>c.data===ds); };
 
-  const NAVS=[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},{id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"★",label:"Favoritos"}];
+  const NAVS=[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},{id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"⭐",label:"Favoritos"}];
 
   return(
     <div style={{minHeight:"100vh",background:"#0F0F1A",color:"#EAE8F2",fontFamily:"'DM Sans',system-ui,sans-serif"}}>
