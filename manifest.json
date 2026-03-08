@@ -11,13 +11,13 @@
   "lang": "pt-BR",
   "icons": [
     {
-      "src": "https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png",
+      "src": "icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
