@@ -1961,6 +1961,9 @@ function App() {
           })()}
         </Ovl>
       )}
+
+      {/* Adicionar cantor */}
+      {showAddC&&(
         <Ovl onClose={()=>setShowAddC(false)}>
           <MH title="Novo Cantor" onClose={()=>setShowAddC(false)}/>
           <Fld label="Nome" value={newCantN} placeholder="Nome do cantor" onChange={e=>setNewCantN(e.target.value)}/>
