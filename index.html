@@ -6,21 +6,9 @@
   <meta name="theme-color" content="#0F0F1A"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="Escala Louvor"/>
-  <title>Escala de Louvor</title>
+  <meta name="apple-mobile-web-app-title" content="Banda Aviva"/>
+  <title>Banda Aviva</title>
   <link rel="manifest" href="manifest.json"/>
-  <!-- React -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Babel (transpile JSX) -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    window._fbInit = { initializeApp, getFirestore, doc, onSnapshot, setDoc, getDoc };
-    window.dispatchEvent(new Event('fbReady'));
-  </script>
   <style>
     html,body,#root{margin:0;padding:0;min-height:100vh;background:#0F0F1A;}
     *{box-sizing:border-box;}
@@ -28,35 +16,21 @@
 </head>
 <body>
   <div id="root"></div>
-  <script>
-    // Wait for Firebase to load, then start React
-    window.addEventListener('fbReady', function() {
-      const { initializeApp, getFirestore, doc, onSnapshot, setDoc, getDoc } = window._fbInit;
-      window.__fb = { initializeApp, getFirestore, doc, onSnapshot, setDoc, getDoc };
-      startApp();
-    }, {once:true});
-    // Fallback if module already loaded
-    if(window._fbInit) {
-      const { initializeApp, getFirestore, doc, onSnapshot, setDoc, getDoc } = window._fbInit;
-      window.__fb = { initializeApp, getFirestore, doc, onSnapshot, setDoc, getDoc };
-      startApp();
-    }
-    function startApp() {
-      if(window.__appStarted) return;
-      window.__appStarted = true;
-      const script = document.getElementById('app-script');
-      script.type = 'text/babel';
-      Babel.transformScriptTags();
-    }
-  </script>
-  <script id="app-script" type="text/plain">
+
+  <!-- 1. React UMD -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- 2. Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- 3. Firebase via compat (UMD, não module — sem problema de async) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- 4. App -->
+  <script type="text/babel" data-presets="react">
 const { useState, useRef, useEffect } = React;
-const { initializeApp, getFirestore, doc, onSnapshot, setDoc, getDoc } = window.__fb;
 
-
-/* ─────────────────────────────────────────
-   FIREBASE
-───────────────────────────────────────── */
+/* ── Firebase compat API ── */
 const firebaseConfig = {
   apiKey: "AIzaSyDvTfq3BMF35oxOn0wwP9QcI3nkFD8d4pc",
   authDomain: "escala-de-louvor-c098e.firebaseapp.com",
@@ -65,35 +39,31 @@ const firebaseConfig = {
   messagingSenderId: "417687304037",
   appId: "1:417687304037:web:c57afe10870b68229cd38c"
 };
-const fbApp = initializeApp(firebaseConfig);
-const db    = getFirestore(fbApp);
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// Salva um documento no Firestore
-async function fbSet(colecao, dados) {
-  try { await setDoc(doc(db, "app", colecao), { dados: JSON.stringify(dados) }); } catch(e) { console.error("fbSet",e); }
+async function fbSet(col, data) {
+  try { await db.collection("app").doc(col).set({ dados: JSON.stringify(data) }); } catch(e) { console.error("fbSet",e); }
 }
-// Escuta mudanças em tempo real
-function fbListen(colecao, cb) {
-  return onSnapshot(doc(db, "app", colecao), snap => {
-    if (snap.exists()) {
-      try { cb(JSON.parse(snap.data().dados)); } catch {}
-    }
+function fbListen(col, cb) {
+  return db.collection("app").doc(col).onSnapshot(snap => {
+    if (snap.exists) { try { cb(JSON.parse(snap.data().dados)); } catch(e){} }
   });
 }
-// Escuta opcional — não bloqueia se doc não existir ainda
-function fbListenOpt(colecao, cb) {
-  return onSnapshot(doc(db, "app", colecao), snap => {
-    try { cb(snap.exists() ? JSON.parse(snap.data().dados) : null); } catch {}
-  }, () => cb(null));
+function fbListenOpt(col, cb) {
+  return db.collection("app").doc(col).onSnapshot(
+    snap => { try { cb(snap.exists ? JSON.parse(snap.data().dados) : null); } catch(e){ cb(null); } },
+    () => cb(null)
+  );
 }
-// Carrega uma vez (para inicialização)
-async function fbGet(colecao, fallback) {
-  try {
-    const snap = await getDoc(doc(db, "app", colecao));
-    if (snap.exists()) return JSON.parse(snap.data().dados);
-  } catch {}
+async function fbGet(col, fallback) {
+  try { const s = await db.collection("app").doc(col).get(); if (s.exists) return JSON.parse(s.data().dados); } catch(e){}
   return fallback;
 }
+
+
+/* Firebase, fbSet, fbListen, fbListenOpt, fbGet são injetados pelo build script (compat UMD) */
+
 
 /* ─────────────────────────────────────────
    HELPERS  (all defined before use)
@@ -1001,6 +971,49 @@ function CultoDetalhe({culto,cantores,musicos,favs,newLF,setNLF,accent,bGold,bGh
 /* ─────────────────────────────────────────
    MAIN APP
 ───────────────────────────────────────── */
+function MusicoEditForm({musico,idx,accent,bGold,bGhost,bDanger,onSave,onDelete,onClose}) {
+  const [nome,  setNome]  = useState(musico.nome);
+  const [inst,  setInst]  = useState(musico.instrumento);
+  const [emoji, setEmoji] = useState(musico.emoji);
+  return (
+    <>
+      <div style={{display:"flex",alignItems:"center",gap:14,padding:"14px",background:"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:12}}>
+        <span style={{fontSize:40}}>{emoji}</span>
+        <div>
+          <div style={{fontSize:16,fontWeight:700,color:"#EAE8F2"}}>{nome||musico.nome}</div>
+          <div style={{fontSize:12,color:accent.accent}}>{inst}</div>
+        </div>
+      </div>
+      <Fld label="Nome" value={nome} onChange={e=>setNome(e.target.value)}/>
+      <Fld label="Instrumento" as="select" value={inst} onChange={e=>setInst(e.target.value)}>
+        {["Bateria","Guitarra","Teclado","Contra Baixo","Violão","Baixo","Saxofone","Trompete","Outro"].map(i=>(
+          <option key={i} value={i}>{i}</option>
+        ))}
+      </Fld>
+      <div style={{marginBottom:12}}>
+        <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>Emoji</label>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {EMOJIS.slice(0,30).map(e=>(
+            <button key={e} onClick={()=>setEmoji(e)} style={{
+              fontSize:20,padding:"6px",borderRadius:8,border:"none",cursor:"pointer",
+              background:emoji===e?"rgba("+accent.rgb+",0.25)":"rgba(255,255,255,0.05)",
+              outline:emoji===e?"2px solid "+accent.accent:"none"}}>
+              {e}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+        <button style={bDanger} onClick={()=>onDelete(idx)}>🗑 Remover</button>
+        <div style={{display:"flex",gap:8}}>
+          <button style={bGhost} onClick={onClose}>Cancelar</button>
+          <button style={bGold} onClick={()=>onSave({...musico,nome:nome.trim(),instrumento:inst,emoji},idx)}>Salvar</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function App() {
   const [cantores, setCantores] = useState(INIT_CANTORES);
   const [musicos,  setMusicos]  = useState(INIT_MUSICOS);
@@ -1916,49 +1929,15 @@ function App() {
       {editMI!==null&&musicos[editMI]&&(
         <Ovl onClose={()=>setEditMI(null)}>
           <MH title="Editar Músico" onClose={()=>setEditMI(null)}/>
-          {(()=>{
-            const mt=musicos[editMI];
-            const [nome,setNome]=React.useState(mt.nome);
-            const [inst,setInst]=React.useState(mt.instrumento);
-            const [emoji,setEmoji]=React.useState(mt.emoji);
-            return (
-              <>
-                <div style={{display:"flex",alignItems:"center",gap:14,padding:"14px",background:"rgba(255,255,255,0.03)",borderRadius:10}}>
-                  <span style={{fontSize:40}}>{emoji}</span>
-                  <div>
-                    <div style={{fontSize:16,fontWeight:700,color:"#EAE8F2"}}>{nome||mt.nome}</div>
-                    <div style={{fontSize:12,color:accent.accent}}>{inst}</div>
-                  </div>
-                </div>
-                <Fld label="Nome" value={nome} onChange={e=>setNome(e.target.value)}/>
-                <Fld label="Instrumento" as="select" value={inst} onChange={e=>setInst(e.target.value)}>
-                  {["Bateria","Guitarra","Teclado","Contra Baixo","Violão","Baixo","Saxofone","Trompete","Outro"].map(i=>(
-                    <option key={i} value={i}>{i}</option>
-                  ))}
-                </Fld>
-                <div>
-                  <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>Emoji</label>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                    {EMOJIS.slice(0,30).map(e=>(
-                      <button key={e} onClick={()=>setEmoji(e)} style={{
-                        fontSize:20,padding:"6px",borderRadius:8,border:"none",cursor:"pointer",
-                        background:emoji===e?"rgba("+accent.rgb+",0.25)":"rgba(255,255,255,0.05)",
-                        outline:emoji===e?"2px solid "+accent.accent:"none"}}>
-                        {e}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
-                  <button style={bDanger} onClick={()=>deleteMusicoAt(editMI)}>🗑 Remover</button>
-                  <div style={{display:"flex",gap:8}}>
-                    <button style={bGhost} onClick={()=>setEditMI(null)}>Cancelar</button>
-                    <button style={bGold} onClick={()=>saveMusicoEdit({...mt,nome:nome.trim(),instrumento:inst,emoji},editMI)}>Salvar</button>
-                  </div>
-                </div>
-              </>
-            );
-          })()}
+          <MusicoEditForm
+            musico={musicos[editMI]}
+            idx={editMI}
+            accent={accent}
+            bGold={bGold} bGhost={bGhost} bDanger={bDanger}
+            onSave={saveMusicoEdit}
+            onDelete={deleteMusicoAt}
+            onClose={()=>setEditMI(null)}
+          />
         </Ovl>
       )}
 
