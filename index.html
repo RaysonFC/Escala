@@ -80,6 +80,12 @@ function fbListen(colecao, cb) {
     }
   });
 }
+// Escuta opcional — não bloqueia se doc não existir ainda
+function fbListenOpt(colecao, cb) {
+  return onSnapshot(doc(db, "app", colecao), snap => {
+    try { cb(snap.exists() ? JSON.parse(snap.data().dados) : null); } catch {}
+  }, () => cb(null));
+}
 // Carrega uma vez (para inicialização)
 async function fbGet(colecao, fallback) {
   try {
@@ -101,7 +107,7 @@ const daysUntil = (ds) => {
   if(d<0) return null; if(d===0) return "Hoje"; if(d===1) return "Amanhã"; return `em ${d}d`;
 };
 const mkL = (titulo="",artista="",ytUrl="",tom="") => ({id:uid(),titulo,artista,ytUrl,tom,cifra:"",obs:""});
-const mkC = (data,tipo,tema="",campanha="") => ({id:uid(),data,tipo,tema,campanha,cantores:[],louvores:[],obs:"",lembrete:false});
+const mkC = (data,tipo,tema="",campanha="") => ({id:uid(),data,tipo,tema,campanha,cantores:[],musicos:[],louvores:[],obs:"",lembrete:false});
 const mkCantor = (nome,emoji="🎤") => ({id:uid(),nome,emoji,louvoresFav:[]});
 const normalizeCantor = (c) => typeof c==="string" ? mkCantor(c) : {louvoresFav:[],...c};
 
@@ -140,6 +146,16 @@ const INIT_CANTORES = [
   {id:"c2",nome:"Mariana",   emoji:"🎶",louvoresFav:[]},
   {id:"c3",nome:"Alessandra",emoji:"🎵",louvoresFav:[]},
   {id:"c4",nome:"Uesley",    emoji:"🎸",louvoresFav:[]},
+];
+const INIT_MUSICOS = [
+  {id:"m1",nome:"Miguel Edmar",instrumento:"Bateria",  emoji:"🥁",louvoresFav:[]},
+  {id:"m2",nome:"Miguel",      instrumento:"Bateria",  emoji:"🥁",louvoresFav:[]},
+  {id:"m3",nome:"Kleyson",     instrumento:"Bateria",  emoji:"🥁",louvoresFav:[]},
+  {id:"m4",nome:"Raysson",     instrumento:"Guitarra", emoji:"🎸",louvoresFav:[]},
+  {id:"m5",nome:"David",       instrumento:"Teclado",  emoji:"🎹",louvoresFav:[]},
+  {id:"m6",nome:"Joseph",      instrumento:"Teclado",  emoji:"🎹",louvoresFav:[]},
+  {id:"m7",nome:"Peterson",    instrumento:"Contra Baixo",emoji:"🎵",louvoresFav:[]},
+  {id:"m8",nome:"Bismark",     instrumento:"Contra Baixo",emoji:"🎵",louvoresFav:[]},
 ];
 const INIT_CULTOS = [
   {...mkC(nextDow(3),"quarta"), cantores:["Débora","Uesley"],
@@ -793,8 +809,8 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,bGold,bGhost,bDa
 /* ─────────────────────────────────────────
    CULTO DETALHE (separate component, no IIFE)
 ───────────────────────────────────────── */
-function CultoDetalhe({culto,cantores,favs,newLF,setNLF,accent,bGold,bGhost,bDanger,
-  onBack,onDelete,onToggleCantor,onUpdC,onAddLouvor,onRemLouvor,onMoveLouvor,
+function CultoDetalhe({culto,cantores,musicos,favs,newLF,setNLF,accent,bGold,bGhost,bDanger,
+  onBack,onDelete,onToggleCantor,onToggleMusico,onUpdC,onAddLouvor,onRemLouvor,onMoveLouvor,
   onToggleFav,isFav,onToggleLembrete,onPresent,onCopy,onOpenFavPk,onPlay}) {
   const c=culto; const cf=CC[c.tipo];
   const [editDate,setEditDate]=useState(false);
@@ -877,10 +893,10 @@ function CultoDetalhe({culto,cantores,favs,newLF,setNLF,accent,bGold,bGhost,bDan
         </div>
       </div>
 
-      {/* Two col */}
+      {/* Three sections */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}} className="gsm">
         <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"18px"}}>
-          <h3 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:17,fontWeight:700,color:"#EAE8F2",margin:"0 0 12px"}}>Cantores Escalados</h3>
+          <h3 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:17,fontWeight:700,color:"#EAE8F2",margin:"0 0 12px"}}>🎤 Cantores</h3>
           <div style={{display:"flex",flexDirection:"column",gap:5}}>
             {cantores.map(ct=>{
               const on=c.cantores.includes(ct.nome);
@@ -900,9 +916,32 @@ function CultoDetalhe({culto,cantores,favs,newLF,setNLF,accent,bGold,bGhost,bDan
           </div>
         </div>
         <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"18px"}}>
-          <h3 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:17,fontWeight:700,color:"#EAE8F2",margin:"0 0 12px"}}>Observações</h3>
-          <Fld as="textarea" value={c.obs} placeholder="Horário, local, anotações..." onChange={e=>onUpdC({...c,obs:e.target.value})}/>
+          <h3 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:17,fontWeight:700,color:"#EAE8F2",margin:"0 0 12px"}}>🎸 Músicos</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:5}}>
+            {(musicos||[]).map(mt=>{
+              const on=(c.musicos||[]).includes(mt.nome);
+              return (
+                <button key={mt.id} className="pill" onClick={()=>onToggleMusico(c.id,mt.nome)} style={{
+                  display:"flex",alignItems:"center",gap:9,padding:"9px 12px",borderRadius:9,
+                  border:on?"1px solid rgba("+cf.rgb+",0.45)":"1px solid rgba(255,255,255,0.07)",
+                  background:on?"rgba("+cf.rgb+",0.12)":"rgba(255,255,255,0.03)",
+                  color:on?cf.color:"rgba(255,255,255,0.45)",cursor:"pointer",fontFamily:"inherit",
+                  fontSize:13,fontWeight:on?600:400,transition:"all 0.15s",textAlign:"left"}}>
+                  <span style={{fontSize:18}}>{mt.emoji}</span>
+                  <div style={{flex:1}}>
+                    <div>{mt.nome}</div>
+                    <div style={{fontSize:10,opacity:0.5}}>{mt.instrumento}</div>
+                  </div>
+                  {on&&<span style={{fontSize:12}}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
+      </div>
+      <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"18px",marginBottom:14}}>
+        <h3 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:17,fontWeight:700,color:"#EAE8F2",margin:"0 0 12px"}}>Observações</h3>
+        <Fld as="textarea" value={c.obs} placeholder="Horário, local, anotações..." onChange={e=>onUpdC({...c,obs:e.target.value})}/>
       </div>
 
       {/* Louvores */}
@@ -964,56 +1003,66 @@ function CultoDetalhe({culto,cantores,favs,newLF,setNLF,accent,bGold,bGhost,bDan
 ───────────────────────────────────────── */
 function App() {
   const [cantores, setCantores] = useState(INIT_CANTORES);
+  const [musicos,  setMusicos]  = useState(INIT_MUSICOS);
   const [cultos,   setCultos]   = useState(INIT_CULTOS);
   const [favs,     setFavs]     = useState(INIT_FAVS);
   const [themeKey, setThemeKey] = useState("gold");
-  const [fbReady,  setFbReady]  = useState(false); // Firebase carregado?
+  const [fbReady,  setFbReady]  = useState(false);
 
-  // Flag para evitar loop: só salva no Firebase após carregar os dados
-  const loaded = useRef({cant:false, cult:false, favs:false});
-  // Flag para evitar salvar quando a mudança veio DO Firebase
-  const fromFb = useRef({cant:false, cult:false, favs:false});
+  const loaded = useRef({cant:false, mus:false, cult:false, favs:false});
+  const fromFb = useRef({cant:false, mus:false, cult:false, favs:false});
 
-  // ── Carrega dados iniciais e escuta mudanças em tempo real ──
   useEffect(()=>{
-    // Cantores
+    const checkReady = () => {
+      if (loaded.current.cant && loaded.current.cult && loaded.current.favs) {
+        setFbReady(true);
+      }
+    };
+
     const unCant = fbListen("cantores", data => {
-      const norm = (data||[]).map(normalizeCantor);
       fromFb.current.cant = true;
-      setCantores(norm);
+      setCantores((data||[]).map(normalizeCantor));
       loaded.current.cant = true;
-      setFbReady(r => r || (loaded.current.cult && loaded.current.favs));
+      checkReady();
     });
-    // Cultos
+    const unMus = fbListenOpt("musicos", data => {
+      fromFb.current.mus = true;
+      if (data) setMusicos(data.map(m=>({louvoresFav:[],...m})));
+      loaded.current.mus = true;
+    });
     const unCult = fbListen("cultos", data => {
       fromFb.current.cult = true;
       setCultos(data||[]);
       loaded.current.cult = true;
-      setFbReady(r => r || (loaded.current.cant && loaded.current.favs));
+      checkReady();
     });
-    // Favoritos
     const unFavs = fbListen("favs", data => {
       fromFb.current.favs = true;
       setFavs(data||[]);
       loaded.current.favs = true;
-      setFbReady(r => r || (loaded.current.cant && loaded.current.cult));
+      checkReady();
     });
-    // Tema (localStorage apenas, cada pessoa tem o seu)
+    // Fallback: abre o app após 5s mesmo se algo falhar
+    const fallback = setTimeout(() => setFbReady(true), 5000);
     try{ const t=localStorage.getItem("esc_theme"); if(t) setThemeKey(t); }catch{}
-    // Inicializa Firestore com dados seed se ainda não existir
     fbGet("cantores",null).then(v=>{ if(!v) fbSet("cantores",INIT_CANTORES); });
+    fbGet("musicos", null).then(v=>{ if(!v) fbSet("musicos", INIT_MUSICOS);  });
     fbGet("cultos",  null).then(v=>{ if(!v) fbSet("cultos",  INIT_CULTOS);   });
     fbGet("favs",    null).then(v=>{ if(!v) fbSet("favs",    INIT_FAVS);     });
-
-    return ()=>{ unCant(); unCult(); unFavs(); };
+    return ()=>{ unCant(); unMus(); unCult(); unFavs(); clearTimeout(fallback); };
   }, []);
 
-  // ── Salva no Firebase quando o estado muda (apenas mudanças locais) ──
   useEffect(()=>{
     if (!loaded.current.cant) return;
     if (fromFb.current.cant) { fromFb.current.cant=false; return; }
     fbSet("cantores", cantores);
   }, [cantores]);
+
+  useEffect(()=>{
+    if (!loaded.current.mus) return;
+    if (fromFb.current.mus) { fromFb.current.mus=false; return; }
+    fbSet("musicos", musicos);
+  }, [musicos]);
 
   useEffect(()=>{
     if (!loaded.current.cult) return;
@@ -1038,9 +1087,14 @@ function App() {
   const [selId,     setSelId]   = useState(null);
   const [playL,     setPlayL]   = useState(null);
   const [presentId, setPId]     = useState(null);
-  const [editCI,    setEditCI]  = useState(null);
+  const [openCards, setOpenCards] = useState({});
+  const toggleCard = id => setOpenCards(p=>({...p,[id]:!p[id]}));
+  const [editMI,    setEditMI]  = useState(null);
   const [showAddC,  setShowAddC]= useState(false);
+  const [showAddM,  setShowAddM]= useState(false);
   const [newCantN,  setNewCantN]= useState("");
+  const [newMusN,   setNewMusN] = useState("");
+  const [newMusInst,setNewMusInst]=useState("Bateria");
   const [newCultoF, setNCF]     = useState(null);
   const [newLF,     setNLF]     = useState(null);
   const [showFavPk, setFavPk]   = useState(false);
@@ -1112,6 +1166,11 @@ function App() {
     const c=getC(cid); if(!c)return;
     updC({...c,cantores:c.cantores.includes(nome)?c.cantores.filter(n=>n!==nome):[...c.cantores,nome]});
   };
+  const toggleMusico=(cid,nome)=>{
+    const c=getC(cid); if(!c)return;
+    const ms=c.musicos||[];
+    updC({...c,musicos:ms.includes(nome)?ms.filter(n=>n!==nome):[...ms,nome]});
+  };
   const doAddLouvor=cid=>{
     if(!newLF?.titulo)return;
     const c=getC(cid); if(!c)return;
@@ -1162,6 +1221,25 @@ function App() {
     setCantores(p=>[...p,mkCantor(newCantN.trim())]);
     setNewCantN(""); setShowAddC(false); showToast("Cantor adicionado ✓");
   };
+  const doAddMusico=()=>{
+    if(!newMusN.trim())return;
+    setMusicos(p=>[...p,{id:uid(),nome:newMusN.trim(),instrumento:newMusInst,emoji:
+      newMusInst==="Bateria"?"🥁":newMusInst==="Guitarra"?"🎸":newMusInst==="Teclado"?"🎹":
+      newMusInst==="Contra Baixo"?"🎵":newMusInst==="Violão"?"🎸":"🎵",louvoresFav:[]}]);
+    setNewMusN(""); setShowAddM(false); showToast("Músico adicionado ✓");
+  };
+  const saveMusicoEdit=(updated,idx)=>{
+    const oldNome=musicos[idx]?.nome;
+    setMusicos(p=>p.map((m,i)=>i===idx?updated:m));
+    if(oldNome!==updated.nome) setCultos(p=>p.map(c=>({...c,musicos:(c.musicos||[]).map(n=>n===oldNome?updated.nome:n)})));
+    setEditMI(null); showToast("Músico atualizado ✓");
+  };
+  const deleteMusicoAt=idx=>{
+    const nome=musicos[idx]?.nome;
+    setMusicos(p=>p.filter((_,i)=>i!==idx));
+    setCultos(p=>p.map(c=>({...c,musicos:(c.musicos||[]).filter(n=>n!==nome)})));
+    setEditMI(null); showToast("Músico removido",false);
+  };
   const doSearch=async()=>{
     if(!sq.trim())return;
     setSLoad(true); setSRes([]); setSErr("");
@@ -1178,6 +1256,7 @@ function App() {
     const lines=[
       "📋 "+CC[c.tipo].label+" — "+fmtDate(c.data),
       c.cantores.length?"🎤 Cantores: "+c.cantores.join(", "):"",
+      (c.musicos||[]).length?"🎸 Músicos: "+c.musicos.join(", "):"",
       c.louvores.length?"\n🎵 Louvores":"",
       ...c.louvores.map((l,i)=>"  "+(i+1)+". "+l.titulo+(l.artista?" — "+l.artista:"")+(l.tom?" ("+l.tom+")":"")+(l.cifra?" | "+l.cifra:"")),
     ].filter(Boolean).join("\n");
@@ -1201,7 +1280,7 @@ function App() {
       alignItems:"center",justifyContent:"center",gap:16,fontFamily:"'DM Sans',system-ui,sans-serif"}}>
       <style>{"@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;600&display=swap');"}</style>
       <div style={{fontSize:48,animation:"spin 1.2s linear infinite",display:"inline-block"}}>✝</div>
-      <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,fontWeight:700,color:"#EAE8F2"}}>Escala de Louvor</div>
+      <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,fontWeight:700,color:"#EAE8F2"}}>Banda Aviva</div>
       <div style={{fontSize:13,color:"rgba(255,255,255,0.4)"}}>Conectando ao banco de dados...</div>
       <style>{"@keyframes spin{to{transform:rotate(360deg)}}"}</style>
     </div>
@@ -1240,76 +1319,35 @@ function App() {
       {/* Header */}
       <header style={{position:"sticky",top:0,zIndex:100,background:"rgba(15,15,26,0.97)",
         backdropFilter:"blur(16px)",borderBottom:"1px solid rgba(255,255,255,0.07)",
-        display:"flex",alignItems:"center",padding:"0 20px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginRight:24,padding:"12px 0",flexShrink:0}}>
+        display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px",gap:12}}>
+        {/* Logo — sempre visível à esquerda */}
+        <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 0",flexShrink:0}}>
           <span style={{fontSize:26,color:accent.accent,lineHeight:1,textShadow:"0 0 20px rgba("+accent.rgb+",0.5)"}}>✝</span>
-          <div className="hsm">
-            <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#EAE8F2",lineHeight:1}}>Escala de Louvor</div>
+          <div>
+            <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#EAE8F2",lineHeight:1}}>Banda Aviva</div>
             <div style={{fontSize:9,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase"}}>Ministério de Música</div>
           </div>
         </div>
-        <nav style={{display:"flex",flex:1}} className="hsm">
+        {/* Nav abas — sempre visível à direita */}
+        <div style={{display:"flex",alignItems:"center",gap:4}}>
           {[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},
             {id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"★",label:"Favoritos"}].map(n=>(
             <button key={n.id} className="htab" onClick={()=>setTab(n.id)} style={{
-              background:"none",border:"none",cursor:"pointer",padding:"0 12px",height:50,fontSize:13,
+              background:"none",border:"none",cursor:"pointer",padding:"0 10px",height:50,fontSize:12,
               fontFamily:"inherit",color:tab===n.id?accent.accent:"rgba(255,255,255,0.4)",
               borderBottom:tab===n.id?"2px solid "+accent.accent:"2px solid transparent",
-              fontWeight:tab===n.id?600:400,transition:"all 0.2s",display:"flex",alignItems:"center",gap:6}}>
-              <span>{n.icon}</span><span>{n.label}</span>
+              fontWeight:tab===n.id?600:400,transition:"all 0.2s",display:"flex",alignItems:"center",gap:5,
+              whiteSpace:"nowrap"}}>
+              <span style={{fontSize:16}}>{n.icon}</span>
+              <span style={{fontSize:12}}>{n.label}</span>
             </button>
           ))}
-        </nav>
-        {/* Mobile nav — ícone que abre menu suspenso */}
-        <div style={{flex:1,display:"none",alignItems:"center"}} className="nav-mobile">
-          <span style={{fontSize:13,fontWeight:600,color:accent.accent}}>
-            {[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},
-              {id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"★",label:"Favoritos"}]
-              .find(n=>n.id===tab)?.icon}{" "}
-            {[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},
-              {id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"★",label:"Favoritos"}]
-              .find(n=>n.id===tab)?.label}
-          </span>
-        </div>
-        <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0,position:"relative"}}>
-          {/* Botão menu hamburguer — visível no mobile */}
-          <button onClick={()=>setShowMenu(m=>!m)} style={{background:"rgba(255,255,255,0.05)",
-            border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.6)",
-            borderRadius:8,padding:"7px 11px",cursor:"pointer",fontSize:18,lineHeight:1}} className="menu-btn">☰</button>
-          {/* Tema — visível no desktop */}
-          <button onClick={()=>setShowTheme(true)} className="hsm" style={{background:"rgba(255,255,255,0.05)",
+          <div style={{width:1,height:24,background:"rgba(255,255,255,0.1)",margin:"0 6px"}}/>
+          <button onClick={()=>setShowTheme(true)} style={{background:"rgba(255,255,255,0.05)",
             border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",
             borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:15}}>🎨</button>
           <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",
-            boxShadow:"0 0 8px rgba(76,175,125,0.6)"}} title="Sincronizado 🔥"/>
-          {/* Dropdown menu suspenso */}
-          {showMenu&&(
-            <div onClick={()=>setShowMenu(false)} style={{position:"fixed",inset:0,zIndex:200}} />
-          )}
-          {showMenu&&(
-            <div style={{position:"absolute",top:"calc(100% + 8px)",right:0,zIndex:300,
-              background:"#1a1a2e",border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,
-              padding:8,minWidth:180,boxShadow:"0 16px 48px rgba(0,0,0,0.6)",
-              display:"flex",flexDirection:"column",gap:2}}>
-              {[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},
-                {id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"★",label:"Favoritos"}].map(n=>(
-                <button key={n.id} onClick={()=>{setTab(n.id);setShowMenu(false);}} style={{
-                  display:"flex",alignItems:"center",gap:10,padding:"11px 14px",borderRadius:9,border:"none",
-                  cursor:"pointer",fontFamily:"inherit",fontSize:14,textAlign:"left",
-                  background:tab===n.id?"rgba("+accent.rgb+",0.15)":"transparent",
-                  color:tab===n.id?accent.accent:"rgba(255,255,255,0.7)",fontWeight:tab===n.id?700:400}}>
-                  <span style={{fontSize:18}}>{n.icon}</span>{n.label}
-                </button>
-              ))}
-              <div style={{height:1,background:"rgba(255,255,255,0.08)",margin:"4px 0"}}/>
-              <button onClick={()=>{setShowTheme(true);setShowMenu(false);}} style={{
-                display:"flex",alignItems:"center",gap:10,padding:"11px 14px",borderRadius:9,border:"none",
-                cursor:"pointer",fontFamily:"inherit",fontSize:14,
-                background:"transparent",color:"rgba(255,255,255,0.7)"}}>
-                <span style={{fontSize:18}}>🎨</span>Tema
-              </button>
-            </div>
-          )}
+            boxShadow:"0 0 8px rgba(76,175,125,0.6)",marginLeft:4}} title="Sincronizado 🔥"/>
         </div>
       </header>
 
@@ -1429,12 +1467,13 @@ function App() {
         {tab==="culto"&&sel&&(
           <CultoDetalhe
             culto={getC(sel.id)||sel}
-            cantores={cantores} favs={favs}
+            cantores={cantores} musicos={musicos} favs={favs}
             newLF={newLF} setNLF={setNLF}
             accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger}
             onBack={()=>setTab("calendario")}
             onDelete={doDelCulto}
             onToggleCantor={toggleCantor}
+            onToggleMusico={toggleMusico}
             onUpdC={updC}
             onAddLouvor={doAddLouvor}
             onRemLouvor={doRemLouvor}
@@ -1457,10 +1496,12 @@ function App() {
                 <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:5}}>Ministério de Música</div>
                 <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:30,fontWeight:700,color:"#EAE8F2",margin:0}}>Escalas</h1>
               </div>
-              <button style={bGold} onClick={()=>setShowAddC(true)}>+ Cantor</button>
+              <div style={{display:"flex",gap:8}}>
+                <button style={bGold} onClick={()=>setShowAddC(true)}>+ Cantor</button>
+              </div>
             </div>
             <div style={{marginBottom:24}}>
-              <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>CANTORES</div>
+              <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>🎤 CANTORES</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:10}}>
                 {cantores.map((ct,i)=>{
                   const nC=cultos.reduce((a,c)=>a+(c.cantores.includes(ct.nome)?1:0),0);
@@ -1482,6 +1523,32 @@ function App() {
                 })}
               </div>
             </div>
+
+            {/* Músicos */}
+            <div style={{marginBottom:24}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600}}>🎸 MÚSICOS</div>
+                <button style={{...bGold,padding:"6px 14px",fontSize:12,boxShadow:"none"}} onClick={()=>setShowAddM(true)}>+ Músico</button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:10}}>
+                {musicos.map((mt,i)=>{
+                  const nC=cultos.reduce((a,c)=>a+((c.musicos||[]).includes(mt.nome)?1:0),0);
+                  return (
+                    <div key={mt.id} onClick={()=>setEditMI(i)} className="ccard" style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",
+                      borderRadius:12,padding:"16px 12px",textAlign:"center",position:"relative",
+                      transition:"transform 0.15s, border-color 0.15s",cursor:"pointer"}}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba("+accent.rgb+",0.4)";}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.07)";}}>
+                      <div style={{fontSize:30,marginBottom:7}}>{mt.emoji}</div>
+                      <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",marginBottom:2}}>{mt.nome}</div>
+                      <div style={{fontSize:10,color:accent.accent,fontWeight:600,marginBottom:2}}>{mt.instrumento}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{nC} culto{nC!==1?"s":""}</div>
+                      <div style={{position:"absolute",top:7,right:9,fontSize:10,color:"rgba(255,255,255,0.2)"}}>✎</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(215px,1fr))",gap:12}} className="gsm">
               {Object.entries(CC).map(([tipo,cf])=>{
                 const cs=cultos.filter(c=>c.tipo===tipo).sort((a,b)=>a.data.localeCompare(b.data));
@@ -1490,44 +1557,93 @@ function App() {
                     borderTop:"3px solid "+cf.color,borderRadius:14,padding:"14px"}}>
                     <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:cf.color,marginBottom:12}}>{cf.label}</div>
                     {cs.length===0&&<p style={{color:"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Sem cultos</p>}
-                    {cs.map(c=>(
-                      <div key={c.id} style={{borderRadius:8,padding:"10px",border:"1px solid rgba(255,255,255,0.06)",marginBottom:7,background:"rgba(255,255,255,0.02)"}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                          <span style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{fmtDate(c.data)}</span>
-                          <div style={{display:"flex",alignItems:"center",gap:5}}>
-                            {daysUntil(c.data)&&<span style={{fontSize:10,fontWeight:700,
-                              color:daysUntil(c.data)==="Hoje"?"#6BBFA3":daysUntil(c.data)==="Amanhã"?accent.accent:"rgba(255,255,255,0.3)"}}>
-                              {daysUntil(c.data)}</span>}
-                            <button onClick={()=>toggleLembrete(c.id)} style={{background:"none",border:"none",
-                              cursor:"pointer",fontSize:12,padding:0,color:c.lembrete?accent.accent:"rgba(255,255,255,0.15)"}}>
-                              {c.lembrete?"🔔":"🔕"}
-                            </button>
-                          </div>
+                    {cs.map(c=>{
+                      const open = !!openCards[c.id];
+                      const nCant = c.cantores.length;
+                      const nMus  = (c.musicos||[]).length;
+                      return (
+                        <div key={c.id} style={{borderRadius:10,border:"1px solid rgba(255,255,255,0.07)",marginBottom:7,background:"rgba(255,255,255,0.02)",overflow:"hidden"}}>
+                          {/* Header do card — sempre visível, clicável */}
+                          <button onClick={()=>toggleCard(c.id)} style={{
+                            width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",
+                            padding:"10px 12px",background:"none",border:"none",cursor:"pointer",
+                            fontFamily:"inherit",textAlign:"left",gap:8}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0}}>
+                              <span style={{fontSize:13,fontWeight:700,color:"#EAE8F2",whiteSpace:"nowrap"}}>{fmtDate(c.data)}</span>
+                              {c.campanha&&<span style={{fontSize:10,color:cf.color,fontWeight:700,whiteSpace:"nowrap"}}>🔥</span>}
+                              {/* Preview: emojis dos selecionados */}
+                              <span style={{fontSize:13,letterSpacing:-2,opacity:0.7}}>
+                                {cantores.filter(ct=>c.cantores.includes(ct.nome)).map(ct=>ct.emoji).join("")}
+                                {(musicos||[]).filter(mt=>(c.musicos||[]).includes(mt.nome)).map(mt=>mt.emoji).join("")}
+                              </span>
+                              {(nCant+nMus)>0&&<span style={{fontSize:10,color:"rgba(255,255,255,0.3)",flexShrink:0}}>{nCant+nMus} escalado{nCant+nMus!==1?"s":""}</span>}
+                            </div>
+                            <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                              {daysUntil(c.data)&&<span style={{fontSize:10,fontWeight:700,
+                                color:daysUntil(c.data)==="Hoje"?"#6BBFA3":daysUntil(c.data)==="Amanhã"?accent.accent:"rgba(255,255,255,0.3)"}}>
+                                {daysUntil(c.data)}</span>}
+                              <span style={{fontSize:12,color:"rgba(255,255,255,0.3)",transition:"transform 0.2s",
+                                display:"inline-block",transform:open?"rotate(180deg)":"rotate(0deg)"}}>▾</span>
+                            </div>
+                          </button>
+
+                          {/* Conteúdo expansível */}
+                          {open&&(
+                            <div style={{padding:"0 12px 12px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+                              {c.campanha&&<div style={{fontSize:10,fontWeight:700,color:cf.color,marginBottom:4,paddingTop:8}}>🔥 {c.campanha}</div>}
+                              {c.tema&&<div style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontStyle:"italic",marginBottom:8,paddingTop:c.campanha?0:8}}>📖 {c.tema}</div>}
+                              {!c.campanha&&!c.tema&&<div style={{paddingTop:8}}/>}
+                              <div style={{fontSize:10,letterSpacing:1,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",marginBottom:5}}>Cantores</div>
+                              <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}}>
+                                {cantores.map(ct=>{
+                                  const on=c.cantores.includes(ct.nome);
+                                  return (
+                                    <button key={ct.id} className="pill" onClick={()=>toggleCantor(c.id,ct.nome)} style={{
+                                      borderRadius:20,padding:"3px 9px",
+                                      border:on?"1px solid rgba("+cf.rgb+",0.45)":"1px solid rgba(255,255,255,0.08)",
+                                      background:on?"rgba("+cf.rgb+",0.12)":"transparent",
+                                      color:on?cf.color:"rgba(255,255,255,0.35)",
+                                      cursor:"pointer",fontSize:11,fontFamily:"inherit",transition:"all 0.15s",
+                                      display:"flex",alignItems:"center",gap:4}}>
+                                      <span style={{fontSize:13}}>{ct.emoji}</span>{ct.nome}{on?" ✓":""}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {musicos.length>0&&<>
+                                <div style={{fontSize:10,letterSpacing:1,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",marginBottom:5}}>Músicos</div>
+                                <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}}>
+                                  {musicos.map(mt=>{
+                                    const on=(c.musicos||[]).includes(mt.nome);
+                                    return (
+                                      <button key={mt.id} className="pill" onClick={()=>toggleMusico(c.id,mt.nome)} style={{
+                                        borderRadius:20,padding:"3px 9px",
+                                        border:on?"1px solid rgba("+cf.rgb+",0.45)":"1px solid rgba(255,255,255,0.06)",
+                                        background:on?"rgba("+cf.rgb+",0.1)":"transparent",
+                                        color:on?cf.color:"rgba(255,255,255,0.25)",
+                                        cursor:"pointer",fontSize:11,fontFamily:"inherit",transition:"all 0.15s",
+                                        display:"flex",alignItems:"center",gap:4}}>
+                                        <span style={{fontSize:13}}>{mt.emoji}</span>{mt.nome}{on?" ✓":""}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </>}
+                              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:4}}>
+                                <button onClick={()=>toggleLembrete(c.id)} style={{background:"none",border:"none",
+                                  cursor:"pointer",fontSize:12,padding:0,color:c.lembrete?accent.accent:"rgba(255,255,255,0.2)"}}>
+                                  {c.lembrete?"🔔 Lembrete":"🔕 Lembrete"}
+                                </button>
+                                <button onClick={()=>{setSelId(c.id);setTab("culto");}} style={{
+                                  background:"none",border:"none",color:accent.accent,cursor:"pointer",fontSize:11,fontFamily:"inherit",padding:0}}>
+                                  Ver detalhes →
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        {c.campanha&&<div style={{fontSize:10,fontWeight:700,color:cf.color,marginBottom:2}}>🔥 {c.campanha}</div>}
-                        {c.tema&&<div style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontStyle:"italic",marginBottom:5}}>📖 {c.tema}</div>}
-                        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:7}}>
-                          {cantores.map(ct=>{
-                            const on=c.cantores.includes(ct.nome);
-                            return (
-                              <button key={ct.id} className="pill" onClick={()=>toggleCantor(c.id,ct.nome)} style={{
-                                borderRadius:20,padding:"3px 9px",
-                                border:on?"1px solid rgba("+cf.rgb+",0.45)":"1px solid rgba(255,255,255,0.08)",
-                                background:on?"rgba("+cf.rgb+",0.12)":"transparent",
-                                color:on?cf.color:"rgba(255,255,255,0.35)",
-                                cursor:"pointer",fontSize:11,fontFamily:"inherit",transition:"all 0.15s",
-                                display:"flex",alignItems:"center",gap:4}}>
-                                <span style={{fontSize:13}}>{ct.emoji}</span>{ct.nome}{on?" ✓":""}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <button onClick={()=>{setSelId(c.id);setTab("culto");}} style={{
-                          background:"none",border:"none",color:accent.accent,cursor:"pointer",fontSize:11,fontFamily:"inherit",padding:0}}>
-                          Ver detalhes →
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -1779,8 +1895,72 @@ function App() {
         />
       )}
 
-      {/* Adicionar cantor */}
-      {showAddC&&(
+      {/* Adicionar músico */}
+      {showAddM&&(
+        <Ovl onClose={()=>setShowAddM(false)}>
+          <MH title="Novo Músico" onClose={()=>setShowAddM(false)}/>
+          <Fld label="Nome" value={newMusN} placeholder="Nome do músico" onChange={e=>setNewMusN(e.target.value)}/>
+          <Fld label="Instrumento" as="select" value={newMusInst} onChange={e=>setNewMusInst(e.target.value)}>
+            {["Bateria","Guitarra","Teclado","Contra Baixo","Violão","Baixo","Saxofone","Trompete","Outro"].map(i=>(
+              <option key={i} value={i}>{i}</option>
+            ))}
+          </Fld>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button style={bGhost} onClick={()=>setShowAddM(false)}>Cancelar</button>
+            <button style={bGold} onClick={doAddMusico}>Adicionar</button>
+          </div>
+        </Ovl>
+      )}
+
+      {/* Editar músico */}
+      {editMI!==null&&musicos[editMI]&&(
+        <Ovl onClose={()=>setEditMI(null)}>
+          <MH title="Editar Músico" onClose={()=>setEditMI(null)}/>
+          {(()=>{
+            const mt=musicos[editMI];
+            const [nome,setNome]=React.useState(mt.nome);
+            const [inst,setInst]=React.useState(mt.instrumento);
+            const [emoji,setEmoji]=React.useState(mt.emoji);
+            return (
+              <>
+                <div style={{display:"flex",alignItems:"center",gap:14,padding:"14px",background:"rgba(255,255,255,0.03)",borderRadius:10}}>
+                  <span style={{fontSize:40}}>{emoji}</span>
+                  <div>
+                    <div style={{fontSize:16,fontWeight:700,color:"#EAE8F2"}}>{nome||mt.nome}</div>
+                    <div style={{fontSize:12,color:accent.accent}}>{inst}</div>
+                  </div>
+                </div>
+                <Fld label="Nome" value={nome} onChange={e=>setNome(e.target.value)}/>
+                <Fld label="Instrumento" as="select" value={inst} onChange={e=>setInst(e.target.value)}>
+                  {["Bateria","Guitarra","Teclado","Contra Baixo","Violão","Baixo","Saxofone","Trompete","Outro"].map(i=>(
+                    <option key={i} value={i}>{i}</option>
+                  ))}
+                </Fld>
+                <div>
+                  <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>Emoji</label>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                    {EMOJIS.slice(0,30).map(e=>(
+                      <button key={e} onClick={()=>setEmoji(e)} style={{
+                        fontSize:20,padding:"6px",borderRadius:8,border:"none",cursor:"pointer",
+                        background:emoji===e?"rgba("+accent.rgb+",0.25)":"rgba(255,255,255,0.05)",
+                        outline:emoji===e?"2px solid "+accent.accent:"none"}}>
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                  <button style={bDanger} onClick={()=>deleteMusicoAt(editMI)}>🗑 Remover</button>
+                  <div style={{display:"flex",gap:8}}>
+                    <button style={bGhost} onClick={()=>setEditMI(null)}>Cancelar</button>
+                    <button style={bGold} onClick={()=>saveMusicoEdit({...mt,nome:nome.trim(),instrumento:inst,emoji},editMI)}>Salvar</button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </Ovl>
+      )}
         <Ovl onClose={()=>setShowAddC(false)}>
           <MH title="Novo Cantor" onClose={()=>setShowAddC(false)}/>
           <Fld label="Nome" value={newCantN} placeholder="Nome do cantor" onChange={e=>setNewCantN(e.target.value)}/>
