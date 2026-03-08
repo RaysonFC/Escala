@@ -72,7 +72,7 @@ const CC = {
 };
 const DAYS_PT=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const MONTHS_PT=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const EMOJIS=["🎤","🎶","🎵","🎸","🎹","🥁","🎺","🎻","🪗","🪘","🎷","🙏","✝","🌟","💫","🌙","🔥","💎","🌿","🌸","🦋","🎯","🏆","👑","⚡","🌊","🎭","☀","🕊","🎨"];
+const EMOJIS=["🎤","🎧","🎶","🎵","🎼","🎸","🎹","🥁","🎺","🎻","🪗","🪘","🎷","🎙","🪕","🎚","🎛","🙏","✝","⛪","📖","🕊","🌟","💫","✨","🌙","☀","🌈","❤️‍🔥","💛","💜","💙","🤍","❤","🌿","🌸","🌺","🌻","🌹","🦋","🌊","🍃","🌴","🌾","🍀","🔥","💎","🏆","👑","⚡","🎯","🎭","🎨","🦁","🦅","🐦","⭐","🌠","🎇","🥇","🎀","🌌","🪐"];
 const TONS=[
   // Maiores
   "C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B",
@@ -257,7 +257,10 @@ function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
 function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger}){
   const [nome,setNome]=useState(cantor.nome);
   const [emoji,setEmoji]=useState(cantor.emoji);
-  const todosLouvores=[...new Map(cultos.flatMap(c=>c.louvores).map(l=>[l.titulo,l])).values()];
+  const historico=[...new Map(
+    cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===cantor.nome))
+    .map(l=>[l.titulo,l])
+  ).values()];
   return(
     <>
       <div style={{display:"flex",alignItems:"center",gap:14,padding:14,background:"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:12}}>
@@ -273,6 +276,28 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
           ))}
         </div>
       </div>
+
+      {/* Histórico de louvores */}
+      {historico.length>0&&(
+        <div style={{marginBottom:14}}>
+          <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>🎵 Histórico de Louvores</label>
+          <div style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:6,maxHeight:180,overflowY:"auto"}}>
+            {historico.map((l,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,justifyContent:"space-between"}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,overflow:"hidden"}}>
+                  <span style={{color:accent.accent,flexShrink:0,fontSize:12}}>♪</span>
+                  <div style={{overflow:"hidden"}}>
+                    <div style={{fontSize:12,color:"#EAE8F2",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo}</div>
+                    {l.artista&&<div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{l.artista}</div>}
+                  </div>
+                </div>
+                {l.tom&&<span style={{fontSize:10,fontWeight:700,color:accent.accent,background:"rgba("+accent.rgb+",0.12)",borderRadius:6,padding:"2px 7px",flexShrink:0}}>{l.tom}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
         <button style={bDanger} onClick={()=>onDelete(idx)}>🗑 Remover</button>
         <div style={{display:"flex",gap:8}}>
@@ -340,6 +365,7 @@ function App(){
   const [editMI,setEditMI]=useState(null);
   const [showAddC,setShowAddC]=useState(false);
   const [showAddM,setShowAddM]=useState(false);
+  const [showMusicos,setShowMusicos]=useState(false);
   const [newCantN,setNewCantN]=useState("");
   const [newMusN,setNewMusN]=useState("");
   const [newMusInst,setNewMusInst]=useState("Bateria");
@@ -631,7 +657,7 @@ function App(){
             {/* Próximos */}
             {proximos.length>0&&(
               <div style={{marginBottom:20}}>
-                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:8}}>PRÓXIMOS CULTOS</div>
+                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600,marginBottom:8}}>PRÓXIMOS CULTOS</div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                   {proximos.map(c=>{
                     const cf=CC[c.tipo];
@@ -851,7 +877,7 @@ function App(){
             </div>
 
             {/* Cantores */}
-            <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>🎤 CANTORES</div>
+            <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>🎤 CANTORES</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}}>
               {cantores.map((ct,i)=>{
                 const n=cultos.filter(c=>c.cantores.includes(ct.nome)).length;
@@ -862,7 +888,7 @@ function App(){
                 ).values()].slice(0,5);
                 return(
                   <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                       <span style={{fontSize:26}}>{ct.emoji}</span>
                       <div>
                         <div style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{ct.nome}</div>
@@ -870,15 +896,7 @@ function App(){
                       </div>
                     </div>
                     {historico.length>0&&(
-                      <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:7}}>
-                        {historico.map((l,i)=>(
-                          <div key={i} style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:3,display:"flex",alignItems:"center",gap:4,overflow:"hidden"}}>
-                            <span style={{color:accent.accent,flexShrink:0}}>♪</span>
-                            <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</span>
-                            {l.tom&&<span style={{color:accent.accent,fontWeight:700,flexShrink:0,fontSize:9}}>{l.tom}</span>}
-                          </div>
-                        ))}
-                      </div>
+                      <div style={{fontSize:10,color:accent.accent,marginTop:4}}>♪ {historico.length} música{historico.length!==1?"s":""}</div>
                     )}
                     {historico.length===0&&(
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.18)",fontStyle:"italic"}}>Sem louvores ainda</div>
@@ -890,11 +908,14 @@ function App(){
             </div>
 
             {/* Músicos */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-              <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600}}>🎸 MÚSICOS</div>
-              <button style={{...bGold,padding:"5px 12px",fontSize:11,boxShadow:"none"}} onClick={()=>setShowAddM(true)}>+ Músico</button>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showMusicos?10:0}}>
+              <button onClick={()=>setShowMusicos(p=>!p)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:6,padding:0}}>
+                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600}}>🎸 MÚSICOS</div>
+                <span style={{color:"rgba(255,255,255,0.4)",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:showMusicos?"rotate(180deg)":"none"}}>▾</span>
+              </button>
+              {showMusicos&&<button style={{...bGold,padding:"5px 12px",fontSize:11,boxShadow:"none"}} onClick={()=>setShowAddM(true)}>+ Músico</button>}
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:10,marginBottom:24}}>
+            {showMusicos&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:10,marginBottom:24}}>
               {musicos.map((mt,i)=>{
                 const n=cultos.filter(c=>(c.musicos||[]).includes(mt.nome)).length;
                 return(
@@ -907,7 +928,8 @@ function App(){
                   </div>
                 );
               })}
-            </div>
+            </div>}
+            <div style={{marginBottom:24}}/>
 
             {/* Colunas por tipo */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:12}}>
