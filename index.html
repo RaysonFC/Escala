@@ -1007,7 +1007,7 @@ function App() {
   const [cultos,   setCultos]   = useState(INIT_CULTOS);
   const [favs,     setFavs]     = useState(INIT_FAVS);
   const [themeKey, setThemeKey] = useState("gold");
-  const [fbReady,  setFbReady]  = useState(false);
+  const [fbReady,  setFbReady]  = useState(true); // Abre imediatamente com dados locais
 
   const loaded = useRef({cant:false, mus:false, cult:false, favs:false});
   const fromFb = useRef({cant:false, mus:false, cult:false, favs:false});
