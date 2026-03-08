@@ -70,7 +70,12 @@ const CC = {
 const DAYS_PT=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const MONTHS_PT=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const EMOJIS=["🎤","🎶","🎵","🎸","🎹","🥁","🎺","🎻","🪗","🪘","🎷","🙏","✝","🌟","💫","🌙","🔥","💎","🌿","🌸","🦋","🎯","🏆","👑","⚡","🌊","🎭","☀","🕊","🎨"];
-const TONS=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B","Cm","Dm","Em","Fm","Gm","Am","Bm"];
+const TONS=[
+  // Maiores
+  "C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B",
+  // Menores
+  "Cm","C#m","Dbm","Dm","D#m","Ebm","Em","Fm","F#m","Gbm","Gm","G#m","Abm","Am","A#m","Bbm","Bm"
+];
 const YT_API_KEY = "AIzaSyAsJxMF7VvZl2T6eqir9x8z88QHRBOFco0";
 
 const INIT_CANTORES=[
@@ -733,7 +738,10 @@ function App(){
                     <span style={{fontSize:12,color:"rgba(255,255,255,0.3)",minWidth:16}}>{i+1}</span>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{l.artista}</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",display:"flex",gap:6,alignItems:"center"}}>
+                        <span>{l.artista}</span>
+                        {l.cantor&&<span style={{color:accent.accent,fontWeight:600}}>· {l.cantor}</span>}
+                      </div>
                     </div>
                     <TomTag tom={l.tom}/>
                     {getYTId(l.ytUrl||"")&&<button onClick={()=>setPlayL(l)} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:16,padding:"3px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
@@ -750,10 +758,25 @@ function App(){
                   <div style={{fontSize:12,fontWeight:700,color:"#EAE8F2",marginBottom:12}}>Novo Louvor</div>
                   <Fld label="Título" value={newLF.titulo} onChange={e=>setNLF(p=>({...p,titulo:e.target.value}))} placeholder="Nome da música"/>
                   <Fld label="Artista" value={newLF.artista} onChange={e=>setNLF(p=>({...p,artista:e.target.value}))} placeholder="Nome do artista"/>
-                  <Fld label="Link YouTube" value={newLF.ytUrl} onChange={e=>setNLF(p=>({...p,ytUrl:e.target.value}))} placeholder="https://youtu.be/..."/>
+                  <Fld label="Link YouTube (opcional)" value={newLF.ytUrl} onChange={e=>setNLF(p=>({...p,ytUrl:e.target.value}))} placeholder="https://youtu.be/..."/>
                   <Fld label="Tom" as="select" value={newLF.tom} onChange={e=>setNLF(p=>({...p,tom:e.target.value}))}>
-                    <option value="">Selecionar</option>
-                    {TONS.map(t=><option key={t}>{t}</option>)}
+                    <option value="">— Selecionar tom —</option>
+                    <optgroup label="Maiores">
+                      {TONS.filter(t=>!t.endsWith("m")).map(t=><option key={t} value={t}>{t}</option>)}
+                    </optgroup>
+                    <optgroup label="Menores">
+                      {TONS.filter(t=>t.endsWith("m")).map(t=><option key={t} value={t}>{t}</option>)}
+                    </optgroup>
+                  </Fld>
+                  <Fld label="Cantor(a)" as="select" value={newLF.cantor||""} onChange={e=>setNLF(p=>({...p,cantor:e.target.value}))}>
+                    <option value="">— Selecionar cantor —</option>
+                    {cantores.filter(ct=>c.cantores.includes(ct.nome)).map(ct=>(
+                      <option key={ct.id} value={ct.nome}>{ct.emoji} {ct.nome}</option>
+                    ))}
+                    {cantores.filter(ct=>!c.cantores.includes(ct.nome)).length>0&&<option disabled>──────────</option>}
+                    {cantores.filter(ct=>!c.cantores.includes(ct.nome)).map(ct=>(
+                      <option key={ct.id} value={ct.nome}>{ct.emoji} {ct.nome}</option>
+                    ))}
                   </Fld>
                   <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
                     <button style={bGhost} onClick={()=>setNLF(null)}>Cancelar</button>
@@ -778,14 +801,37 @@ function App(){
 
             {/* Cantores */}
             <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>🎤 CANTORES</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:10,marginBottom:24}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}}>
               {cantores.map((ct,i)=>{
                 const n=cultos.filter(c=>c.cantores.includes(ct.nome)).length;
+                // Todos os louvores que esse cantor já cantou
+                const historico=[...new Map(
+                  cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===ct.nome))
+                  .map(l=>[l.titulo,l])
+                ).values()].slice(0,5);
                 return(
-                  <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"14px 10px",textAlign:"center",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
-                    <div style={{fontSize:28,marginBottom:6}}>{ct.emoji}</div>
-                    <div style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{ct.nome}</div>
-                    <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:2}}>{n} culto{n!==1?"s":""}</div>
+                  <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                      <span style={{fontSize:26}}>{ct.emoji}</span>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{ct.nome}</div>
+                        <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{n} culto{n!==1?"s":""}</div>
+                      </div>
+                    </div>
+                    {historico.length>0&&(
+                      <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:7}}>
+                        {historico.map((l,i)=>(
+                          <div key={i} style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:3,display:"flex",alignItems:"center",gap:4,overflow:"hidden"}}>
+                            <span style={{color:accent.accent,flexShrink:0}}>♪</span>
+                            <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</span>
+                            {l.tom&&<span style={{color:accent.accent,fontWeight:700,flexShrink:0,fontSize:9}}>{l.tom}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {historico.length===0&&(
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.18)",fontStyle:"italic"}}>Sem louvores ainda</div>
+                    )}
                     <div style={{position:"absolute",top:6,right:8,fontSize:10,color:"rgba(255,255,255,0.2)"}}>✎</div>
                   </div>
                 );
