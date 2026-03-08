@@ -92,20 +92,84 @@ const INIT_FAVS=[
   {...mkL("Oceans","Hillsong United","https://youtu.be/dy9nwe9_xzw","D"),cifra:"Bm–G–D–A"},
 ];
 
-/* ── Busca YouTube ── */
+/* ── Banco local de louvores gospel ── */
+const LOCAL_DB=[
+  {titulo:"Oceans (Onde Os Pés Podem Falhar)",artista:"Hillsong United",ytUrl:"https://youtu.be/dy9nwe9_xzw",tom:"D"},
+  {titulo:"Quão Grande És Tu",artista:"Hillsong",ytUrl:"https://youtu.be/KBD18rsVJHk",tom:"G"},
+  {titulo:"Bondade de Deus",artista:"Bethel Music",ytUrl:"https://youtu.be/GlgG_3LE1uE",tom:"A"},
+  {titulo:"Way Maker",artista:"Sinach",ytUrl:"https://youtu.be/iJCV_2H9xD0",tom:"E"},
+  {titulo:"Reckless Love",artista:"Cory Asbury",ytUrl:"https://youtu.be/Sc6SSHuZvQE",tom:"E"},
+  {titulo:"What A Beautiful Name",artista:"Hillsong Worship",ytUrl:"https://youtu.be/nQWFzMvCfLE",tom:"D"},
+  {titulo:"Tão Bom",artista:"Hillsong Worship",ytUrl:"https://youtu.be/VrIM0xZFDSA",tom:"G"},
+  {titulo:"10.000 Reasons (Bless The Lord)",artista:"Matt Redman",ytUrl:"https://youtu.be/DXDGE_lRI0E",tom:"G"},
+  {titulo:"Águas Purificadoras",artista:"David Quinlan",ytUrl:"https://youtu.be/1qbJbCZS3vg",tom:"A"},
+  {titulo:"Me Rendo a Ti",artista:"Fernandinho",ytUrl:"https://youtu.be/MBjgpE5MVUQ",tom:"C"},
+  {titulo:"Nada Além do Sangue",artista:"Fernandinho",ytUrl:"https://youtu.be/9wFxOQmMHyE",tom:"G"},
+  {titulo:"Lugar Secreto",artista:"Gabriela Rocha",ytUrl:"https://youtu.be/Dv-FsW8CXNQ",tom:"E"},
+  {titulo:"Filho do Pai",artista:"Gabriela Rocha",ytUrl:"https://youtu.be/5Vz1KJGJqkA",tom:"D"},
+  {titulo:"Chega",artista:"Gabriela Rocha",ytUrl:"https://youtu.be/N0zvYxueg8U",tom:"C"},
+  {titulo:"Vitória",artista:"Isaías Saad",ytUrl:"https://youtu.be/7oqHbK1nRLc",tom:"A"},
+  {titulo:"Deus Cuida de Mim",artista:"Isaías Saad",ytUrl:"https://youtu.be/GI3axEkPYxs",tom:"G"},
+  {titulo:"Deus Não Tarda",artista:"Isaías Saad",ytUrl:"https://youtu.be/8L2AwFp3VRA",tom:"D"},
+  {titulo:"Grande É o Senhor",artista:"Lauriete",ytUrl:"https://youtu.be/UFVQ3l6nSBo",tom:"G"},
+  {titulo:"Eu Navegarei",artista:"Fernandinho",ytUrl:"https://youtu.be/JEMfvDStHc4",tom:"E"},
+  {titulo:"Deus É Deus",artista:"Delino Marçal",ytUrl:"https://youtu.be/1H1V8k9e7bM",tom:"C"},
+  {titulo:"Aleluia",artista:"Fernandinho",ytUrl:"https://youtu.be/LPcRGaAEjyM",tom:"A"},
+  {titulo:"Hosana",artista:"Hillsong United",ytUrl:"https://youtu.be/a7yMFqFVqhc",tom:"E"},
+  {titulo:"Cornerstone",artista:"Hillsong Worship",ytUrl:"https://youtu.be/eBnVS_VKqgg",tom:"G"},
+  {titulo:"So Will I",artista:"Hillsong United",ytUrl:"https://youtu.be/pCZdm1IYANU",tom:"D"},
+  {titulo:"King Of Kings",artista:"Hillsong Worship",ytUrl:"https://youtu.be/UtNYMiKFgnE",tom:"G"},
+  {titulo:"Trono da Graça",artista:"Diante do Trono",ytUrl:"https://youtu.be/2gbGIW4xZSs",tom:"D"},
+  {titulo:"Santo Espírito",artista:"Diante do Trono",ytUrl:"https://youtu.be/jVsE1g8zP44",tom:"A"},
+  {titulo:"Deus da Minha Vida",artista:"Diante do Trono",ytUrl:"https://youtu.be/Vv1VvkfTmUk",tom:"E"},
+  {titulo:"Jeová Jire",artista:"Ministério Ipiranga",ytUrl:"https://youtu.be/L5UMN3MHd1E",tom:"G"},
+  {titulo:"Pra Sempre",artista:"Ministério Ipiranga",ytUrl:"https://youtu.be/xLJcFHCGSC4",tom:"C"},
+  {titulo:"Minha Fortaleza",artista:"Vocal Livre",ytUrl:"https://youtu.be/kPvTxxObU4M",tom:"D"},
+  {titulo:"Creio",artista:"Paulo César Baruk",ytUrl:"https://youtu.be/NOJqaM2xY5E",tom:"G"},
+  {titulo:"Jesus",artista:"Paulo César Baruk",ytUrl:"https://youtu.be/HnLcDf7OYIA",tom:"A"},
+  {titulo:"Preciso de Ti",artista:"Thalles Roberto",ytUrl:"https://youtu.be/a3sRp-bGbVA",tom:"E"},
+  {titulo:"Ele Vive",artista:"Thalles Roberto",ytUrl:"https://youtu.be/Ni9xCrFuBDY",tom:"D"},
+  {titulo:"Deus Abriu o Mar",artista:"Eyshila",ytUrl:"https://youtu.be/Q_4n3OkwxJg",tom:"G"},
+  {titulo:"Ele Está Aqui",artista:"Eyshila",ytUrl:"https://youtu.be/kSHk1xVNGH4",tom:"C"},
+  {titulo:"Espírito Vem",artista:"Renascer Praise",ytUrl:"https://youtu.be/V_6s6V1MKBQ",tom:"A"},
+  {titulo:"Digno É o Senhor",artista:"Renascer Praise",ytUrl:"https://youtu.be/N4FoRb7bZkc",tom:"E"},
+  {titulo:"Ousado Amor",artista:"Midian Lima",ytUrl:"https://youtu.be/hPPEUPbf4gU",tom:"D"},
+  {titulo:"O Senhor É Bom",artista:"Anderson Freire",ytUrl:"https://youtu.be/nHqSKJ_IrZ4",tom:"G"},
+  {titulo:"Enche a Minha Vida",artista:"Anderson Freire",ytUrl:"https://youtu.be/RdBU5-xSA1k",tom:"C"},
+  {titulo:"Aos Que Crêem",artista:"Anderson Freire",ytUrl:"https://youtu.be/yWmv8Rq3qeA",tom:"D"},
+  {titulo:"Tu És Santo",artista:"Hillsong Brasil",ytUrl:"https://youtu.be/Aq8wGVBF1hc",tom:"A"},
+  {titulo:"Fiel",artista:"Hillsong Brasil",ytUrl:"https://youtu.be/r6nDv6_u9yY",tom:"G"},
+  {titulo:"Glória",artista:"Fernandinho",ytUrl:"https://youtu.be/T78M6TqlPEU",tom:"E"},
+  {titulo:"Deus Me Ama",artista:"Fernandinho",ytUrl:"https://youtu.be/Cgh4OgJb57I",tom:"D"},
+  {titulo:"Volta Senhor",artista:"Fernandinho",ytUrl:"https://youtu.be/A5nSUc7CWBM",tom:"C"},
+  {titulo:"O Sangue",artista:"Fernandinho",ytUrl:"https://youtu.be/bRFGexqgBTs",tom:"G"},
+];
+
+function localSearch(q){
+  const w=q.toLowerCase().split(" ").filter(Boolean);
+  return LOCAL_DB.filter(l=>w.some(x=>l.titulo.toLowerCase().includes(x)||l.artista.toLowerCase().includes(x)));
+}
+
+/* ── Busca YouTube via oEmbed (sem API key, sem CORS) ── */
 async function ytSearch(q){
+  // Tenta YouTube Data API primeiro
   try{
-    const r=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q+" gospel")}&type=video&maxResults=8&key=${YT_API_KEY}`);
+    const r=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q+" louvor gospel")}&type=video&maxResults=8&key=${YT_API_KEY}&regionCode=BR`);
     const d=await r.json();
-    if(!d.items||!d.items.length) return [];
-    return d.items.map(it=>({
-      titulo:it.snippet.title,
-      artista:it.snippet.channelTitle,
-      ytId:it.id.videoId,
-      ytUrl:"https://www.youtube.com/watch?v="+it.id.videoId,
-      tom:"",cifra:"",obs:""
-    }));
-  }catch(e){ return []; }
+    if(d.items&&d.items.length){
+      return d.items.map(it=>({
+        titulo:it.snippet.title,
+        artista:it.snippet.channelTitle,
+        ytId:it.id.videoId,
+        ytUrl:"https://www.youtube.com/watch?v="+it.id.videoId,
+        tom:"",cifra:"",obs:""
+      }));
+    }
+  }catch(e){}
+  // Fallback: banco local
+  const loc=localSearch(q);
+  if(loc.length) return loc.map(l=>({...l,ytId:getYTId(l.ytUrl),obs:""}));
+  return [];
 }
 
 /* ── Mini componentes ── */
@@ -168,7 +232,7 @@ function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
         <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
           <TomTag tom={l.tom}/>
           {id&&onPlay&&<button onClick={()=>onPlay(l)} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
-          {onFav&&<button onClick={onFav} style={{background:isFav?"rgba(201,168,76,0.15)":"rgba(255,255,255,0.05)",border:isFav?"1px solid rgba(201,168,76,0.35)":"1px solid rgba(255,255,255,0.1)",color:isFav?"#C9A84C":"rgba(255,255,255,0.4)",borderRadius:20,padding:"3px 10px",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700}}>{isFav?"★":"☆"}</button>}
+          {onFav&&<button onClick={onFav} style={{background:isFav?"rgba(201,168,76,0.18)":"rgba(255,255,255,0.08)",border:isFav?"1px solid rgba(201,168,76,0.5)":"1px solid rgba(255,255,255,0.22)",color:isFav?"#E8C96A":"rgba(255,255,255,0.75)",borderRadius:20,padding:"3px 10px",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>{isFav?"★":"☆"}</button>}
           {onAdd&&<button onClick={onAdd} style={{background:"rgba(107,191,163,0.12)",border:"1px solid rgba(107,191,163,0.3)",color:"#6BBFA3",borderRadius:20,padding:"3px 10px",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700}}>+ Culto</button>}
         </div>
       </div>
@@ -271,6 +335,7 @@ function App(){
   const [sq,setSq]=useState("");
   const [sRes,setSRes]=useState([]);
   const [sLoad,setSLoad]=useState(false);
+  const [sLocal,setSLocal]=useState(false);
   const [sErr,setSErr]=useState("");
   const [paste,setPaste]=useState("");
   // Novo louvor / culto
@@ -345,13 +410,26 @@ function App(){
     setNCF(null);
   };
 
-  // Busca
   const doSearch=async()=>{
     if(!sq.trim())return;
-    setSLoad(true); setSRes([]); setSErr("");
-    const r=await ytSearch(sq);
-    if(!r.length) setSErr("Nenhum resultado encontrado.");
-    setSRes(r); setSLoad(false);
+    setSLoad(true); setSRes([]); setSErr(""); setSLocal(false);
+    // Tenta YouTube API
+    let r=[];
+    let fromLocal=false;
+    try{
+      const resp=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(sq+" louvor gospel")}&type=video&maxResults=8&key=${YT_API_KEY}&regionCode=BR`);
+      const d=await resp.json();
+      if(d.items&&d.items.length){
+        r=d.items.map(it=>({titulo:it.snippet.title,artista:it.snippet.channelTitle,ytId:it.id.videoId,ytUrl:"https://www.youtube.com/watch?v="+it.id.videoId,tom:"",cifra:"",obs:""}));
+      }
+    }catch(e){}
+    // Fallback banco local
+    if(!r.length){
+      r=localSearch(sq).map(l=>({...l,ytId:getYTId(l.ytUrl),obs:""}));
+      fromLocal=true;
+    }
+    if(!r.length) setSErr("Nenhum resultado. Tente outro nome ou cole o link do YouTube abaixo.");
+    setSRes(r); setSLocal(fromLocal); setSLoad(false);
   };
 
   // Calendário
@@ -382,14 +460,23 @@ function App(){
         .ccard:hover{transform:translateY(-2px);border-color:rgba(${accent.rgb},0.4)!important;}
         .yt-w:hover .yt-ov{opacity:1!important;}
         ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);}
-        @media(max-width:500px){.nav-label{display:none!important;}}
+        @media(max-width:600px){
+          .nav-label{display:none!important;}
+          .main-content{padding-bottom:80px!important;}
+          .desktop-nav{display:none!important;}
+          .mobile-nav{display:flex!important;}
+          .header-inner{padding:0 12px!important;}
+        }
+        @media(min-width:601px){
+          .mobile-nav{display:none!important;}
+        }
       `}</style>
 
       {/* Glows */}
       <div style={{position:"fixed",top:"-20%",left:"5%",width:"50vw",height:"50vw",borderRadius:"50%",background:`radial-gradient(circle,rgba(${accent.rgb},0.06),transparent 65%)`,pointerEvents:"none",zIndex:0}}/>
 
       {/* Header */}
-      <header style={{position:"sticky",top:0,zIndex:100,background:"rgba(15,15,26,0.97)",backdropFilter:"blur(16px)",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px"}}>
+      <header style={{position:"sticky",top:0,zIndex:100,background:"rgba(15,15,26,0.97)",backdropFilter:"blur(16px)",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px"}} className="header-inner">
         {/* Logo */}
         <div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 0",flexShrink:0}}>
           <span style={{fontSize:24,color:accent.accent,textShadow:`0 0 20px rgba(${accent.rgb},0.5)`}}>✝</span>
@@ -398,21 +485,36 @@ function App(){
             <div style={{fontSize:9,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase"}}>Ministério de Música</div>
           </div>
         </div>
-        {/* Nav */}
-        <div style={{display:"flex",alignItems:"center",gap:2}}>
+        {/* Nav desktop */}
+        <div className="desktop-nav" style={{display:"flex",alignItems:"center",gap:2}}>
           {NAVS.map(n=>(
-            <button key={n.id} className="htab" onClick={()=>{setTab(n.id);setSelId(null);}} style={{background:"none",border:"none",cursor:"pointer",padding:"0 8px",height:48,fontSize:12,fontFamily:"inherit",color:tab===n.id?accent.accent:"rgba(255,255,255,0.4)",borderBottom:tab===n.id?"2px solid "+accent.accent:"2px solid transparent",fontWeight:tab===n.id?600:400,transition:"all 0.2s",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
-              <span style={{fontSize:15}}>{n.icon}</span>
-              <span className="nav-label">{n.label}</span>
+            <button key={n.id} className="htab" onClick={()=>{setTab(n.id);setSelId(null);}} style={{background:"none",border:"none",cursor:"pointer",padding:"0 10px",height:48,fontSize:13,fontFamily:"inherit",color:tab===n.id?accent.accent:"rgba(255,255,255,0.4)",borderBottom:tab===n.id?"2px solid "+accent.accent:"2px solid transparent",fontWeight:tab===n.id?600:400,transition:"all 0.2s",display:"flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>
+              <span style={{fontSize:16}}>{n.icon}</span>
+              <span>{n.label}</span>
             </button>
           ))}
-          <div style={{width:1,height:20,background:"rgba(255,255,255,0.1)",margin:"0 4px"}}/>
+          <div style={{width:1,height:20,background:"rgba(255,255,255,0.1)",margin:"0 6px"}}/>
           <button onClick={()=>setShowTheme(true)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",padding:"0 6px",color:"rgba(255,255,255,0.4)"}}>🎨</button>
           <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}} title="Sincronizado"/>
         </div>
+        {/* Mobile: só ícones de ação no header */}
+        <div style={{display:"flex",alignItems:"center",gap:8}} className="mobile-only-header">
+          <button onClick={()=>setShowTheme(true)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",padding:"4px",color:"rgba(255,255,255,0.4)"}}>🎨</button>
+          <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}}/>
+        </div>
       </header>
 
-      <div style={{maxWidth:1000,margin:"0 auto",padding:"24px 16px",position:"relative",zIndex:1}}>
+      {/* Nav inferior mobile */}
+      <nav className="mobile-nav" style={{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"rgba(15,15,26,0.98)",backdropFilter:"blur(20px)",borderTop:"1px solid rgba(255,255,255,0.08)",display:"none",justifyContent:"space-around",alignItems:"center",padding:"8px 0 max(8px,env(safe-area-inset-bottom))"}}>
+        {NAVS.map(n=>(
+          <button key={n.id} onClick={()=>{setTab(n.id);setSelId(null);}} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 12px",fontFamily:"inherit",flex:1}}>
+            <span style={{fontSize:22,filter:tab===n.id?`drop-shadow(0 0 6px rgba(${accent.rgb},0.8))`:"none",transition:"filter 0.2s"}}>{n.icon}</span>
+            <span style={{fontSize:9,fontWeight:600,letterSpacing:.5,color:tab===n.id?accent.accent:"rgba(255,255,255,0.35)",transition:"color 0.2s",textTransform:"uppercase"}}>{n.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="main-content" style={{maxWidth:1000,margin:"0 auto",padding:"24px 16px",position:"relative",zIndex:1}}>
 
         {/* ══ CALENDÁRIO ══ */}
         {tab==="calendario"&&(
@@ -695,7 +797,10 @@ function App(){
             {sErr&&<div style={{background:"rgba(224,123,138,0.08)",border:"1px solid rgba(224,123,138,0.25)",color:"#E07B8A",borderRadius:10,padding:"10px 15px",fontSize:13,marginBottom:16}}>{sErr}</div>}
             {sRes.length>0&&(
               <>
-                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>{sRes.length} resultados</div>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600}}>{sRes.length} resultados</div>
+                  {sLocal&&<span style={{fontSize:10,background:"rgba(91,155,213,0.12)",border:"1px solid rgba(91,155,213,0.3)",color:"#5B9BD5",borderRadius:20,padding:"2px 8px",fontWeight:600}}>📚 Banco local</span>}
+                </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12,marginBottom:24}}>
                   {sRes.map((r,i)=>(
                     <LCard key={i} l={r} accent={accent} isFav={isFav(r)} onFav={()=>toggleFav(r)} onPlay={setPlayL} onAdd={()=>{ setNLF({...r,obs:""}); setTab("culto"); showToast("Selecione o culto e salve"); }}/>
@@ -744,9 +849,22 @@ function App(){
         <Ovl onClose={()=>setPlayL(null)} wide>
           <MH title={playL.titulo||"Reproduzindo"} sub={playL.artista} onClose={()=>setPlayL(null)}/>
           {getYTId(playL.ytUrl||"")?(
-            <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000",borderRadius:12,overflow:"hidden"}}>
-              <iframe src={"https://www.youtube.com/embed/"+getYTId(playL.ytUrl)+"?autoplay=1&rel=0"} title={playL.titulo} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}/>
-            </div>
+            <>
+              <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000",borderRadius:12,overflow:"hidden"}}>
+                <iframe
+                  src={"https://www.youtube.com/embed/"+getYTId(playL.ytUrl)+"?autoplay=1&rel=0&playsinline=1"}
+                  title={playL.titulo}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}
+                />
+              </div>
+              <div style={{textAlign:"center",marginTop:10}}>
+                <a href={playL.ytUrl} target="_blank" rel="noopener noreferrer" style={{color:accent.accent,fontSize:12,textDecoration:"none",background:"rgba(255,255,255,0.05)",padding:"6px 14px",borderRadius:20,border:"1px solid rgba(255,255,255,0.1)"}}>
+                  🔗 Abrir no YouTube
+                </a>
+              </div>
+            </>
           ):<p style={{color:"rgba(255,255,255,0.4)",textAlign:"center",padding:20}}>Link de vídeo não disponível</p>}
         </Ovl>
       )}
