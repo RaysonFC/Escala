@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+  <meta name="theme-color" content="#0F0F1A"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Banda Aviva"/>
+  <meta name="application-name" content="Banda Aviva"/>
+  <meta name="description" content="Escala de louvor da Banda Aviva"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon.png"/>
+  <title>Banda Aviva</title>
+  <style>
+    html,body,#root{margin:0;padding:0;min-height:100vh;background:#0F0F1A;}
+    *{box-sizing:border-box;}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script type="text/babel" data-presets="react">
+const {useState,useRef,useEffect} = React;
+
+/* ── Firebase ── */
+const FB_CFG = {
+  apiKey:"AIzaSyDvTfq3BMF35oxOn0wwP9QcI3nkFD8d4pc",
+  authDomain:"escala-de-louvor-c098e.firebaseapp.com",
+  projectId:"escala-de-louvor-c098e",
+  storageBucket:"escala-de-louvor-c098e.firebasestorage.app",
+  messagingSenderId:"417687304037",
+  appId:"1:417687304037:web:c57afe10870b68229cd38c"
+};
+if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
+const db = firebase.firestore();
+const fbSet = async(col,data)=>{ try{ await db.collection("app").doc(col).set({dados:JSON.stringify(data)}); }catch(e){console.error(e);} };
+const fbListen = (col,cb)=>db.collection("app").doc(col).onSnapshot(s=>{ if(s.exists){ try{cb(JSON.parse(s.data().dados));}catch(e){} } });
+const fbGet = async(col,fb)=>{ try{ const s=await db.collection("app").doc(col).get(); if(s.exists)return JSON.parse(s.data().dados); }catch(e){} return fb; };
+
+/* ── Helpers ── */
+const uid = ()=>Math.random().toString(36).slice(2,9);
+const getYTId = (url="")=>{ const m=url.match(/(?:youtu\.be\/|[?&]v=|embed\/)([A-Za-z0-9_-]{11})/); return m?m[1]:""; };
+const nextDow = (dow)=>{ const d=new Date(); d.setDate(d.getDate()+((dow-d.getDay()+7)%7||7)); return d.toISOString().split("T")[0]; };
+const fmtDate = ds=>ds.split("-").reverse().join("/");
+const daysUntil = ds=>{ const d=Math.round((new Date(ds+"T00:00")-new Date().setHours(0,0,0,0))/86400000); if(d<0)return null; if(d===0)return"Hoje"; if(d===1)return"Amanhã"; return`em ${d}d`; };
+const mkL = (titulo="",artista="",ytUrl="",tom="")=>({id:uid(),titulo,artista,ytUrl,tom,cifra:"",obs:""});
+const mkC = (data,tipo,tema="",campanha="")=>({id:uid(),data,tipo,tema,campanha,cantores:[],musicos:[],louvores:[],obs:"",lembrete:false});
+const mkCantor = (nome,emoji="🎤")=>({id:uid(),nome,emoji,louvoresFav:[]});
+const normCantor = c=>typeof c==="string"?mkCantor(c):{louvoresFav:[],...c};
+
+/* ── Constantes ── */
+const THEMES = {
+  gold:{name:"Dourado",accent:"#C9A84C",light:"#E8C96A",rgb:"201,168,76"},
+  blue:{name:"Azul",accent:"#5B9BD5",light:"#7BB8F0",rgb:"91,155,213"},
+  green:{name:"Verde",accent:"#4CAF7D",light:"#68D49A",rgb:"76,175,125"},
+  purple:{name:"Roxo",accent:"#9B6FD4",light:"#B890F0",rgb:"155,111,212"},
+  rose:{name:"Rosa",accent:"#D4607A",light:"#F07A94",rgb:"212,96,122"},
+};
+const CC = {
+  quarta:{label:"Quarta-Feira",short:"Quarta",color:"#C9A84C",rgb:"201,168,76"},
+  sexta:{label:"Sexta-Feira",short:"Sexta",color:"#E07B8A",rgb:"224,123,138"},
+  sabado:{label:"Sábado",short:"Sábado",color:"#6BBFA3",rgb:"107,191,163"},
+  domingo:{label:"Domingo",short:"Domingo",color:"#A78BFA",rgb:"167,139,250"},
+};
+const DAYS_PT=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const MONTHS_PT=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const EMOJIS=["🎤","🎶","🎵","🎸","🎹","🥁","🎺","🎻","🪗","🪘","🎷","🙏","✝","🌟","💫","🌙","🔥","💎","🌿","🌸","🦋","🎯","🏆","👑","⚡","🌊","🎭","☀","🕊","🎨"];
+const TONS=[
+  // Maiores
+  "C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B",
+  // Menores
+  "Cm","C#m","Dbm","Dm","D#m","Ebm","Em","Fm","F#m","Gbm","Gm","G#m","Abm","Am","A#m","Bbm","Bm"
+];
+const YT_API_KEY = "AIzaSyAsJxMF7VvZl2T6eqir9x8z88QHRBOFco0";
+
+const INIT_CANTORES=[
+  {id:"c1",nome:"Débora",emoji:"🎤",louvoresFav:[]},
+  {id:"c2",nome:"Mariana",emoji:"🎶",louvoresFav:[]},
+  {id:"c3",nome:"Alessandra",emoji:"🎵",louvoresFav:[]},
+  {id:"c4",nome:"Uesley",emoji:"🎸",louvoresFav:[]},
+];
+const INIT_MUSICOS=[
+  {id:"m1",nome:"Miguel Edmar",instrumento:"Bateria",emoji:"🥁"},
+  {id:"m2",nome:"Miguel",instrumento:"Bateria",emoji:"🥁"},
+  {id:"m3",nome:"Kleyson",instrumento:"Bateria",emoji:"🥁"},
+  {id:"m4",nome:"Raysson",instrumento:"Guitarra",emoji:"🎸"},
+  {id:"m5",nome:"David",instrumento:"Teclado",emoji:"🎹"},
+  {id:"m6",nome:"Joseph",instrumento:"Teclado",emoji:"🎹"},
+  {id:"m7",nome:"Peterson",instrumento:"Contra Baixo",emoji:"🎵"},
+  {id:"m8",nome:"Bismark",instrumento:"Contra Baixo",emoji:"🎵"},
+];
+const INIT_CULTOS=[
+  {...mkC(nextDow(3),"quarta"),cantores:["Débora","Uesley"],louvores:[{...mkL("Quão Grande és Tu","Hillsong","https://youtu.be/KBD18rsVJHk","G"),cifra:"G–D–Em–C"}]},
+  {...mkC(nextDow(0),"domingo"),cantores:["Alessandra","Débora"],louvores:[{...mkL("Bondade de Deus","Bethel","https://youtu.be/GlgG_3LE1uE","A"),cifra:"A–E–F#m–D"}]},
+];
+const INIT_FAVS=[
+  {...mkL("Oceans","Hillsong United","https://youtu.be/dy9nwe9_xzw","D"),cifra:"Bm–G–D–A"},
+];
+
+/* ── Banco local de louvores gospel ── */
+const LOCAL_DB=[
+  {titulo:"Oceans (Onde Os Pés Podem Falhar)",artista:"Hillsong United",ytUrl:"https://youtu.be/dy9nwe9_xzw",tom:"D"},
+  {titulo:"Quão Grande És Tu",artista:"Hillsong",ytUrl:"https://youtu.be/KBD18rsVJHk",tom:"G"},
+  {titulo:"Bondade de Deus",artista:"Bethel Music",ytUrl:"https://youtu.be/GlgG_3LE1uE",tom:"A"},
+  {titulo:"Way Maker",artista:"Sinach",ytUrl:"https://youtu.be/iJCV_2H9xD0",tom:"E"},
+  {titulo:"Reckless Love",artista:"Cory Asbury",ytUrl:"https://youtu.be/Sc6SSHuZvQE",tom:"E"},
+  {titulo:"What A Beautiful Name",artista:"Hillsong Worship",ytUrl:"https://youtu.be/nQWFzMvCfLE",tom:"D"},
+  {titulo:"Tão Bom",artista:"Hillsong Worship",ytUrl:"https://youtu.be/VrIM0xZFDSA",tom:"G"},
+  {titulo:"10.000 Reasons (Bless The Lord)",artista:"Matt Redman",ytUrl:"https://youtu.be/DXDGE_lRI0E",tom:"G"},
+  {titulo:"Águas Purificadoras",artista:"David Quinlan",ytUrl:"https://youtu.be/1qbJbCZS3vg",tom:"A"},
+  {titulo:"Me Rendo a Ti",artista:"Fernandinho",ytUrl:"https://youtu.be/MBjgpE5MVUQ",tom:"C"},
+  {titulo:"Nada Além do Sangue",artista:"Fernandinho",ytUrl:"https://youtu.be/9wFxOQmMHyE",tom:"G"},
+  {titulo:"Lugar Secreto",artista:"Gabriela Rocha",ytUrl:"https://youtu.be/Dv-FsW8CXNQ",tom:"E"},
+  {titulo:"Filho do Pai",artista:"Gabriela Rocha",ytUrl:"https://youtu.be/5Vz1KJGJqkA",tom:"D"},
+  {titulo:"Chega",artista:"Gabriela Rocha",ytUrl:"https://youtu.be/N0zvYxueg8U",tom:"C"},
+  {titulo:"Vitória",artista:"Isaías Saad",ytUrl:"https://youtu.be/7oqHbK1nRLc",tom:"A"},
+  {titulo:"Deus Cuida de Mim",artista:"Isaías Saad",ytUrl:"https://youtu.be/GI3axEkPYxs",tom:"G"},
+  {titulo:"Deus Não Tarda",artista:"Isaías Saad",ytUrl:"https://youtu.be/8L2AwFp3VRA",tom:"D"},
+  {titulo:"Grande É o Senhor",artista:"Lauriete",ytUrl:"https://youtu.be/UFVQ3l6nSBo",tom:"G"},
+  {titulo:"Eu Navegarei",artista:"Fernandinho",ytUrl:"https://youtu.be/JEMfvDStHc4",tom:"E"},
+  {titulo:"Deus É Deus",artista:"Delino Marçal",ytUrl:"https://youtu.be/1H1V8k9e7bM",tom:"C"},
+  {titulo:"Aleluia",artista:"Fernandinho",ytUrl:"https://youtu.be/LPcRGaAEjyM",tom:"A"},
+  {titulo:"Hosana",artista:"Hillsong United",ytUrl:"https://youtu.be/a7yMFqFVqhc",tom:"E"},
+  {titulo:"Cornerstone",artista:"Hillsong Worship",ytUrl:"https://youtu.be/eBnVS_VKqgg",tom:"G"},
+  {titulo:"So Will I",artista:"Hillsong United",ytUrl:"https://youtu.be/pCZdm1IYANU",tom:"D"},
+  {titulo:"King Of Kings",artista:"Hillsong Worship",ytUrl:"https://youtu.be/UtNYMiKFgnE",tom:"G"},
+  {titulo:"Trono da Graça",artista:"Diante do Trono",ytUrl:"https://youtu.be/2gbGIW4xZSs",tom:"D"},
+  {titulo:"Santo Espírito",artista:"Diante do Trono",ytUrl:"https://youtu.be/jVsE1g8zP44",tom:"A"},
+  {titulo:"Deus da Minha Vida",artista:"Diante do Trono",ytUrl:"https://youtu.be/Vv1VvkfTmUk",tom:"E"},
+  {titulo:"Jeová Jire",artista:"Ministério Ipiranga",ytUrl:"https://youtu.be/L5UMN3MHd1E",tom:"G"},
+  {titulo:"Pra Sempre",artista:"Ministério Ipiranga",ytUrl:"https://youtu.be/xLJcFHCGSC4",tom:"C"},
+  {titulo:"Minha Fortaleza",artista:"Vocal Livre",ytUrl:"https://youtu.be/kPvTxxObU4M",tom:"D"},
+  {titulo:"Creio",artista:"Paulo César Baruk",ytUrl:"https://youtu.be/NOJqaM2xY5E",tom:"G"},
+  {titulo:"Jesus",artista:"Paulo César Baruk",ytUrl:"https://youtu.be/HnLcDf7OYIA",tom:"A"},
+  {titulo:"Preciso de Ti",artista:"Thalles Roberto",ytUrl:"https://youtu.be/a3sRp-bGbVA",tom:"E"},
+  {titulo:"Ele Vive",artista:"Thalles Roberto",ytUrl:"https://youtu.be/Ni9xCrFuBDY",tom:"D"},
+  {titulo:"Deus Abriu o Mar",artista:"Eyshila",ytUrl:"https://youtu.be/Q_4n3OkwxJg",tom:"G"},
+  {titulo:"Ele Está Aqui",artista:"Eyshila",ytUrl:"https://youtu.be/kSHk1xVNGH4",tom:"C"},
+  {titulo:"Espírito Vem",artista:"Renascer Praise",ytUrl:"https://youtu.be/V_6s6V1MKBQ",tom:"A"},
+  {titulo:"Digno É o Senhor",artista:"Renascer Praise",ytUrl:"https://youtu.be/N4FoRb7bZkc",tom:"E"},
+  {titulo:"Ousado Amor",artista:"Midian Lima",ytUrl:"https://youtu.be/hPPEUPbf4gU",tom:"D"},
+  {titulo:"O Senhor É Bom",artista:"Anderson Freire",ytUrl:"https://youtu.be/nHqSKJ_IrZ4",tom:"G"},
+  {titulo:"Enche a Minha Vida",artista:"Anderson Freire",ytUrl:"https://youtu.be/RdBU5-xSA1k",tom:"C"},
+  {titulo:"Aos Que Crêem",artista:"Anderson Freire",ytUrl:"https://youtu.be/yWmv8Rq3qeA",tom:"D"},
+  {titulo:"Tu És Santo",artista:"Hillsong Brasil",ytUrl:"https://youtu.be/Aq8wGVBF1hc",tom:"A"},
+  {titulo:"Fiel",artista:"Hillsong Brasil",ytUrl:"https://youtu.be/r6nDv6_u9yY",tom:"G"},
+  {titulo:"Glória",artista:"Fernandinho",ytUrl:"https://youtu.be/T78M6TqlPEU",tom:"E"},
+  {titulo:"Deus Me Ama",artista:"Fernandinho",ytUrl:"https://youtu.be/Cgh4OgJb57I",tom:"D"},
+  {titulo:"Volta Senhor",artista:"Fernandinho",ytUrl:"https://youtu.be/A5nSUc7CWBM",tom:"C"},
+  {titulo:"O Sangue",artista:"Fernandinho",ytUrl:"https://youtu.be/bRFGexqgBTs",tom:"G"},
+];
+
+function localSearch(q){
+  const w=q.toLowerCase().split(" ").filter(Boolean);
+  return LOCAL_DB.filter(l=>w.some(x=>l.titulo.toLowerCase().includes(x)||l.artista.toLowerCase().includes(x)));
+}
+
+/* ── Busca YouTube via oEmbed (sem API key, sem CORS) ── */
+async function ytSearch(q){
+  // Tenta YouTube Data API primeiro
+  try{
+    const r=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q+" louvor gospel")}&type=video&maxResults=8&key=${YT_API_KEY}&regionCode=BR`);
+    const d=await r.json();
+    if(d.items&&d.items.length){
+      return d.items.map(it=>({
+        titulo:it.snippet.title,
+        artista:it.snippet.channelTitle,
+        ytId:it.id.videoId,
+        ytUrl:"https://www.youtube.com/watch?v="+it.id.videoId,
+        tom:"",cifra:"",obs:""
+      }));
+    }
+  }catch(e){}
+  // Fallback: banco local
+  const loc=localSearch(q);
+  if(loc.length) return loc.map(l=>({...l,ytId:getYTId(l.ytUrl),obs:""}));
+  return [];
+}
+
+/* ── Mini componentes ── */
+const TomTag=({tom})=>tom?<span style={{fontSize:10,fontWeight:700,color:"#C9A84C",background:"rgba(201,168,76,0.12)",borderRadius:6,padding:"2px 7px",letterSpacing:.5}}>{tom}</span>:null;
+
+function Ovl({children,onClose,wide}){
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"#1a1a2e",borderRadius:18,padding:22,width:"100%",maxWidth:wide?620:440,maxHeight:"90vh",overflowY:"auto",border:"1px solid rgba(255,255,255,0.1)"}}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function MH({title,sub,onClose}){
+  return(
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+      <div>
+        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:19,fontWeight:700,color:"#EAE8F2"}}>{title}</div>
+        {sub&&<div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:2}}>{sub}</div>}
+      </div>
+      <button onClick={onClose} style={{background:"rgba(255,255,255,0.07)",border:"none",color:"rgba(255,255,255,0.5)",borderRadius:8,padding:"5px 10px",cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>✕</button>
+    </div>
+  );
+}
+
+function Fld({label,value,onChange,placeholder,as,children,type="text"}){
+  const base={width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:12};
+  return(
+    <div>
+      {label&&<label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
+      {as==="textarea"?<textarea value={value} onChange={onChange} placeholder={placeholder} rows={3} style={{...base,resize:"vertical"}}/>
+       :as==="select"?<select value={value} onChange={onChange} style={base}>{children}</select>
+       :<input type={type} value={value} onChange={onChange} placeholder={placeholder} style={base}/>}
+    </div>
+  );
+}
+
+function YTThumb({ytid,onPlay}){
+  if(!ytid) return <div style={{width:"100%",paddingBottom:"56.25%",background:"#111",borderRadius:"8px 8px 0 0"}}/>;
+  return(
+    <div className="yt-w" onClick={onPlay} style={{position:"relative",width:"100%",paddingBottom:"56.25%",cursor:"pointer",background:"#000",borderRadius:"8px 8px 0 0",overflow:"hidden"}}>
+      <img src={`https://img.youtube.com/vi/${ytid}/mqdefault.jpg`} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
+      <div className="yt-ov" style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.3)",display:"flex",alignItems:"center",justifyContent:"center",opacity:0,transition:"opacity 0.2s"}}>
+        <span style={{fontSize:44,filter:"drop-shadow(0 2px 8px rgba(0,0,0,0.8))"}}>▶</span>
+      </div>
+    </div>
+  );
+}
+
+function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
+  const id=getYTId(l.ytUrl||"");
+  return(
+    <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,overflow:"hidden"}}>
+      {!compact&&<YTThumb ytid={id} onPlay={onPlay?()=>onPlay(l):undefined}/>}
+      <div style={{padding:compact?"10px 12px":"12px 14px"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo||"Sem título"}</div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.38)",marginBottom:6}}>{l.artista}</div>
+        <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+          <TomTag tom={l.tom}/>
+          {id&&onPlay&&<button onClick={()=>onPlay(l)} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
+          {onFav&&<button onClick={onFav} style={{background:isFav?"rgba(201,168,76,0.18)":"rgba(255,255,255,0.08)",border:isFav?"1px solid rgba(201,168,76,0.5)":"1px solid rgba(255,255,255,0.22)",color:isFav?"#E8C96A":"rgba(255,255,255,0.75)",borderRadius:20,padding:"3px 10px",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>{isFav?"★":"☆"}</button>}
+          {onAdd&&<button onClick={onAdd} style={{background:"rgba(107,191,163,0.12)",border:"1px solid rgba(107,191,163,0.3)",color:"#6BBFA3",borderRadius:20,padding:"3px 10px",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700}}>+ Culto</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Cantor Edit Modal ── */
+function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger}){
+  const [nome,setNome]=useState(cantor.nome);
+  const [emoji,setEmoji]=useState(cantor.emoji);
+  const todosLouvores=[...new Map(cultos.flatMap(c=>c.louvores).map(l=>[l.titulo,l])).values()];
+  return(
+    <>
+      <div style={{display:"flex",alignItems:"center",gap:14,padding:14,background:"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:12}}>
+        <span style={{fontSize:40}}>{emoji}</span>
+        <div style={{fontSize:16,fontWeight:700,color:"#EAE8F2"}}>{nome||cantor.nome}</div>
+      </div>
+      <Fld label="Nome" value={nome} onChange={e=>setNome(e.target.value)}/>
+      <div style={{marginBottom:12}}>
+        <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>Emoji</label>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+          {EMOJIS.map(e=>(
+            <button key={e} onClick={()=>setEmoji(e)} style={{fontSize:20,padding:6,borderRadius:8,border:"none",cursor:"pointer",background:emoji===e?"rgba("+accent.rgb+",0.25)":"rgba(255,255,255,0.05)",outline:emoji===e?"2px solid "+accent.accent:"none"}}>{e}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+        <button style={bDanger} onClick={()=>onDelete(idx)}>🗑 Remover</button>
+        <div style={{display:"flex",gap:8}}>
+          <button style={bGhost} onClick={onClose}>Cancelar</button>
+          <button style={bGold} onClick={()=>onSave({...cantor,nome:nome.trim(),emoji},idx)}>Salvar</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── Músico Edit Modal ── */
+function MusicoModal({musico,idx,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger}){
+  const [nome,setNome]=useState(musico.nome);
+  const [inst,setInst]=useState(musico.instrumento);
+  const [emoji,setEmoji]=useState(musico.emoji);
+  return(
+    <>
+      <div style={{display:"flex",alignItems:"center",gap:14,padding:14,background:"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:12}}>
+        <span style={{fontSize:40}}>{emoji}</span>
+        <div>
+          <div style={{fontSize:16,fontWeight:700,color:"#EAE8F2"}}>{nome}</div>
+          <div style={{fontSize:12,color:accent.accent}}>{inst}</div>
+        </div>
+      </div>
+      <Fld label="Nome" value={nome} onChange={e=>setNome(e.target.value)}/>
+      <Fld label="Instrumento" as="select" value={inst} onChange={e=>setInst(e.target.value)}>
+        {["Bateria","Guitarra","Teclado","Contra Baixo","Violão","Baixo","Saxofone","Outro"].map(i=><option key={i}>{i}</option>)}
+      </Fld>
+      <div style={{marginBottom:12}}>
+        <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>Emoji</label>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+          {EMOJIS.map(e=>(
+            <button key={e} onClick={()=>setEmoji(e)} style={{fontSize:20,padding:6,borderRadius:8,border:"none",cursor:"pointer",background:emoji===e?"rgba("+accent.rgb+",0.25)":"rgba(255,255,255,0.05)",outline:emoji===e?"2px solid "+accent.accent:"none"}}>{e}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+        <button style={bDanger} onClick={()=>onDelete(idx)}>🗑 Remover</button>
+        <div style={{display:"flex",gap:8}}>
+          <button style={bGhost} onClick={onClose}>Cancelar</button>
+          <button style={bGold} onClick={()=>onSave({...musico,nome:nome.trim(),instrumento:inst,emoji},idx)}>Salvar</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ══════════════════════════════════════════
+   APP PRINCIPAL
+══════════════════════════════════════════ */
+function App(){
+  const [cantores,setCantores]=useState(INIT_CANTORES);
+  const [musicos,setMusicos]=useState(INIT_MUSICOS);
+  const [cultos,setCultos]=useState(INIT_CULTOS);
+  const [favs,setFavs]=useState(INIT_FAVS);
+  const [themeKey,setThemeKey]=useState("gold");
+  const [tab,setTab]=useState("calendario");
+  const [selId,setSelId]=useState(null);
+  const [playL,setPlayL]=useState(null);
+  const [toast,setToast]=useState(null);
+  const [showTheme,setShowTheme]=useState(false);
+  // Escalas
+  const [editCI,setEditCI]=useState(null);
+  const [editMI,setEditMI]=useState(null);
+  const [showAddC,setShowAddC]=useState(false);
+  const [showAddM,setShowAddM]=useState(false);
+  const [newCantN,setNewCantN]=useState("");
+  const [newMusN,setNewMusN]=useState("");
+  const [newMusInst,setNewMusInst]=useState("Bateria");
+  const [openCards,setOpenCards]=useState({});
+  // Buscar
+  const [sq,setSq]=useState("");
+  const [sRes,setSRes]=useState([]);
+  const [sLoad,setSLoad]=useState(false);
+  const [sLocal,setSLocal]=useState(false);
+  const [sErr,setSErr]=useState("");
+  const [paste,setPaste]=useState("");
+  // Novo louvor / culto
+  const [newLF,setNLF]=useState(null);
+  const [newCF,setNCF]=useState(null);
+  const [showFavPk,setFavPk]=useState(false);
+
+  const loaded=useRef({cant:false,mus:false,cult:false,favs:false});
+  const fromFb=useRef({cant:false,mus:false,cult:false,favs:false});
+  const [fbReady,setFbReady]=useState(false);
+  const readyCount=useRef(0);
+  const markReady=()=>{ readyCount.current+=1; if(readyCount.current>=4) setFbReady(true); };
+
+  useEffect(()=>{
+    const uC=fbListen("cantores",d=>{ fromFb.current.cant=true; setCantores(d.map(normCantor)); if(!loaded.current.cant){loaded.current.cant=true;markReady();} });
+    const uM=fbListen("musicos",d=>{ fromFb.current.mus=true; setMusicos(d.map(m=>({...m}))); if(!loaded.current.mus){loaded.current.mus=true;markReady();} });
+    const uCu=fbListen("cultos",d=>{ fromFb.current.cult=true; setCultos(d); if(!loaded.current.cult){loaded.current.cult=true;markReady();} });
+    const uF=fbListen("favs",d=>{ fromFb.current.favs=true; setFavs(d); if(!loaded.current.favs){loaded.current.favs=true;markReady();} });
+    try{ const t=localStorage.getItem("esc_theme"); if(t) setThemeKey(t); }catch{}
+    fbGet("cantores",null).then(v=>{ if(!v) fbSet("cantores",INIT_CANTORES); });
+    fbGet("musicos",null).then(v=>{ if(!v) fbSet("musicos",INIT_MUSICOS); });
+    fbGet("cultos",null).then(v=>{ if(!v) fbSet("cultos",INIT_CULTOS); });
+    fbGet("favs",null).then(v=>{ if(!v) fbSet("favs",INIT_FAVS); });
+    // Timeout de segurança — se Firebase demorar mais de 5s, entra mesmo assim
+    setTimeout(()=>setFbReady(true), 5000);
+    return()=>{ uC(); uM(); uCu(); uF(); };
+  },[]);
+
+  useEffect(()=>{ if(!loaded.current.cant)return; if(fromFb.current.cant){fromFb.current.cant=false;return;} fbSet("cantores",cantores); },[cantores]);
+  useEffect(()=>{ if(!loaded.current.mus)return; if(fromFb.current.mus){fromFb.current.mus=false;return;} fbSet("musicos",musicos); },[musicos]);
+  useEffect(()=>{ if(!loaded.current.cult)return; if(fromFb.current.cult){fromFb.current.cult=false;return;} fbSet("cultos",cultos); },[cultos]);
+  useEffect(()=>{ if(!loaded.current.favs)return; if(fromFb.current.favs){fromFb.current.favs=false;return;} fbSet("favs",favs); },[favs]);
+  useEffect(()=>{ try{localStorage.setItem("esc_theme",themeKey);}catch{} },[themeKey]);
+
+  // ── Botão voltar do Android ──
+  useEffect(()=>{
+    // Empurra um estado no histórico para interceptar o voltar
+    window.history.pushState({app:"banda-aviva"},"");
+    const onPop=()=>{
+      // Fecha modal aberto, na ordem de prioridade
+      if(playL){ setPlayL(null); window.history.pushState({app:"banda-aviva"},""); return; }
+      if(showTheme){ setShowTheme(false); window.history.pushState({app:"banda-aviva"},""); return; }
+      if(editCI!==null){ setEditCI(null); window.history.pushState({app:"banda-aviva"},""); return; }
+      if(editMI!==null){ setEditMI(null); window.history.pushState({app:"banda-aviva"},""); return; }
+      if(showAddC){ setShowAddC(false); window.history.pushState({app:"banda-aviva"},""); return; }
+      if(showAddM){ setShowAddM(false); window.history.pushState({app:"banda-aviva"},""); return; }
+      if(newCF){ setNCF(null); window.history.pushState({app:"banda-aviva"},""); return; }
+      if(newLF){ setNLF(null); window.history.pushState({app:"banda-aviva"},""); return; }
+      if(showFavPk){ setFavPk(false); window.history.pushState({app:"banda-aviva"},""); return; }
+      // Se estiver na tela de culto, volta pro calendário
+      if(tab==="culto"){ setSelId(null); setTab("calendario"); window.history.pushState({app:"banda-aviva"},""); return; }
+      // Se já estiver no calendário, não sai — reempurra o estado
+      if(tab==="calendario"){ window.history.pushState({app:"banda-aviva"},""); return; }
+      // Qualquer outra aba volta pro calendário
+      setTab("calendario"); setSelId(null); window.history.pushState({app:"banda-aviva"},"");
+    };
+    window.addEventListener("popstate",onPop);
+    return()=>window.removeEventListener("popstate",onPop);
+  },[tab,selId,playL,showTheme,editCI,editMI,showAddC,showAddM,newCF,newLF,showFavPk]);
+
+  const showToast=(msg,ok=true)=>{ setToast({msg,ok}); setTimeout(()=>setToast(null),2500); };
+  const accent=THEMES[themeKey]||THEMES.gold;
+  const bGold={background:"linear-gradient(135deg,"+accent.accent+","+accent.light+")",color:"#0F0F1A",border:"none",borderRadius:10,padding:"9px 18px",cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"inherit",whiteSpace:"nowrap"};
+  const bGhost={background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)",borderRadius:8,padding:"8px 15px",cursor:"pointer",fontSize:13,fontFamily:"inherit"};
+  const bDanger={background:"rgba(224,123,138,0.1)",border:"1px solid rgba(224,123,138,0.3)",color:"#E07B8A",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontFamily:"inherit"};
+
+  const getC=id=>cultos.find(c=>c.id===id);
+  const updC=c=>setCultos(p=>p.map(x=>x.id===c.id?c:x));
+  const today=new Date().toISOString().split("T")[0];
+  const proximos=cultos.filter(c=>{ const d=daysUntil(c.data); return d!==null; }).sort((a,b)=>a.data.localeCompare(b.data)).slice(0,5).map(c=>({...c,diff:daysUntil(c.data)}));
+  const sel=selId?getC(selId):null;
+
+  // Ações culto
+  const toggleCantor=(cid,nome)=>{ const c=getC(cid); if(!c)return; updC({...c,cantores:c.cantores.includes(nome)?c.cantores.filter(n=>n!==nome):[...c.cantores,nome]}); };
+  const toggleMusico=(cid,nome)=>{ const c=getC(cid); if(!c)return; const ms=c.musicos||[]; updC({...c,musicos:ms.includes(nome)?ms.filter(n=>n!==nome):[...ms,nome]}); };
+  const toggleLembrete=cid=>{ const c=getC(cid); if(!c)return; updC({...c,lembrete:!c.lembrete}); };
+  const doDelCulto=cid=>{ setCultos(p=>p.filter(c=>c.id!==cid)); setSelId(null); setTab("calendario"); showToast("Culto removido",false); };
+  const doAddLouvor=(cid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:[...c.louvores,{...l,id:uid()}]}); setNLF(null); showToast("Louvor adicionado ✓"); };
+  const doRemLouvor=(cid,lid)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:c.louvores.filter(l=>l.id!==lid)}); };
+  const moveLouvor=(cid,idx,dir)=>{ const c=getC(cid); if(!c)return; const arr=[...c.louvores]; const ni=idx+dir; if(ni<0||ni>=arr.length)return; [arr[idx],arr[ni]]=[arr[ni],arr[idx]]; updC({...c,louvores:arr}); };
+  const isFav=l=>favs.some(f=>f.titulo===l.titulo&&f.artista===l.artista);
+  const toggleFav=l=>{ const ex=favs.find(f=>f.titulo===l.titulo&&f.artista===l.artista); if(ex){setFavs(p=>p.filter(f=>f.id!==ex.id));showToast("Removido dos favoritos",false);}else{setFavs(p=>[...p,{...l,id:uid()}]);showToast("★ Favorito adicionado");} };
+
+  // Ações cantores/músicos
+  const saveCantorEdit=(upd,idx)=>{ const old=cantores[idx]?.nome; setCantores(p=>p.map((c,i)=>i===idx?upd:c)); if(old!==upd.nome)setCultos(p=>p.map(c=>({...c,cantores:c.cantores.map(n=>n===old?upd.nome:n)}))); setEditCI(null); showToast("Cantor atualizado ✓"); };
+  const deleteCantorAt=idx=>{ const nome=cantores[idx]?.nome; setCantores(p=>p.filter((_,i)=>i!==idx)); setCultos(p=>p.map(c=>({...c,cantores:c.cantores.filter(n=>n!==nome)}))); setEditCI(null); showToast("Cantor removido",false); };
+  const saveMusicoEdit=(upd,idx)=>{ const old=musicos[idx]?.nome; setMusicos(p=>p.map((m,i)=>i===idx?upd:m)); if(old!==upd.nome)setCultos(p=>p.map(c=>({...c,musicos:(c.musicos||[]).map(n=>n===old?upd.nome:n)}))); setEditMI(null); showToast("Músico atualizado ✓"); };
+  const deleteMusicoAt=idx=>{ const nome=musicos[idx]?.nome; setMusicos(p=>p.filter((_,i)=>i!==idx)); setCultos(p=>p.map(c=>({...c,musicos:(c.musicos||[]).filter(n=>n!==nome)}))); setEditMI(null); showToast("Músico removido",false); };
+
+  // Novo culto
+  const doAddCulto=()=>{
+    if(!newCF)return;
+    if(newCF.modo==="campanha"){
+      const novos=[]; let d=new Date(newCF.data+"T00:00"); const n=parseInt(newCF.repeticoes)||4;
+      for(let i=0;i<n;i++){
+        novos.push({...mkC(d.toISOString().split("T")[0],newCF.tipo,newCF.tema,newCF.campanha),campanha:`${newCF.campanha} (${i+1}/${n})`});
+        d.setDate(d.getDate()+7);
+      }
+      setCultos(p=>[...p,...novos]); showToast(`${n} cultos criados ✓`);
+    }else{
+      setCultos(p=>[...p,mkC(newCF.data,newCF.tipo,newCF.tema,"")]); showToast("Culto criado ✓");
+    }
+    setNCF(null);
+  };
+
+  const doSearch=async()=>{
+    if(!sq.trim())return;
+    setSLoad(true); setSRes([]); setSErr(""); setSLocal(false);
+    // Tenta YouTube API
+    let r=[];
+    let fromLocal=false;
+    try{
+      const resp=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(sq+" louvor gospel")}&type=video&maxResults=8&key=${YT_API_KEY}&regionCode=BR`);
+      const d=await resp.json();
+      if(d.items&&d.items.length){
+        r=d.items.map(it=>({titulo:it.snippet.title,artista:it.snippet.channelTitle,ytId:it.id.videoId,ytUrl:"https://www.youtube.com/watch?v="+it.id.videoId,tom:"",cifra:"",obs:""}));
+      }
+    }catch(e){}
+    // Fallback banco local
+    if(!r.length){
+      r=localSearch(sq).map(l=>({...l,ytId:getYTId(l.ytUrl),obs:""}));
+      fromLocal=true;
+    }
+    if(!r.length) setSErr("Nenhum resultado. Tente outro nome ou cole o link do YouTube abaixo.");
+    setSRes(r); setSLocal(fromLocal); setSLoad(false);
+  };
+
+  // Calendário
+  const [calMonth,setCalMonth]=useState(()=>{ const d=new Date(); return{y:d.getFullYear(),m:d.getMonth()}; });
+  const calDays=()=>{
+    const{y,m}=calMonth; const first=new Date(y,m,1).getDay(); const total=new Date(y,m+1,0).getDate();
+    const cells=[]; for(let i=0;i<first;i++) cells.push(null);
+    for(let d=1;d<=total;d++) cells.push(d);
+    return cells;
+  };
+  const cultosDia=(d)=>{ if(!d)return[]; const ds=`${calMonth.y}-${String(calMonth.m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`; return cultos.filter(c=>c.data===ds); };
+
+  const NAVS=[{id:"calendario",icon:"📅",label:"Calendário"},{id:"escala",icon:"👥",label:"Escalas"},{id:"buscar",icon:"🎵",label:"Louvores"},{id:"favoritos",icon:"⭐",label:"Favoritos"}];
+
+  // ── Tela de Loading ──
+  if(!fbReady) return(
+    <div style={{minHeight:"100vh",background:"#0F0F1A",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400&display=swap');
+        @keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes fadeIn2{from{opacity:0}to{opacity:1}}
+        @keyframes spinRing{to{transform:rotate(360deg)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+      `}</style>
+
+      {/* Glow fundo */}
+      <div style={{position:"fixed",inset:0,background:"radial-gradient(ellipse at 50% 60%,rgba(201,168,76,0.05),transparent 65%)",pointerEvents:"none"}}/>
+
+      {/* Círculo girando + texto dentro */}
+      <div style={{position:"relative",width:180,height:180,marginBottom:36,animation:"fadeIn2 0.8s ease"}}>
+
+        {/* Anel externo girando — degradê amarelo */}
+        <svg style={{position:"absolute",inset:0,animation:"spinRing 1.8s linear infinite"}} width="180" height="180" viewBox="0 0 180 180">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#C9A84C" stopOpacity="1"/>
+              <stop offset="40%" stopColor="#E8C96A" stopOpacity="0.9"/>
+              <stop offset="100%" stopColor="#C9A84C" stopOpacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle cx="90" cy="90" r="82" fill="none" stroke="url(#ringGrad)" strokeWidth="4" strokeLinecap="round" strokeDasharray="320 200"/>
+        </svg>
+
+        {/* Anel interno estático — sutil */}
+        <svg style={{position:"absolute",inset:0,opacity:0.12}} width="180" height="180" viewBox="0 0 180 180">
+          <circle cx="90" cy="90" r="82" fill="none" stroke="#C9A84C" strokeWidth="1"/>
+        </svg>
+
+        {/* Cruz centralizada */}
+        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{fontSize:36,color:"rgba(201,168,76,0.6)",fontWeight:300}}>✝</span>
+        </div>
+      </div>
+
+      {/* BANDA AVIVA */}
+      <div style={{animation:"fadeIn 0.7s ease 0.2s both",textAlign:"center",marginBottom:10}}>
+        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:32,fontWeight:700,fontStyle:"italic",color:"#FFFFFF",letterSpacing:2,lineHeight:1}}>
+          Banda Aviva
+        </div>
+        <div style={{width:40,height:1,background:"linear-gradient(90deg,transparent,#C9A84C,transparent)",margin:"10px auto 0"}}/>
+      </div>
+
+      {/* Carregando... */}
+      <div style={{animation:"fadeIn 0.7s ease 0.5s both",display:"flex",alignItems:"center",gap:8,marginTop:6}}>
+        <span style={{fontSize:12,color:"rgba(255,255,255,0.35)",letterSpacing:2,textTransform:"uppercase",fontFamily:"'DM Sans',sans-serif",fontWeight:300,animation:"pulse 1.8s ease-in-out infinite"}}>
+          carregando
+        </span>
+      </div>
+    </div>
+  );
+    <div style={{minHeight:"100vh",background:"#0F0F1A",color:"#EAE8F2",fontFamily:"'DM Sans',system-ui,sans-serif"}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;600&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        input,select,textarea{font-family:inherit;color:#EAE8F2;}
+        input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.2);}
+        option{background:#1a1a2e;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .htab:hover{color:${accent.accent}!important;}
+        .pill:hover{filter:brightness(1.15);}
+        .ccard:hover{transform:translateY(-2px);border-color:rgba(${accent.rgb},0.4)!important;}
+        .yt-w:hover .yt-ov{opacity:1!important;}
+        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);}
+        @media(max-width:600px){
+          .nav-label{display:none!important;}
+          .main-content{padding-bottom:80px!important;}
+          .desktop-nav{display:none!important;}
+          .mobile-nav{display:flex!important;}
+          .header-inner{padding:0 12px!important;}
+        }
+        @media(min-width:601px){
+          .mobile-nav{display:none!important;}
+        }
+      `}</style>
+
+      {/* Glows */}
+      <div style={{position:"fixed",top:"-20%",left:"5%",width:"50vw",height:"50vw",borderRadius:"50%",background:`radial-gradient(circle,rgba(${accent.rgb},0.06),transparent 65%)`,pointerEvents:"none",zIndex:0}}/>
+
+      {/* Header */}
+      <header style={{position:"sticky",top:0,zIndex:100,background:"rgba(15,15,26,0.97)",backdropFilter:"blur(16px)",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px"}} className="header-inner">
+        {/* Logo */}
+        <div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 0",flexShrink:0}}>
+          <img src="https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png" alt="Banda Aviva" style={{width:38,height:38,borderRadius:8,objectFit:"cover"}}/>
+          <div>
+            <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,fontWeight:700,color:"#EAE8F2",lineHeight:1}}>Banda Aviva</div>
+            <div style={{fontSize:9,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase"}}>Ministério de Música</div>
+          </div>
+        </div>
+        {/* Nav desktop */}
+        <div className="desktop-nav" style={{display:"flex",alignItems:"center",gap:2}}>
+          {NAVS.map(n=>(
+            <button key={n.id} className="htab" onClick={()=>{setTab(n.id);setSelId(null);}} style={{background:"none",border:"none",cursor:"pointer",padding:"0 10px",height:48,fontSize:13,fontFamily:"inherit",color:tab===n.id?accent.accent:"rgba(255,255,255,0.4)",borderBottom:tab===n.id?"2px solid "+accent.accent:"2px solid transparent",fontWeight:tab===n.id?600:400,transition:"all 0.2s",display:"flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>
+              <span style={{fontSize:16}}>{n.icon}</span>
+              <span>{n.label}</span>
+            </button>
+          ))}
+          <div style={{width:1,height:20,background:"rgba(255,255,255,0.1)",margin:"0 6px"}}/>
+          <button onClick={()=>setShowTheme(true)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",padding:"0 6px",color:"rgba(255,255,255,0.4)"}}>🎨</button>
+          <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}} title="Sincronizado"/>
+        </div>
+        {/* Mobile: só ícones de ação no header */}
+        <div style={{display:"flex",alignItems:"center",gap:8}} className="mobile-only-header">
+          <button onClick={()=>setShowTheme(true)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",padding:"4px",color:"rgba(255,255,255,0.4)"}}>🎨</button>
+          <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}}/>
+        </div>
+      </header>
+
+      {/* Nav inferior mobile */}
+      <nav className="mobile-nav" style={{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:"rgba(15,15,26,0.98)",backdropFilter:"blur(20px)",borderTop:"1px solid rgba(255,255,255,0.08)",display:"none",justifyContent:"space-around",alignItems:"center",padding:"8px 0 max(8px,env(safe-area-inset-bottom))"}}>
+        {NAVS.map(n=>(
+          <button key={n.id} onClick={()=>{setTab(n.id);setSelId(null);}} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 12px",fontFamily:"inherit",flex:1}}>
+            <span style={{fontSize:22,filter:tab===n.id?`drop-shadow(0 0 6px rgba(${accent.rgb},0.8))`:"none",transition:"filter 0.2s"}}>{n.icon}</span>
+            <span style={{fontSize:9,fontWeight:600,letterSpacing:.5,color:tab===n.id?accent.accent:"rgba(255,255,255,0.35)",transition:"color 0.2s",textTransform:"uppercase"}}>{n.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="main-content" style={{maxWidth:1000,margin:"0 auto",padding:"24px 16px",position:"relative",zIndex:1}}>
+
+        {/* ══ CALENDÁRIO ══ */}
+        {tab==="calendario"&&(
+          <div style={{animation:"fadeUp 0.3s ease"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:20,flexWrap:"wrap",gap:12}}>
+              <div>
+                <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Ministério de Música</div>
+                <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",margin:0}}>Calendário</h1>
+              </div>
+              <button style={bGold} onClick={()=>setNCF({data:today,tipo:"domingo",modo:"unico",tema:"",campanha:"",repeticoes:4})}>+ Novo Culto</button>
+            </div>
+
+            {/* Próximos */}
+            {proximos.length>0&&(
+              <div style={{marginBottom:20}}>
+                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:8}}>PRÓXIMOS CULTOS</div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  {proximos.map(c=>{
+                    const cf=CC[c.tipo];
+                    return(
+                      <div key={c.id} onClick={()=>{setSelId(c.id);setTab("culto");}} className="pill" style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:10,border:`1px solid rgba(${cf.rgb},0.3)`,background:`rgba(${cf.rgb},0.05)`,cursor:"pointer",minWidth:120}}>
+                        <div style={{width:6,height:6,borderRadius:2,background:cf.color,flexShrink:0}}/>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:11,fontWeight:600,color:"#EAE8F2"}}>{cf.short}</div>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{fmtDate(c.data)}</div>
+                        </div>
+                        <div style={{fontSize:10,fontWeight:700,color:c.diff==="Hoje"?"#6BBFA3":c.diff==="Amanhã"?accent.accent:"rgba(255,255,255,0.3)"}}>{c.diff}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Grade calendário */}
+            <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,overflow:"hidden"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+                <button onClick={()=>setCalMonth(p=>{ const d=new Date(p.y,p.m-1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:18,padding:"0 4px"}}>‹</button>
+                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#EAE8F2"}}>{MONTHS_PT[calMonth.m]} {calMonth.y}</div>
+                <button onClick={()=>setCalMonth(p=>{ const d=new Date(p.y,p.m+1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:18,padding:"0 4px"}}>›</button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",textAlign:"center"}}>
+                {DAYS_PT.map(d=><div key={d} style={{padding:"8px 0",fontSize:10,color:"rgba(255,255,255,0.3)",fontWeight:600,letterSpacing:1}}>{d}</div>)}
+                {calDays().map((d,i)=>{
+                  const cs=cultosDia(d);
+                  const isToday=d&&`${calMonth.y}-${String(calMonth.m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`===today;
+                  return(
+                    <div key={i} className="cday" onClick={()=>{ if(cs.length===1){setSelId(cs[0].id);setTab("culto");} }} style={{minHeight:52,padding:"4px 2px",borderTop:"1px solid rgba(255,255,255,0.04)",cursor:cs.length?"pointer":"default",background:isToday?`rgba(${accent.rgb},0.05)`:"transparent",transition:"background 0.15s"}}>
+                      {d&&<>
+                        <div style={{fontSize:11,color:isToday?accent.accent:"rgba(255,255,255,0.4)",fontWeight:isToday?700:400,marginBottom:2}}>{d}</div>
+                        {cs.map(c=><div key={c.id} style={{fontSize:9,background:`rgba(${CC[c.tipo].rgb},0.2)`,color:CC[c.tipo].color,borderRadius:3,padding:"1px 3px",marginBottom:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{CC[c.tipo].short}</div>)}
+                      </>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ CULTO DETALHE ══ */}
+        {tab==="culto"&&sel&&(()=>{
+          const c=getC(sel.id)||sel; const cf=CC[c.tipo];
+          return(
+            <div style={{animation:"fadeUp 0.3s ease"}}>
+              <button onClick={()=>setTab("calendario")} style={{...bGhost,marginBottom:16,padding:"6px 14px",fontSize:12}}>← Voltar</button>
+              {/* Header culto */}
+              <div style={{background:"#161625",border:`1px solid rgba(${cf.rgb},0.2)`,borderTop:`3px solid ${cf.color}`,borderRadius:14,padding:18,marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+                  <div>
+                    <div style={{fontSize:10,letterSpacing:2,color:cf.color,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>{cf.label}</div>
+                    <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,fontWeight:700,color:"#EAE8F2"}}>{fmtDate(c.data)}</div>
+                    {c.campanha&&<div style={{fontSize:12,color:cf.color,fontWeight:700,marginTop:4}}>🔥 {c.campanha}</div>}
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    <button onClick={()=>toggleLembrete(c.id)} style={{...bGhost,padding:"6px 12px",fontSize:12}}>{c.lembrete?"🔔":"🔕"}</button>
+                    <button onClick={()=>doDelCulto(c.id)} style={{...bDanger,padding:"6px 12px"}}>🗑</button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cantores + Músicos */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+                <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:16}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#EAE8F2",marginBottom:10}}>🎤 Cantores</div>
+                  {cantores.map(ct=>{
+                    const on=c.cantores.includes(ct.nome);
+                    return(
+                      <button key={ct.id} onClick={()=>toggleCantor(c.id,ct.nome)} className="pill" style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.07)",background:on?`rgba(${cf.rgb},0.1)`:"rgba(255,255,255,0.02)",color:on?cf.color:"rgba(255,255,255,0.4)",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:on?600:400,marginBottom:5,transition:"all 0.15s"}}>
+                        <span style={{fontSize:16}}>{ct.emoji}</span><span style={{flex:1,textAlign:"left"}}>{ct.nome}</span>{on&&<span>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:16}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#EAE8F2",marginBottom:10}}>🎸 Músicos</div>
+                  {musicos.map(mt=>{
+                    const on=(c.musicos||[]).includes(mt.nome);
+                    return(
+                      <button key={mt.id} onClick={()=>toggleMusico(c.id,mt.nome)} className="pill" style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.07)",background:on?`rgba(${cf.rgb},0.1)`:"rgba(255,255,255,0.02)",color:on?cf.color:"rgba(255,255,255,0.4)",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:on?600:400,marginBottom:5,transition:"all 0.15s"}}>
+                        <span style={{fontSize:16}}>{mt.emoji}</span>
+                        <div style={{flex:1,textAlign:"left"}}>
+                          <div>{mt.nome}</div>
+                          <div style={{fontSize:10,opacity:0.5}}>{mt.instrumento}</div>
+                        </div>
+                        {on&&<span>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Louvores */}
+              <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:16,marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#EAE8F2"}}>🎵 Louvores</div>
+                  <div style={{display:"flex",gap:6}}>
+                    <button style={{...bGhost,padding:"5px 10px",fontSize:11}} onClick={()=>setFavPk(true)}>★ Favs</button>
+                    <button style={{...bGold,padding:"5px 12px",fontSize:11}} onClick={()=>setNLF({titulo:"",artista:"",ytUrl:"",tom:"",cifra:"",obs:""})}>+ Louvor</button>
+                  </div>
+                </div>
+                {c.louvores.length===0&&<p style={{color:"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Nenhum louvor adicionado</p>}
+                {c.louvores.map((l,i)=>(
+                  <div key={l.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
+                    <span style={{fontSize:12,color:"rgba(255,255,255,0.3)",minWidth:16}}>{i+1}</span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",display:"flex",gap:6,alignItems:"center"}}>
+                        <span>{l.artista}</span>
+                        {l.cantor&&<span style={{color:accent.accent,fontWeight:600}}>· {l.cantor}</span>}
+                      </div>
+                    </div>
+                    <TomTag tom={l.tom}/>
+                    {getYTId(l.ytUrl||"")&&<button onClick={()=>setPlayL(l)} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:16,padding:"3px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
+                    <button onClick={()=>moveLouvor(c.id,i,-1)} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===0}>▲</button>
+                    <button onClick={()=>moveLouvor(c.id,i,1)} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===c.louvores.length-1}>▼</button>
+                    <button onClick={()=>doRemLouvor(c.id,l.id)} style={{...bDanger,padding:"3px 8px",fontSize:11}}>✕</button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Form novo louvor */}
+              {newLF&&(
+                <div style={{background:"#161625",border:`1px solid rgba(${accent.rgb},0.2)`,borderRadius:14,padding:16,marginBottom:12}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#EAE8F2",marginBottom:12}}>Novo Louvor</div>
+                  <Fld label="Título" value={newLF.titulo} onChange={e=>setNLF(p=>({...p,titulo:e.target.value}))} placeholder="Nome da música"/>
+                  <Fld label="Artista" value={newLF.artista} onChange={e=>setNLF(p=>({...p,artista:e.target.value}))} placeholder="Nome do artista"/>
+                  <Fld label="Link YouTube (opcional)" value={newLF.ytUrl} onChange={e=>setNLF(p=>({...p,ytUrl:e.target.value}))} placeholder="https://youtu.be/..."/>
+
+                  {/* Tom com optgroup */}
+                  <div style={{marginBottom:12}}>
+                    <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TOM</label>
+                    <select value={newLF.tom} onChange={e=>setNLF(p=>({...p,tom:e.target.value}))} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:0}}>
+                      <option value="">— Selecionar tom —</option>
+                      <optgroup label="── Maiores ──">
+                        <option value="C">C (Dó Maior)</option>
+                        <option value="C#">C# (Dó# Maior)</option>
+                        <option value="Db">Db (Réb Maior)</option>
+                        <option value="D">D (Ré Maior)</option>
+                        <option value="D#">D# (Ré# Maior)</option>
+                        <option value="Eb">Eb (Mib Maior)</option>
+                        <option value="E">E (Mi Maior)</option>
+                        <option value="F">F (Fá Maior)</option>
+                        <option value="F#">F# (Fá# Maior)</option>
+                        <option value="Gb">Gb (Solb Maior)</option>
+                        <option value="G">G (Sol Maior)</option>
+                        <option value="G#">G# (Sol# Maior)</option>
+                        <option value="Ab">Ab (Láb Maior)</option>
+                        <option value="A">A (Lá Maior)</option>
+                        <option value="A#">A# (Lá# Maior)</option>
+                        <option value="Bb">Bb (Sib Maior)</option>
+                        <option value="B">B (Si Maior)</option>
+                      </optgroup>
+                      <optgroup label="── Menores ──">
+                        <option value="Cm">Cm (Dó Menor)</option>
+                        <option value="C#m">C#m (Dó# Menor)</option>
+                        <option value="Dbm">Dbm (Réb Menor)</option>
+                        <option value="Dm">Dm (Ré Menor)</option>
+                        <option value="D#m">D#m (Ré# Menor)</option>
+                        <option value="Ebm">Ebm (Mib Menor)</option>
+                        <option value="Em">Em (Mi Menor)</option>
+                        <option value="Fm">Fm (Fá Menor)</option>
+                        <option value="F#m">F#m (Fá# Menor)</option>
+                        <option value="Gbm">Gbm (Solb Menor)</option>
+                        <option value="Gm">Gm (Sol Menor)</option>
+                        <option value="G#m">G#m (Sol# Menor)</option>
+                        <option value="Abm">Abm (Láb Menor)</option>
+                        <option value="Am">Am (Lá Menor)</option>
+                        <option value="A#m">A#m (Lá# Menor)</option>
+                        <option value="Bbm">Bbm (Sib Menor)</option>
+                        <option value="Bm">Bm (Si Menor)</option>
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  {/* Cantor */}
+                  <div style={{marginBottom:12}}>
+                    <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>CANTOR(A)</label>
+                    <select value={newLF.cantor||""} onChange={e=>setNLF(p=>({...p,cantor:e.target.value}))} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none"}}>
+                      <option value="">— Selecionar cantor —</option>
+                      {c.cantores.length>0&&<optgroup label="── Escalados neste culto ──">
+                        {cantores.filter(ct=>c.cantores.includes(ct.nome)).map(ct=>(
+                          <option key={ct.id} value={ct.nome}>{ct.emoji} {ct.nome}</option>
+                        ))}
+                      </optgroup>}
+                      <optgroup label="── Todos os cantores ──">
+                        {cantores.map(ct=>(
+                          <option key={"all-"+ct.id} value={ct.nome}>{ct.emoji} {ct.nome}</option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </div>
+
+                  <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+                    <button style={bGhost} onClick={()=>setNLF(null)}>Cancelar</button>
+                    <button style={bGold} onClick={()=>doAddLouvor(c.id,newLF)} disabled={!newLF.titulo.trim()}>Salvar</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ══ ESCALAS ══ */}
+        {tab==="escala"&&(
+          <div style={{animation:"fadeUp 0.3s ease"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:20,flexWrap:"wrap",gap:12}}>
+              <div>
+                <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Ministério de Música</div>
+                <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",margin:0}}>Escalas</h1>
+              </div>
+              <button style={bGold} onClick={()=>setShowAddC(true)}>+ Cantor</button>
+            </div>
+
+            {/* Cantores */}
+            <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>🎤 CANTORES</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}}>
+              {cantores.map((ct,i)=>{
+                const n=cultos.filter(c=>c.cantores.includes(ct.nome)).length;
+                // Todos os louvores que esse cantor já cantou
+                const historico=[...new Map(
+                  cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===ct.nome))
+                  .map(l=>[l.titulo,l])
+                ).values()].slice(0,5);
+                return(
+                  <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                      <span style={{fontSize:26}}>{ct.emoji}</span>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{ct.nome}</div>
+                        <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{n} culto{n!==1?"s":""}</div>
+                      </div>
+                    </div>
+                    {historico.length>0&&(
+                      <div style={{borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:7}}>
+                        {historico.map((l,i)=>(
+                          <div key={i} style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginBottom:3,display:"flex",alignItems:"center",gap:4,overflow:"hidden"}}>
+                            <span style={{color:accent.accent,flexShrink:0}}>♪</span>
+                            <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</span>
+                            {l.tom&&<span style={{color:accent.accent,fontWeight:700,flexShrink:0,fontSize:9}}>{l.tom}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {historico.length===0&&(
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.18)",fontStyle:"italic"}}>Sem louvores ainda</div>
+                    )}
+                    <div style={{position:"absolute",top:6,right:8,fontSize:10,color:"rgba(255,255,255,0.2)"}}>✎</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Músicos */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600}}>🎸 MÚSICOS</div>
+              <button style={{...bGold,padding:"5px 12px",fontSize:11,boxShadow:"none"}} onClick={()=>setShowAddM(true)}>+ Músico</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:10,marginBottom:24}}>
+              {musicos.map((mt,i)=>{
+                const n=cultos.filter(c=>(c.musicos||[]).includes(mt.nome)).length;
+                return(
+                  <div key={mt.id} onClick={()=>setEditMI(i)} className="ccard" style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"14px 10px",textAlign:"center",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
+                    <div style={{fontSize:28,marginBottom:6}}>{mt.emoji}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{mt.nome}</div>
+                    <div style={{fontSize:10,color:accent.accent,fontWeight:600,marginTop:2}}>{mt.instrumento}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{n} culto{n!==1?"s":""}</div>
+                    <div style={{position:"absolute",top:6,right:8,fontSize:10,color:"rgba(255,255,255,0.2)"}}>✎</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Colunas por tipo */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:12}}>
+              {Object.entries(CC).map(([tipo,cf])=>{
+                const cs=cultos.filter(c=>c.tipo===tipo).sort((a,b)=>a.data.localeCompare(b.data));
+                return(
+                  <div key={tipo} style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderTop:`3px solid ${cf.color}`,borderRadius:14,padding:14}}>
+                    <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,fontWeight:700,color:cf.color,marginBottom:10}}>{cf.label}</div>
+                    {cs.length===0&&<p style={{color:"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Sem cultos</p>}
+                    {cs.map(c=>{
+                      const open=!!openCards[c.id];
+                      const nC=c.cantores.length, nM=(c.musicos||[]).length;
+                      return(
+                        <div key={c.id} style={{borderRadius:10,border:"1px solid rgba(255,255,255,0.07)",marginBottom:7,overflow:"hidden"}}>
+                          <button onClick={()=>setOpenCards(p=>({...p,[c.id]:!p[c.id]}))} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 11px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",gap:6}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
+                              <span style={{fontSize:12,fontWeight:700,color:"#EAE8F2",whiteSpace:"nowrap"}}>{fmtDate(c.data)}</span>
+                              <span style={{fontSize:12,opacity:0.7}}>
+                                {cantores.filter(ct=>c.cantores.includes(ct.nome)).map(ct=>ct.emoji).join("")}
+                                {musicos.filter(mt=>(c.musicos||[]).includes(mt.nome)).map(mt=>mt.emoji).join("")}
+                              </span>
+                            </div>
+                            <div style={{display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+                              {daysUntil(c.data)&&<span style={{fontSize:10,fontWeight:700,color:daysUntil(c.data)==="Hoje"?"#6BBFA3":daysUntil(c.data)==="Amanhã"?accent.accent:"rgba(255,255,255,0.3)"}}>{daysUntil(c.data)}</span>}
+                              <span style={{color:"rgba(255,255,255,0.3)",fontSize:11,transition:"transform 0.2s",display:"inline-block",transform:open?"rotate(180deg)":"none"}}>▾</span>
+                            </div>
+                          </button>
+                          {open&&(
+                            <div style={{padding:"0 11px 11px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+                              <div style={{paddingTop:8,marginBottom:6}}>
+                                <div style={{fontSize:9,letterSpacing:1,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",marginBottom:4}}>Cantores</div>
+                                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                                  {cantores.map(ct=>{
+                                    const on=c.cantores.includes(ct.nome);
+                                    return <button key={ct.id} onClick={()=>toggleCantor(c.id,ct.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.08)",background:on?`rgba(${cf.rgb},0.12)`:"transparent",color:on?cf.color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span style={{fontSize:12}}>{ct.emoji}</span>{ct.nome}</button>;
+                                  })}
+                                </div>
+                              </div>
+                              <div style={{marginBottom:6}}>
+                                <div style={{fontSize:9,letterSpacing:1,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",marginBottom:4}}>Músicos</div>
+                                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                                  {musicos.map(mt=>{
+                                    const on=(c.musicos||[]).includes(mt.nome);
+                                    return <button key={mt.id} onClick={()=>toggleMusico(c.id,mt.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.06)",background:on?`rgba(${cf.rgb},0.1)`:"transparent",color:on?cf.color:"rgba(255,255,255,0.25)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span style={{fontSize:12}}>{mt.emoji}</span>{mt.nome}</button>;
+                                  })}
+                                </div>
+                              </div>
+                              <button onClick={()=>{setSelId(c.id);setTab("culto");}} style={{background:"none",border:"none",color:accent.accent,cursor:"pointer",fontSize:11,fontFamily:"inherit",padding:0}}>Ver detalhes →</button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ══ BUSCAR ══ */}
+        {tab==="buscar"&&(
+          <div style={{animation:"fadeUp 0.3s ease"}}>
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Banco de Músicas</div>
+              <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",margin:0}}>Buscar Louvores</h1>
+            </div>
+            <div style={{display:"flex",background:"#161625",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,overflow:"hidden",marginBottom:20}}>
+              <span style={{padding:"0 14px",color:accent.accent,fontSize:17,display:"flex",alignItems:"center"}}>♪</span>
+              <input value={sq} onChange={e=>setSq(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doSearch()} placeholder="Nome da música, artista..." style={{flex:1,background:"transparent",border:"none",color:"#EAE8F2",padding:"13px 0",fontSize:14,fontFamily:"inherit",outline:"none"}}/>
+              <button onClick={doSearch} style={{...bGold,borderRadius:8,margin:6,padding:"0 20px",boxShadow:"none"}}>
+                {sLoad?<span style={{display:"inline-block",width:13,height:13,border:"2px solid rgba(0,0,0,0.2)",borderTop:"2px solid #0F0F1A",borderRadius:"50%",animation:"spin 0.7s linear infinite"}}/>:"Buscar"}
+              </button>
+            </div>
+            {sErr&&<div style={{background:"rgba(224,123,138,0.08)",border:"1px solid rgba(224,123,138,0.25)",color:"#E07B8A",borderRadius:10,padding:"10px 15px",fontSize:13,marginBottom:16}}>{sErr}</div>}
+            {sRes.length>0&&(
+              <>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",fontWeight:600}}>{sRes.length} resultados</div>
+                  {sLocal&&<span style={{fontSize:10,background:"rgba(91,155,213,0.12)",border:"1px solid rgba(91,155,213,0.3)",color:"#5B9BD5",borderRadius:20,padding:"2px 8px",fontWeight:600}}>📚 Banco local</span>}
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12,marginBottom:24}}>
+                  {sRes.map((r,i)=>(
+                    <LCard key={i} l={r} accent={accent} isFav={isFav(r)} onFav={()=>toggleFav(r)} onPlay={setPlayL} onAdd={()=>{ setNLF({...r,obs:""}); setTab("culto"); showToast("Selecione o culto e salve"); }}/>
+                  ))}
+                </div>
+              </>
+            )}
+            {/* Colar link */}
+            <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:18}}>
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#EAE8F2",marginBottom:10}}>Colar link do YouTube</div>
+              <Fld value={paste} placeholder="https://youtu.be/..." onChange={e=>setPaste(e.target.value)}/>
+              {getYTId(paste)&&(
+                <div style={{marginTop:10}}>
+                  <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000",borderRadius:10,overflow:"hidden",marginBottom:10}}>
+                    <iframe src={"https://www.youtube.com/embed/"+getYTId(paste)+"?rel=0"} title="YT" allowFullScreen style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}/>
+                  </div>
+                  <button style={bGold} onClick={()=>{ setNLF({titulo:"",artista:"",ytUrl:paste,tom:"",cifra:"",obs:""}); setTab("culto"); showToast("Cole no culto e salve"); }}>+ Usar no Culto</button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ══ FAVORITOS ══ */}
+        {tab==="favoritos"&&(
+          <div style={{animation:"fadeUp 0.3s ease"}}>
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Minha lista</div>
+              <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",margin:0}}>Favoritos</h1>
+            </div>
+            {favs.length===0&&<p style={{color:"rgba(255,255,255,0.3)",fontSize:14,fontStyle:"italic"}}>Nenhum favorito ainda. Busque músicas e marque com ★</p>}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
+              {favs.map(l=>(
+                <LCard key={l.id} l={l} accent={accent} isFav={true} onFav={()=>toggleFav(l)} onPlay={setPlayL} onAdd={()=>{ setNLF({...l,obs:""}); setTab("culto"); showToast("Selecione o culto e salve"); }}/>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>{/* /content */}
+
+      {/* ══ MODAIS ══ */}
+
+      {/* Player YouTube */}
+      {playL&&(
+        <Ovl onClose={()=>setPlayL(null)} wide>
+          <MH title={playL.titulo||"Reproduzindo"} sub={playL.artista} onClose={()=>setPlayL(null)}/>
+          {getYTId(playL.ytUrl||"")?(
+            <>
+              <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000",borderRadius:12,overflow:"hidden"}}>
+                <iframe
+                  src={"https://www.youtube.com/embed/"+getYTId(playL.ytUrl)+"?autoplay=1&rel=0&playsinline=1"}
+                  title={playL.titulo}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}
+                />
+              </div>
+              <div style={{textAlign:"center",marginTop:10}}>
+                <a href={playL.ytUrl} target="_blank" rel="noopener noreferrer" style={{color:accent.accent,fontSize:12,textDecoration:"none",background:"rgba(255,255,255,0.05)",padding:"6px 14px",borderRadius:20,border:"1px solid rgba(255,255,255,0.1)"}}>
+                  🔗 Abrir no YouTube
+                </a>
+              </div>
+            </>
+          ):<p style={{color:"rgba(255,255,255,0.4)",textAlign:"center",padding:20}}>Link de vídeo não disponível</p>}
+        </Ovl>
+      )}
+
+      {/* Novo culto */}
+      {newCF&&(
+        <Ovl onClose={()=>setNCF(null)}>
+          <MH title="Novo Culto" onClose={()=>setNCF(null)}/>
+          <div style={{display:"flex",background:"rgba(255,255,255,0.04)",borderRadius:8,overflow:"hidden",marginBottom:12}}>
+            {["unico","campanha"].map(m=>(
+              <button key={m} onClick={()=>setNCF(p=>({...p,modo:m}))} style={{flex:1,padding:"8px",background:newCF.modo===m?`rgba(${accent.rgb},0.2)`:"transparent",border:"none",color:newCF.modo===m?accent.accent:"rgba(255,255,255,0.4)",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:newCF.modo===m?600:400}}>
+                {m==="unico"?"Culto Único":"Campanha / Série"}
+              </button>
+            ))}
+          </div>
+          <Fld label="Tipo" as="select" value={newCF.tipo} onChange={e=>setNCF(p=>({...p,tipo:e.target.value}))}>
+            {Object.entries(CC).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+          </Fld>
+          <Fld label="Data" type="date" value={newCF.data} onChange={e=>setNCF(p=>({...p,data:e.target.value}))}/>
+          <Fld label="Tema (opcional)" value={newCF.tema} onChange={e=>setNCF(p=>({...p,tema:e.target.value}))} placeholder="Ex: Gratidão"/>
+          {newCF.modo==="campanha"&&<>
+            <Fld label="Nome da Campanha" value={newCF.campanha} onChange={e=>setNCF(p=>({...p,campanha:e.target.value}))} placeholder="Ex: Semana de Oração"/>
+            <Fld label="Nº de semanas" as="select" value={newCF.repeticoes} onChange={e=>setNCF(p=>({...p,repeticoes:e.target.value}))}>
+              {[2,3,4,5,6,7,8].map(n=><option key={n} value={n}>{n} semanas</option>)}
+            </Fld>
+          </>}
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button style={bGhost} onClick={()=>setNCF(null)}>Cancelar</button>
+            <button style={bGold} onClick={doAddCulto}>Criar</button>
+          </div>
+        </Ovl>
+      )}
+
+      {/* Favoritos picker */}
+      {showFavPk&&sel&&(
+        <Ovl onClose={()=>setFavPk(false)}>
+          <MH title="Adicionar Favorito" onClose={()=>setFavPk(false)}/>
+          {favs.length===0&&<p style={{color:"rgba(255,255,255,0.35)",fontSize:13}}>Nenhum favorito ainda.</p>}
+          {favs.map(f=>(
+            <div key={f.id} onClick={()=>{ doAddLouvor(sel.id,f); setFavPk(false); }} className="pill" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,border:"1px solid rgba(255,255,255,0.07)",marginBottom:6,cursor:"pointer",background:"rgba(255,255,255,0.02)"}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2"}}>{f.titulo}</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{f.artista}</div>
+              </div>
+              <TomTag tom={f.tom}/>
+            </div>
+          ))}
+        </Ovl>
+      )}
+
+      {/* Editar cantor */}
+      {editCI!==null&&cantores[editCI]&&(
+        <Ovl onClose={()=>setEditCI(null)}>
+          <MH title="Editar Cantor" onClose={()=>setEditCI(null)}/>
+          <CantorModal cantor={cantores[editCI]} idx={editCI} cultos={cultos} onSave={saveCantorEdit} onDelete={deleteCantorAt} onClose={()=>setEditCI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger}/>
+        </Ovl>
+      )}
+
+      {/* Adicionar cantor */}
+      {showAddC&&(
+        <Ovl onClose={()=>setShowAddC(false)}>
+          <MH title="Novo Cantor" onClose={()=>setShowAddC(false)}/>
+          <Fld label="Nome" value={newCantN} placeholder="Nome do cantor" onChange={e=>setNewCantN(e.target.value)}/>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button style={bGhost} onClick={()=>setShowAddC(false)}>Cancelar</button>
+            <button style={bGold} onClick={()=>{ if(!newCantN.trim())return; setCantores(p=>[...p,mkCantor(newCantN.trim())]); setNewCantN(""); setShowAddC(false); showToast("Cantor adicionado ✓"); }}>Adicionar</button>
+          </div>
+        </Ovl>
+      )}
+
+      {/* Editar músico */}
+      {editMI!==null&&musicos[editMI]&&(
+        <Ovl onClose={()=>setEditMI(null)}>
+          <MH title="Editar Músico" onClose={()=>setEditMI(null)}/>
+          <MusicoModal musico={musicos[editMI]} idx={editMI} onSave={saveMusicoEdit} onDelete={deleteMusicoAt} onClose={()=>setEditMI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger}/>
+        </Ovl>
+      )}
+
+      {/* Adicionar músico */}
+      {showAddM&&(
+        <Ovl onClose={()=>setShowAddM(false)}>
+          <MH title="Novo Músico" onClose={()=>setShowAddM(false)}/>
+          <Fld label="Nome" value={newMusN} placeholder="Nome do músico" onChange={e=>setNewMusN(e.target.value)}/>
+          <Fld label="Instrumento" as="select" value={newMusInst} onChange={e=>setNewMusInst(e.target.value)}>
+            {["Bateria","Guitarra","Teclado","Contra Baixo","Violão","Baixo","Saxofone","Outro"].map(i=><option key={i}>{i}</option>)}
+          </Fld>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button style={bGhost} onClick={()=>setShowAddM(false)}>Cancelar</button>
+            <button style={bGold} onClick={()=>{ if(!newMusN.trim())return; const e=newMusInst==="Bateria"?"🥁":newMusInst==="Guitarra"?"🎸":newMusInst==="Teclado"?"🎹":"🎵"; setMusicos(p=>[...p,{id:uid(),nome:newMusN.trim(),instrumento:newMusInst,emoji:e}]); setNewMusN(""); setShowAddM(false); showToast("Músico adicionado ✓"); }}>Adicionar</button>
+          </div>
+        </Ovl>
+      )}
+
+      {/* Tema */}
+      {showTheme&&(
+        <Ovl onClose={()=>setShowTheme(false)}>
+          <MH title="Tema" onClose={()=>setShowTheme(false)}/>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}}>
+            {Object.entries(THEMES).map(([k,t])=>(
+              <button key={k} onClick={()=>{setThemeKey(k);setShowTheme(false);}} style={{padding:"12px",borderRadius:12,border:themeKey===k?`2px solid ${t.accent}`:"1px solid rgba(255,255,255,0.1)",background:themeKey===k?`rgba(${t.rgb},0.12)`:"rgba(255,255,255,0.03)",cursor:"pointer",fontFamily:"inherit"}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:t.accent,margin:"0 auto 8px"}}/>
+                <div style={{fontSize:12,color:"#EAE8F2",fontWeight:themeKey===k?700:400}}>{t.name}</div>
+              </button>
+            ))}
+          </div>
+        </Ovl>
+      )}
+
+      {/* Toast */}
+      {toast&&(
+        <div style={{position:"fixed",bottom:24,right:20,zIndex:9999,padding:"11px 18px",borderRadius:12,background:toast.ok?"rgba(76,175,125,0.97)":"rgba(224,123,138,0.97)",color:"#0F0F1A",fontWeight:700,fontSize:13,fontFamily:"inherit",boxShadow:"0 8px 28px rgba(0,0,0,0.5)",animation:"toastIn 0.25s ease"}}>
+          {toast.msg}
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
