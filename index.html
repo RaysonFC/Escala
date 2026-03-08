@@ -484,41 +484,56 @@ function App(){
   if(!fbReady) return(
     <div style={{minHeight:"100vh",background:"#0F0F1A",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0}}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;600&display=swap');
-        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.96)}}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-        @keyframes dotPulse{0%,80%,100%{transform:scale(0);opacity:0.3}40%{transform:scale(1);opacity:1}}
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400&display=swap');
+        @keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes fadeIn2{from{opacity:0}to{opacity:1}}
+        @keyframes spinRing{to{transform:rotate(360deg)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
       `}</style>
 
-      {/* Glow de fundo */}
-      <div style={{position:"fixed",top:"30%",left:"50%",transform:"translateX(-50%)",width:"60vw",height:"60vw",borderRadius:"50%",background:"radial-gradient(circle,rgba(201,168,76,0.08),transparent 65%)",pointerEvents:"none"}}/>
+      {/* Glow fundo */}
+      <div style={{position:"fixed",inset:0,background:"radial-gradient(ellipse at 50% 60%,rgba(201,168,76,0.05),transparent 65%)",pointerEvents:"none"}}/>
 
-      {/* Logo */}
-      <div style={{animation:"pulse 2s ease-in-out infinite",marginBottom:28}}>
-        <img src="icon.png" alt="Banda Aviva"
-          onError={e=>{ e.target.style.display="none"; e.target.nextSibling.style.display="flex"; }}
-          style={{width:100,height:100,borderRadius:22,objectFit:"cover",boxShadow:"0 0 40px rgba(201,168,76,0.25)"}}
-        />
-        <div style={{display:"none",width:100,height:100,borderRadius:22,background:"rgba(201,168,76,0.1)",border:"1px solid rgba(201,168,76,0.3)",alignItems:"center",justifyContent:"center",fontSize:40}}>✝</div>
+      {/* Círculo girando + texto dentro */}
+      <div style={{position:"relative",width:180,height:180,marginBottom:36,animation:"fadeIn2 0.8s ease"}}>
+
+        {/* Anel externo girando — degradê amarelo */}
+        <svg style={{position:"absolute",inset:0,animation:"spinRing 1.8s linear infinite"}} width="180" height="180" viewBox="0 0 180 180">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#C9A84C" stopOpacity="1"/>
+              <stop offset="40%" stopColor="#E8C96A" stopOpacity="0.9"/>
+              <stop offset="100%" stopColor="#C9A84C" stopOpacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle cx="90" cy="90" r="82" fill="none" stroke="url(#ringGrad)" strokeWidth="4" strokeLinecap="round" strokeDasharray="320 200"/>
+        </svg>
+
+        {/* Anel interno estático — sutil */}
+        <svg style={{position:"absolute",inset:0,opacity:0.12}} width="180" height="180" viewBox="0 0 180 180">
+          <circle cx="90" cy="90" r="82" fill="none" stroke="#C9A84C" strokeWidth="1"/>
+        </svg>
+
+        {/* Cruz centralizada */}
+        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{fontSize:36,color:"rgba(201,168,76,0.6)",fontWeight:300}}>✝</span>
+        </div>
       </div>
 
-      {/* Nome */}
-      <div style={{animation:"fadeIn 0.6s ease 0.2s both",textAlign:"center",marginBottom:8}}>
-        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",letterSpacing:0.5}}>Banda Aviva</div>
-        <div style={{fontSize:11,letterSpacing:3,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",marginTop:4}}>Ministério de Música</div>
+      {/* BANDA AVIVA */}
+      <div style={{animation:"fadeIn 0.7s ease 0.2s both",textAlign:"center",marginBottom:10}}>
+        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:32,fontWeight:700,fontStyle:"italic",color:"#FFFFFF",letterSpacing:2,lineHeight:1}}>
+          Banda Aviva
+        </div>
+        <div style={{width:40,height:1,background:"linear-gradient(90deg,transparent,#C9A84C,transparent)",margin:"10px auto 0"}}/>
       </div>
 
-      {/* Pontos animados */}
-      <div style={{animation:"fadeIn 0.6s ease 0.5s both",display:"flex",gap:7,marginTop:32}}>
-        {[0,1,2].map(i=>(
-          <div key={i} style={{width:8,height:8,borderRadius:"50%",background:"#C9A84C",animation:`dotPulse 1.4s ease-in-out ${i*0.16}s infinite`}}/>
-        ))}
+      {/* Carregando... */}
+      <div style={{animation:"fadeIn 0.7s ease 0.5s both",display:"flex",alignItems:"center",gap:8,marginTop:6}}>
+        <span style={{fontSize:12,color:"rgba(255,255,255,0.35)",letterSpacing:2,textTransform:"uppercase",fontFamily:"'DM Sans',sans-serif",fontWeight:300,animation:"pulse 1.8s ease-in-out infinite"}}>
+          carregando
+        </span>
       </div>
-
-      {/* Texto */}
-      <div style={{animation:"fadeIn 0.6s ease 0.8s both",fontSize:12,color:"rgba(255,255,255,0.2)",marginTop:16,letterSpacing:0.5}}>Carregando escala...</div>
     </div>
   );
     <div style={{minHeight:"100vh",background:"#0F0F1A",color:"#EAE8F2",fontFamily:"'DM Sans',system-ui,sans-serif"}}>
