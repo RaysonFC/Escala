@@ -1,4 +1,4 @@
-const CACHE = 'banda-aviva-v2';
+const CACHE = 'banda-aviva-v4';
 const ASSETS = [
   '/Escala/',
   '/Escala/index.html',
@@ -11,7 +11,6 @@ const ASSETS = [
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
 ];
 
-// Instala e faz cache dos arquivos principais
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll(ASSETS)).catch(()=>{})
@@ -19,7 +18,6 @@ self.addEventListener('install', e => {
   self.skipWaiting();
 });
 
-// Ativa e limpa caches antigos
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -29,21 +27,17 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Responde com cache se disponível, senão busca na rede
 self.addEventListener('fetch', e => {
-  // Ignora Firebase e YouTube (sempre online)
   if(e.request.url.includes('firestore') || 
      e.request.url.includes('googleapis') ||
      e.request.url.includes('youtube')) return;
 
+  // Sempre busca na rede primeiro, só usa cache se falhar
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      return cached || fetch(e.request).then(res => {
-        // Guarda no cache para próxima vez
-        const clone = res.clone();
-        caches.open(CACHE).then(cache => cache.put(e.request, clone));
-        return res;
-      }).catch(() => cached);
-    })
+    fetch(e.request).then(res => {
+      const clone = res.clone();
+      caches.open(CACHE).then(cache => cache.put(e.request, clone));
+      return res;
+    }).catch(() => caches.match(e.request))
   );
 });
