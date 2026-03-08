@@ -1,4 +1,4 @@
-const CACHE = 'banda-aviva-v2';
+const CACHE = 'banda-aviva-v3';
 const ASSETS = [
   '/Escala/',
   '/Escala/index.html',
