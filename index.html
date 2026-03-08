@@ -257,31 +257,53 @@ function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
 function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger}){
   const [nome,setNome]=useState(cantor.nome);
   const [emoji,setEmoji]=useState(cantor.emoji);
+  const [pickingEmoji,setPickingEmoji]=useState(false);
+  const [editingName,setEditingName]=useState(false);
   const historico=[...new Map(
     cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===cantor.nome))
     .map(l=>[l.titulo,l])
   ).values()];
+
+  // Modo picker de emoji
+  if(pickingEmoji) return(
+    <>
+      <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:14,textAlign:"center"}}>Toque no emoji para escolher</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center",marginBottom:16}}>
+        {EMOJIS.map(e=>(
+          <button key={e} onClick={()=>{setEmoji(e);setPickingEmoji(false);}} style={{fontSize:26,padding:8,borderRadius:10,border:"none",cursor:"pointer",background:emoji===e?"rgba("+accent.rgb+",0.3)":"rgba(255,255,255,0.05)",outline:emoji===e?"2px solid "+accent.accent:"none",transition:"all 0.1s"}}>{e}</button>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"center"}}>
+        <button style={bGhost} onClick={()=>setPickingEmoji(false)}>Cancelar</button>
+      </div>
+    </>
+  );
+
+  // Modo card normal
   return(
     <>
-      <div style={{display:"flex",alignItems:"center",gap:14,padding:14,background:"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:12}}>
-        <span style={{fontSize:40}}>{emoji}</span>
-        <div style={{fontSize:16,fontWeight:700,color:"#EAE8F2"}}>{nome||cantor.nome}</div>
-      </div>
-      <Fld label="Nome" value={nome} onChange={e=>setNome(e.target.value)}/>
-      <div style={{marginBottom:12}}>
-        <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>Emoji</label>
-        <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-          {EMOJIS.map(e=>(
-            <button key={e} onClick={()=>setEmoji(e)} style={{fontSize:20,padding:6,borderRadius:8,border:"none",cursor:"pointer",background:emoji===e?"rgba("+accent.rgb+",0.25)":"rgba(255,255,255,0.05)",outline:emoji===e?"2px solid "+accent.accent:"none"}}>{e}</button>
-          ))}
+      {/* Card visual do cantor */}
+      <div style={{background:"rgba(255,255,255,0.03)",borderRadius:14,padding:"20px 16px",marginBottom:16,textAlign:"center"}}>
+        {/* Emoji clicável */}
+        <div onClick={()=>setPickingEmoji(true)} style={{fontSize:56,cursor:"pointer",display:"inline-block",position:"relative",marginBottom:8}}>
+          {emoji}
+          <span style={{position:"absolute",bottom:0,right:-4,fontSize:14,background:"rgba(255,255,255,0.15)",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>✎</span>
         </div>
+        {/* Nome clicável */}
+        {editingName
+          ? <input autoFocus value={nome} onChange={e=>setNome(e.target.value)} onBlur={()=>setEditingName(false)} onKeyDown={e=>{if(e.key==="Enter")setEditingName(false);}} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"6px 12px",color:"#EAE8F2",fontSize:18,fontWeight:700,textAlign:"center",width:"100%",fontFamily:"inherit",outline:"none"}}/>
+          : <div onClick={()=>setEditingName(true)} style={{fontSize:18,fontWeight:700,color:"#EAE8F2",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6}}>
+              {nome} <span style={{fontSize:12,color:"rgba(255,255,255,0.3)"}}>✎</span>
+            </div>
+        }
+        <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:4}}>Toque no emoji ou nome para editar</div>
       </div>
 
       {/* Histórico de louvores */}
       {historico.length>0&&(
         <div style={{marginBottom:14}}>
-          <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>🎵 Histórico de Louvores</label>
-          <div style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:6,maxHeight:180,overflowY:"auto"}}>
+          <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>🎵 Louvores cantados</label>
+          <div style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
             {historico.map((l,i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:8,justifyContent:"space-between"}}>
                 <div style={{display:"flex",alignItems:"center",gap:6,overflow:"hidden"}}>
@@ -296,6 +318,9 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
             ))}
           </div>
         </div>
+      )}
+      {historico.length===0&&(
+        <p style={{textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:12,fontStyle:"italic",marginBottom:14}}>Sem louvores registrados ainda</p>
       )}
 
       <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
@@ -379,6 +404,7 @@ function App(){
   const [paste,setPaste]=useState("");
   // Novo louvor / culto
   const [newLF,setNLF]=useState(null);
+  const [editLF,setELF]=useState(null); // {cultoId, louvorId, louvor}
   const [newCF,setNCF]=useState(null);
   const [showFavPk,setFavPk]=useState(false);
 
@@ -453,6 +479,7 @@ function App(){
   const toggleLembrete=cid=>{ const c=getC(cid); if(!c)return; updC({...c,lembrete:!c.lembrete}); };
   const doDelCulto=cid=>{ setCultos(p=>p.filter(c=>c.id!==cid)); setSelId(null); setTab("calendario"); showToast("Culto removido",false); };
   const doAddLouvor=(cid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:[...c.louvores,{...l,id:uid()}]}); setNLF(null); showToast("Louvor adicionado ✓"); };
+  const doEditLouvor=(cid,lid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:c.louvores.map(x=>x.id===lid?{...x,...l}:x)}); setELF(null); showToast("Louvor atualizado ✓"); };
   const doRemLouvor=(cid,lid)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:c.louvores.filter(l=>l.id!==lid)}); };
   const moveLouvor=(cid,idx,dir)=>{ const c=getC(cid); if(!c)return; const arr=[...c.louvores]; const ni=idx+dir; if(ni<0||ni>=arr.length)return; [arr[idx],arr[ni]]=[arr[ni],arr[idx]]; updC({...c,louvores:arr}); };
   const isFav=l=>favs.some(f=>f.titulo===l.titulo&&f.artista===l.artista);
@@ -776,6 +803,7 @@ function App(){
                     </div>
                     <TomTag tom={l.tom}/>
                     {getYTId(l.ytUrl||"")&&<button onClick={()=>setPlayL(l)} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:16,padding:"3px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
+                    <button onClick={()=>setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}})} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",borderRadius:16,padding:"3px 8px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✎</button>
                     <button onClick={()=>moveLouvor(c.id,i,-1)} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===0}>▲</button>
                     <button onClick={()=>moveLouvor(c.id,i,1)} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===c.louvores.length-1}>▼</button>
                     <button onClick={()=>doRemLouvor(c.id,l.id)} style={{...bDanger,padding:"3px 8px",fontSize:11}}>✕</button>
@@ -864,6 +892,44 @@ function App(){
             </div>
           );
         })()}
+
+        {/* ── Modal editar louvor ── */}
+        {editLF&&(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,padding:"0 0 0 0"}} onClick={e=>{if(e.target===e.currentTarget)setELF(null);}}>
+            <div style={{background:"#1A1A2E",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div style={{fontSize:14,fontWeight:700,color:"#EAE8F2"}}>✎ Editar Louvor</div>
+                <button onClick={()=>setELF(null)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",borderRadius:"50%",width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>✕</button>
+              </div>
+              <Fld label="Título" value={editLF.louvor.titulo} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,titulo:e.target.value}}))} placeholder="Nome da música"/>
+              <Fld label="Artista" value={editLF.louvor.artista||""} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,artista:e.target.value}}))} placeholder="Nome do artista"/>
+              <Fld label="Link YouTube (opcional)" value={editLF.louvor.ytUrl||""} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,ytUrl:e.target.value}}))} placeholder="https://youtu.be/..."/>
+              <div style={{marginBottom:12}}>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TOM</label>
+                <select value={editLF.louvor.tom||""} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,tom:e.target.value}}))} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none"}}>
+                  <option value="">— Selecionar tom —</option>
+                  <optgroup label="── Maiores ──">
+                    {["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"].map(t=><option key={t} value={t}>{t}</option>)}
+                  </optgroup>
+                  <optgroup label="── Menores ──">
+                    {["Cm","C#m","Dbm","Dm","D#m","Ebm","Em","Fm","F#m","Gbm","Gm","G#m","Abm","Am","A#m","Bbm","Bm"].map(t=><option key={t} value={t}>{t}</option>)}
+                  </optgroup>
+                </select>
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>CANTOR(A)</label>
+                <select value={editLF.louvor.cantor||""} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,cantor:e.target.value}}))} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none"}}>
+                  <option value="">— Selecionar cantor —</option>
+                  {cantores.map(ct=><option key={ct.id} value={ct.nome}>{ct.emoji} {ct.nome}</option>)}
+                </select>
+              </div>
+              <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+                <button style={bGhost} onClick={()=>setELF(null)}>Cancelar</button>
+                <button style={bGold} onClick={()=>doEditLouvor(editLF.cultoId,editLF.louvorId,editLF.louvor)} disabled={!editLF.louvor.titulo.trim()}>Salvar</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ══ ESCALAS ══ */}
         {tab==="escala"&&(
