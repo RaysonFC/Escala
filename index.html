@@ -448,6 +448,7 @@ function App(){
   const [openLouvor,setOpenLouvor]=useState(null); // louvor id expandido
   const [transposeMap,setTransposeMap]=useState({}); // {louvorId: tomAtual}
   const [playerTranspose,setPlayerTranspose]=useState(0); // semitons no player
+  const [escalaFiltro,setEscalaFiltro]=useState(""); // filtro aba escalas
 
   const loaded=useRef({cant:false,mus:false,cult:false,favs:false});
   const fromFb=useRef({cant:false,mus:false,cult:false,favs:false});
@@ -517,7 +518,31 @@ function App(){
   // Ações culto
   const toggleCantor=(cid,nome)=>{ const c=getC(cid); if(!c)return; updC({...c,cantores:c.cantores.includes(nome)?c.cantores.filter(n=>n!==nome):[...c.cantores,nome]}); };
   const toggleMusico=(cid,nome)=>{ const c=getC(cid); if(!c)return; const ms=c.musicos||[]; updC({...c,musicos:ms.includes(nome)?ms.filter(n=>n!==nome):[...ms,nome]}); };
-  const toggleLembrete=cid=>{ const c=getC(cid); if(!c)return; updC({...c,lembrete:!c.lembrete}); };
+  const toggleLembrete=async cid=>{
+    const c=getC(cid); if(!c)return;
+    const novoVal=!c.lembrete;
+    if(novoVal && "Notification" in window){
+      const perm=await Notification.requestPermission();
+      if(perm==="granted"){
+        // Agendar notificação via check diário
+        const d=new Date(c.data+"T08:00");
+        const agora=new Date();
+        const diff=d-agora;
+        if(diff>0&&diff<86400000*2){
+          setTimeout(()=>{
+            new Notification("🔔 Banda Aviva",{body:`Culto hoje: ${CC[c.tipo].label} — ${fmtDate(c.data)}`,icon:"https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png"});
+          },Math.max(0,diff));
+        }
+        showToast("🔔 Lembrete ativado!");
+      } else {
+        showToast("Permita notificações no navegador");
+        return;
+      }
+    } else if(!novoVal){
+      showToast("🔕 Lembrete removido");
+    }
+    updC({...c,lembrete:novoVal});
+  };
   const doDelCulto=cid=>{ setCultos(p=>p.filter(c=>c.id!==cid)); setSelId(null); setTab("calendario"); showToast("Culto removido",false); };
   const doSaveEditCulto=ec=>{ updC(ec); setEditCulto(null); showToast("Culto atualizado ✓"); };
   const doAddLouvor=(cid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:[...c.louvores,{...l,id:uid()}]}); setNLF(null); showToast("Louvor adicionado ✓"); };
@@ -723,6 +748,49 @@ function App(){
               <button style={bGold} onClick={()=>setNCF({data:today,tipo:"domingo",modo:"unico",tema:"",campanha:"",repeticoes:4})}>+ Novo Culto</button>
             </div>
 
+            {/* Escala da semana */}
+            {(()=>{
+              const now=new Date(today);
+              const diaSemana=now.getDay();
+              const inicioSemana=new Date(now); inicioSemana.setDate(now.getDate()-diaSemana);
+              const fimSemana=new Date(inicioSemana); fimSemana.setDate(inicioSemana.getDate()+6);
+              const fmt=d=>d.toISOString().split("T")[0];
+              const cultosSemanais=cultos.filter(c=>c.data>=fmt(inicioSemana)&&c.data<=fmt(fimSemana)).sort((a,b)=>a.data.localeCompare(b.data));
+              if(!cultosSemanais.length) return null;
+              return(
+                <div style={{background:"#161625",border:`1px solid rgba(${accent.rgb},0.2)`,borderRadius:14,padding:16,marginBottom:20}}>
+                  <div style={{fontSize:10,letterSpacing:2,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:12}}>📅 ESTA SEMANA</div>
+                  {cultosSemanais.map(c=>{
+                    const cf=CC[c.tipo];
+                    const temCantores=c.cantores.length>0;
+                    const temMusicos=(c.musicos||[]).length>0;
+                    const temLouvores=c.louvores.length>0;
+                    const completo=temCantores&&temMusicos&&temLouvores;
+                    return(
+                      <div key={c.id} onClick={()=>{setSelId(c.id);setTab("culto");}} className="ccard" style={{background:"rgba(255,255,255,0.03)",border:`1px solid rgba(${cf.rgb},0.2)`,borderLeft:`3px solid ${cf.color}`,borderRadius:10,padding:"12px 14px",marginBottom:8,cursor:"pointer",transition:"all 0.15s"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                              <span style={{fontSize:11,fontWeight:700,color:cf.color,textTransform:"uppercase",letterSpacing:1}}>{cf.short}</span>
+                              <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{fmtDate(c.data)}</span>
+                              {daysUntil(c.data)&&<span style={{fontSize:10,fontWeight:700,color:daysUntil(c.data)==="Hoje"?"#6BBFA3":daysUntil(c.data)==="Amanhã"?accent.accent:"rgba(255,255,255,0.4)"}}>{daysUntil(c.data)}</span>}
+                            </div>
+                            {c.tema&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontStyle:"italic",marginBottom:4}}>📖 {c.tema}</div>}
+                            <div style={{display:"flex",gap:8,flexWrap:"wrap",fontSize:11}}>
+                              {c.cantores.length>0&&<span style={{color:"rgba(255,255,255,0.5)"}}>🎤 {c.cantores.join(", ")}</span>}
+                              {(c.musicos||[]).length>0&&<span style={{color:"rgba(255,255,255,0.4)"}}>🎸 {musicos.filter(m=>(c.musicos||[]).includes(m.nome)).map(m=>m.emoji).join("")}</span>}
+                            </div>
+                            {c.louvores.length>0&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:4}}>🎵 {c.louvores.length} louvor{c.louvores.length!==1?"es":""}: {c.louvores.slice(0,3).map(l=>l.titulo).join(" · ")}{c.louvores.length>3?"...":""}</div>}
+                          </div>
+                          <span style={{fontSize:14,flexShrink:0}}>{completo?"✅":"⚠️"}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
             {/* Próximos */}
             {proximos.length>0&&(
               <div style={{marginBottom:20}}>
@@ -790,9 +858,55 @@ function App(){
                       <div onClick={()=>setEditCulto({...c})} style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginTop:6,cursor:"pointer",fontStyle:"italic"}}>Toque em ✎ para adicionar tema...</div>
                     )}
                   </div>
+                  {/* Indicador completo/incompleto */}
+                  {(()=>{
+                    const temCantores=c.cantores.length>0;
+                    const temMusicos=(c.musicos||[]).length>0;
+                    const temLouvores=c.louvores.length>0;
+                    const completo=temCantores&&temMusicos&&temLouvores;
+                    const parcial=(temCantores||temMusicos||temLouvores)&&!completo;
+                    if(!completo) return(
+                      <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                        {[["🎤 Cantores",temCantores],["🎸 Músicos",temMusicos],["🎵 Louvores",temLouvores]].map(([label,ok])=>(
+                          <span key={label} style={{fontSize:10,padding:"2px 8px",borderRadius:20,background:ok?"rgba(107,191,163,0.1)":"rgba(224,123,138,0.1)",border:ok?"1px solid rgba(107,191,163,0.3)":"1px solid rgba(224,123,138,0.3)",color:ok?"#6BBFA3":"#E07B8A",fontWeight:600}}>{ok?"✓":"○"} {label}</span>
+                        ))}
+                      </div>
+                    );
+                    return <div style={{fontSize:10,color:"#6BBFA3",marginBottom:10,fontWeight:600}}>✅ Escala completa</div>;
+                  })()}
                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                     <button onClick={()=>setEditCulto({...c})} style={{...bGhost,padding:"6px 12px",fontSize:13}} title="Editar culto">✎</button>
-                    <button onClick={()=>toggleLembrete(c.id)} style={{...bGhost,padding:"6px 12px",fontSize:12}}>{c.lembrete?"🔔":"🔕"}</button>
+                    <button onClick={()=>toggleLembrete(c.id)} style={{...bGhost,padding:"6px 12px",fontSize:12}} title={c.lembrete?"Lembrete ativo":"Ativar lembrete"}>{c.lembrete?"🔔":"🔕"}</button>
+                    <button onClick={()=>{
+                      const novo={...c,id:"c"+Date.now(),data:c.data,campanha:c.campanha?(c.campanha+" (cópia)"):"",louvores:c.louvores.map(l=>({...l,id:"l"+Date.now()+Math.random()}))};
+                      setCultos(p=>[...p,novo]); showToast("Culto duplicado ✓");
+                    }} style={{...bGhost,padding:"6px 12px",fontSize:12}} title="Duplicar culto">⎘</button>
+                    <button onClick={()=>{
+                      const linhas=[];
+                      linhas.push(`*${CC[c.tipo].label} — ${fmtDate(c.data)}*`);
+                      if(c.tema) linhas.push(`📖 ${c.tema}`);
+                      if(c.campanha) linhas.push(`🔥 ${c.campanha}`);
+                      linhas.push("");
+                      if(c.cantores.length) linhas.push(`🎤 *Cantores:* ${c.cantores.join(", ")}`);
+                      if((c.musicos||[]).length){
+                        const mNomes=musicos.filter(m=>(c.musicos||[]).includes(m.nome)).map(m=>m.emoji+" "+m.nome+" ("+m.instrumento+")");
+                        linhas.push(`🎸 *Músicos:* ${mNomes.join(", ")}`);
+                      }
+                      if(c.louvores.length){
+                        linhas.push("");
+                        linhas.push("🎵 *Louvores:*");
+                        c.louvores.forEach((l,i)=>{
+                          let linha=`${i+1}. ${l.titulo}`;
+                          if(l.artista) linha+=` — ${l.artista}`;
+                          if(l.tom) linha+=` *(${l.tom})*`;
+                          if(l.cantor) linha+=` 🎤${l.cantor}`;
+                          linhas.push(linha);
+                        });
+                      }
+                      if(c.obs){ linhas.push(""); linhas.push(`📝 ${c.obs}`); }
+                      const texto=linhas.join("\n");
+                      window.open("https://wa.me/?text="+encodeURIComponent(texto),"_blank");
+                    }} style={{...bGold,padding:"6px 12px",fontSize:12,boxShadow:"none"}} title="Compartilhar no WhatsApp">📤 WhatsApp</button>
                     <button onClick={()=>doDelCulto(c.id)} style={{...bDanger,padding:"6px 12px"}}>🗑</button>
                   </div>
                 </div>
@@ -841,6 +955,7 @@ function App(){
                 {c.louvores.length===0&&<p style={{color:"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Nenhum louvor adicionado</p>}
                 {c.louvores.map((l,i)=>{
                   const isOpen=openLouvor===l.id;
+                  const vidOpen=openLouvor===("vid_"+l.id);
                   const escaladosCulto=musicos.filter(mt=>(c.musicos||[]).includes(mt.nome));
                   const listaMus=escaladosCulto.length>0?escaladosCulto:musicos;
                   const selMus=l.musicos||[];
@@ -876,8 +991,14 @@ function App(){
                   return(
                     <div key={l.id} style={{borderBottom:"1px solid rgba(255,255,255,0.05)",overflow:"hidden"}}>
                       {/* Linha clicável */}
-                      <div onClick={()=>{ setOpenLouvor(isOpen?null:l.id); if(!isOpen) setTransposeMap(p=>({...p,[l.id]:l.tom||""})); }} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",cursor:"pointer"}}>
+                      <div
+                        draggable
+                        onDragStart={e=>{ e.dataTransfer.setData("louvorIdx",String(i)); e.dataTransfer.setData("cultoId",c.id); }}
+                        onDragOver={e=>e.preventDefault()}
+                        onDrop={e=>{ e.preventDefault(); const from=parseInt(e.dataTransfer.getData("louvorIdx")); const cid=e.dataTransfer.getData("cultoId"); if(cid!==c.id||from===i)return; const cult=getC(c.id); if(!cult)return; const arr=[...cult.louvores]; const [moved]=arr.splice(from,1); arr.splice(i,0,moved); updC({...cult,louvores:arr}); }}
+                        onClick={()=>{ setOpenLouvor(isOpen?null:l.id); if(!isOpen) setTransposeMap(p=>({...p,[l.id]:l.tom||""})); }} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",cursor:"grab"}}>
                         <span style={{fontSize:12,color:"rgba(255,255,255,0.3)",minWidth:16,flexShrink:0}}>{i+1}</span>
+                        <span style={{color:"rgba(255,255,255,0.15)",fontSize:14,flexShrink:0,cursor:"grab"}}>⠿</span>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</div>
                           <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",display:"flex",gap:4,alignItems:"center",flexWrap:"wrap",marginTop:2}}>
@@ -889,14 +1010,31 @@ function App(){
                         </div>
                         <TomTag tom={l.tom}/>
                         <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
-                          {getYTId(l.ytUrl||"")&&<button onClick={e=>{e.stopPropagation();setPlayL(l);}} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:16,padding:"3px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
+                          {getYTId(l.ytUrl||"")&&<button onClick={e=>{e.stopPropagation();setOpenLouvor(vidOpen?null:"vid_"+l.id);}} style={{background:vidOpen?"rgba(204,0,0,0.25)":"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:16,padding:"3px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{vidOpen?"■":"▶"}</button>}
                           <button onClick={e=>{e.stopPropagation();setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}});}} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",borderRadius:16,padding:"3px 8px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✎</button>
-                          <button onClick={e=>{e.stopPropagation();moveLouvor(c.id,i,-1);}} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===0}>▲</button>
-                          <button onClick={e=>{e.stopPropagation();moveLouvor(c.id,i,1);}} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===c.louvores.length-1}>▼</button>
                           <button onClick={e=>{e.stopPropagation();doRemLouvor(c.id,l.id);}} style={{...bDanger,padding:"3px 8px",fontSize:11}}>✕</button>
                           <span style={{color:"rgba(255,255,255,0.25)",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(180deg)":"none"}}>▾</span>
                         </div>
                       </div>
+
+                      {/* Player inline */}
+                      {vidOpen&&getYTId(l.ytUrl||"")&&(
+                        <div style={{borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+                          <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000"}}>
+                            <iframe src={"https://www.youtube.com/embed/"+getYTId(l.ytUrl)+"?autoplay=1&rel=0&playsinline=1"} title={l.titulo} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}/>
+                          </div>
+                          <div style={{background:"rgba(0,0,0,0.5)",padding:"8px 14px",display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"}}>
+                            <button onClick={()=>setPlayerTranspose(p=>p-1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                            <div style={{textAlign:"center",flex:1}}>
+                              <div style={{fontSize:20,fontWeight:700,color:playerTranspose!==0?accent.accent:"rgba(255,255,255,0.4)",lineHeight:1}}>{playerTranspose>0?"+"+playerTranspose:playerTranspose}</div>
+                              <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",letterSpacing:1}}>{playerTranspose!==0?(playerTranspose>0?"semitons acima":"semitons abaixo"):"tom original"}</div>
+                              {l.tom&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>ref: <span style={{color:accent.accent,fontWeight:700}}>{l.tom}</span></div>}
+                            </div>
+                            <button onClick={()=>setPlayerTranspose(p=>p+1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                            {playerTranspose!==0&&<button onClick={()=>setPlayerTranspose(0)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>↺</button>}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Painel expandido */}
                       {isOpen&&(
@@ -940,6 +1078,13 @@ function App(){
                             })}
                           </div>
                           {escaladosCulto.length===0&&<div style={{fontSize:10,color:"rgba(255,255,255,0.2)",fontStyle:"italic",marginBottom:10}}>Escale músicos no culto para filtrar aqui</div>}
+
+                          {/* Cifra Club link */}
+                          <div style={{marginBottom:12}}>
+                            <a href={"https://www.cifraclub.com.br/pesquisar/?q="+encodeURIComponent((l.titulo||"")+" "+(l.artista||""))} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:11,color:"rgba(255,255,255,0.45)",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"5px 10px",textDecoration:"none",transition:"all 0.15s"}}>
+                              🎸 Buscar cifra no Cifra Club
+                            </a>
+                          </div>
                           <div style={{display:"flex",gap:8,justifyContent:"flex-end",paddingRight:4}}>
                             <button onClick={()=>{setOpenLouvor(null);setTransposeMap(p=>({...p,[l.id]:l.tom}));}} style={{...bGhost,padding:"6px 14px",fontSize:12}}>Cancelar</button>
                             <button onClick={salvar} style={{...bGold,padding:"6px 16px",fontSize:12}}>Salvar ✓</button>
@@ -1174,12 +1319,18 @@ function App(){
         {/* ══ ESCALAS ══ */}
         {tab==="escala"&&(
           <div style={{animation:"fadeUp 0.3s ease"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:20,flexWrap:"wrap",gap:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:16,flexWrap:"wrap",gap:12}}>
               <div>
                 <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Ministério de Música</div>
                 <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",margin:0}}>Escalas</h1>
               </div>
               <button style={bGold} onClick={()=>setShowAddC(true)}>+ Cantor</button>
+            </div>
+            {/* Busca */}
+            <div style={{display:"flex",background:"#161625",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,overflow:"hidden",marginBottom:20}}>
+              <span style={{padding:"0 12px",color:"rgba(255,255,255,0.3)",display:"flex",alignItems:"center"}}>🔍</span>
+              <input value={escalaFiltro||""} onChange={e=>setEscalaFiltro(e.target.value)} placeholder="Buscar cantor, músico ou louvor..." style={{flex:1,background:"transparent",border:"none",color:"#EAE8F2",padding:"11px 0",fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+              {escalaFiltro&&<button onClick={()=>setEscalaFiltro("")} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",padding:"0 12px",cursor:"pointer",fontSize:16}}>✕</button>}
             </div>
 
             {/* Cantores */}
@@ -1240,7 +1391,14 @@ function App(){
             {/* Colunas por tipo */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(210px,1fr))",gap:12}}>
               {Object.entries(CC).map(([tipo,cf])=>{
-                const cs=cultos.filter(c=>c.tipo===tipo).sort((a,b)=>a.data.localeCompare(b.data));
+                const cs=cultos.filter(c=>c.tipo===tipo).sort((a,b)=>a.data.localeCompare(b.data)).filter(c=>{
+                  if(!escalaFiltro)return true;
+                  const f=escalaFiltro.toLowerCase();
+                  return c.cantores.some(n=>n.toLowerCase().includes(f))||
+                    (c.musicos||[]).some(n=>n.toLowerCase().includes(f))||
+                    c.louvores.some(l=>l.titulo.toLowerCase().includes(f)||l.artista?.toLowerCase().includes(f))||
+                    fmtDate(c.data).toLowerCase().includes(f);
+                });
                 return(
                   <div key={tipo} style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderTop:`3px solid ${cf.color}`,borderRadius:14,padding:14}}>
                     <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,fontWeight:700,color:cf.color,marginBottom:10}}>{cf.label}</div>
