@@ -410,6 +410,7 @@ function App(){
   const [showFavPk,setFavPk]=useState(false);
   const [openLouvor,setOpenLouvor]=useState(null); // louvor id expandido
   const [transposeMap,setTransposeMap]=useState({}); // {louvorId: tomAtual}
+  const [playerTranspose,setPlayerTranspose]=useState(0); // semitons no player
 
   const loaded=useRef({cant:false,mus:false,cult:false,favs:false});
   const fromFb=useRef({cant:false,mus:false,cult:false,favs:false});
@@ -1324,8 +1325,8 @@ function App(){
 
       {/* Player YouTube */}
       {playL&&(
-        <Ovl onClose={()=>setPlayL(null)} wide>
-          <MH title={playL.titulo||"Reproduzindo"} sub={playL.artista} onClose={()=>setPlayL(null)}/>
+        <Ovl onClose={()=>{setPlayL(null);setPlayerTranspose(0);}} wide>
+          <MH title={playL.titulo||"Reproduzindo"} sub={playL.artista} onClose={()=>{setPlayL(null);setPlayerTranspose(0);}}/>
           {getYTId(playL.ytUrl||"")?(
             <>
               <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000",borderRadius:12,overflow:"hidden"}}>
@@ -1337,6 +1338,59 @@ function App(){
                   style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}
                 />
               </div>
+
+              {/* Transpose no player */}
+              {(()=>{
+                const TONS_MAJ=["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
+                const TONS_MIN=["Cm","C#m","Dbm","Dm","D#m","Ebm","Em","Fm","F#m","Gbm","Gm","G#m","Abm","Am","A#m","Bbm","Bm"];
+                const tomOriginal=playL.tom||"";
+                const isMin=tomOriginal.endsWith("m");
+                const lista=isMin?TONS_MIN:TONS_MAJ;
+                const idxOriginal=lista.indexOf(tomOriginal);
+                const idxAtual=idxOriginal>=0?(idxOriginal+playerTranspose+lista.length*12)%lista.length:-1;
+                const tomAtual=idxOriginal>=0?lista[idxAtual]:"";
+                const mudou=playerTranspose!==0;
+
+                const salvarNoPlayer=()=>{
+                  if(!mudou||!tomAtual)return;
+                  // Salva em todos os cultos que tiverem esse louvor
+                  const novosCultos=cultos.map(cu=>({
+                    ...cu,
+                    louvores:cu.louvores.map(x=>x.id===playL.id?{...x,tom:tomAtual}:x)
+                  }));
+                  setCultos(novosCultos);
+                  fbSet("cultos",novosCultos);
+                  setPlayL(p=>({...p,tom:tomAtual}));
+                  setPlayerTranspose(0);
+                  showToast("Tom salvo: "+tomAtual+" ✓");
+                };
+
+                return(
+                  <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:"14px 16px",marginTop:12}}>
+                    <div style={{fontSize:9,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:10,textAlign:"center"}}>🎵 Transpose</div>
+                    <div style={{display:"flex",alignItems:"center",gap:12,justifyContent:"center",marginBottom:10}}>
+                      <button onClick={()=>setPlayerTranspose(p=>p-1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:12,width:44,height:44,fontSize:22,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                      <div style={{textAlign:"center",minWidth:80}}>
+                        {tomOriginal?(
+                          <>
+                            <div style={{fontSize:28,fontWeight:700,color:mudou?accent.accent:"#EAE8F2",letterSpacing:1}}>{tomAtual||tomOriginal}</div>
+                            {mudou&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>original: {tomOriginal}</div>}
+                            {!mudou&&<div style={{fontSize:10,color:"rgba(255,255,255,0.25)"}}>tom original</div>}
+                          </>
+                        ):(
+                          <div style={{fontSize:13,color:"rgba(255,255,255,0.3)"}}>sem tom definido</div>
+                        )}
+                      </div>
+                      <button onClick={()=>setPlayerTranspose(p=>p+1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:12,width:44,height:44,fontSize:22,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                    </div>
+                    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+                      {mudou&&<button onClick={()=>setPlayerTranspose(0)} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.4)",borderRadius:10,padding:"5px 14px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↺ Original</button>}
+                      {mudou&&tomAtual&&<button onClick={salvarNoPlayer} style={{...bGold,padding:"5px 16px",fontSize:12}}>Salvar {tomAtual} ✓</button>}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div style={{textAlign:"center",marginTop:10}}>
                 <a href={playL.ytUrl} target="_blank" rel="noopener noreferrer" style={{color:accent.accent,fontSize:12,textDecoration:"none",background:"rgba(255,255,255,0.05)",padding:"6px 14px",borderRadius:20,border:"1px solid rgba(255,255,255,0.1)"}}>
                   🔗 Abrir no YouTube
