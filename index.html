@@ -405,6 +405,7 @@ function App(){
   // Novo louvor / culto
   const [newLF,setNLF]=useState(null);
   const [editLF,setELF]=useState(null); // {cultoId, louvorId, louvor}
+  const [editCulto,setEditCulto]=useState(null);
   const [newCF,setNCF]=useState(null);
   const [showFavPk,setFavPk]=useState(false);
 
@@ -478,6 +479,7 @@ function App(){
   const toggleMusico=(cid,nome)=>{ const c=getC(cid); if(!c)return; const ms=c.musicos||[]; updC({...c,musicos:ms.includes(nome)?ms.filter(n=>n!==nome):[...ms,nome]}); };
   const toggleLembrete=cid=>{ const c=getC(cid); if(!c)return; updC({...c,lembrete:!c.lembrete}); };
   const doDelCulto=cid=>{ setCultos(p=>p.filter(c=>c.id!==cid)); setSelId(null); setTab("calendario"); showToast("Culto removido",false); };
+  const doSaveEditCulto=ec=>{ updC(ec); setEditCulto(null); showToast("Culto atualizado ✓"); };
   const doAddLouvor=(cid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:[...c.louvores,{...l,id:uid()}]}); setNLF(null); showToast("Louvor adicionado ✓"); };
   const doEditLouvor=(cid,lid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:c.louvores.map(x=>x.id===lid?{...x,...l}:x)}); setELF(null); showToast("Louvor atualizado ✓"); };
   const doRemLouvor=(cid,lid)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:c.louvores.filter(l=>l.id!==lid)}); };
@@ -738,12 +740,18 @@ function App(){
               {/* Header culto */}
               <div style={{background:"#161625",border:`1px solid rgba(${cf.rgb},0.2)`,borderTop:`3px solid ${cf.color}`,borderRadius:14,padding:18,marginBottom:14}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
-                  <div>
+                  <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:10,letterSpacing:2,color:cf.color,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>{cf.label}</div>
                     <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,fontWeight:700,color:"#EAE8F2"}}>{fmtDate(c.data)}</div>
+                    {c.tema&&<div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:6,fontStyle:"italic"}}>📖 {c.tema}</div>}
                     {c.campanha&&<div style={{fontSize:12,color:cf.color,fontWeight:700,marginTop:4}}>🔥 {c.campanha}</div>}
+                    {c.obs&&<div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:4}}>{c.obs}</div>}
+                    {!c.tema&&!c.campanha&&(
+                      <div onClick={()=>setEditCulto({...c})} style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginTop:6,cursor:"pointer",fontStyle:"italic"}}>Toque em ✎ para adicionar tema...</div>
+                    )}
                   </div>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    <button onClick={()=>setEditCulto({...c})} style={{...bGhost,padding:"6px 12px",fontSize:13}} title="Editar culto">✎</button>
                     <button onClick={()=>toggleLembrete(c.id)} style={{...bGhost,padding:"6px 12px",fontSize:12}}>{c.lembrete?"🔔":"🔕"}</button>
                     <button onClick={()=>doDelCulto(c.id)} style={{...bDanger,padding:"6px 12px"}}>🗑</button>
                   </div>
@@ -926,6 +934,55 @@ function App(){
               <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
                 <button style={bGhost} onClick={()=>setELF(null)}>Cancelar</button>
                 <button style={bGold} onClick={()=>doEditLouvor(editLF.cultoId,editLF.louvorId,editLF.louvor)} disabled={!editLF.louvor.titulo.trim()}>Salvar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal editar culto ── */}
+        {editCulto&&(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200}} onClick={e=>{if(e.target===e.currentTarget)setEditCulto(null);}}>
+            <div style={{background:"#1A1A2E",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div style={{fontSize:14,fontWeight:700,color:"#EAE8F2"}}>✎ Editar Culto</div>
+                <button onClick={()=>setEditCulto(null)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",borderRadius:"50%",width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>✕</button>
+              </div>
+
+              {/* Data */}
+              <div style={{marginBottom:12}}>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>DATA</label>
+                <input type="date" value={editCulto.data} onChange={e=>setEditCulto(p=>({...p,data:e.target.value}))} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none",colorScheme:"dark"}}/>
+              </div>
+
+              {/* Tipo */}
+              <div style={{marginBottom:12}}>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TIPO</label>
+                <select value={editCulto.tipo} onChange={e=>setEditCulto(p=>({...p,tipo:e.target.value}))} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none"}}>
+                  {Object.entries(CC).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+
+              {/* Tema */}
+              <div style={{marginBottom:12}}>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TEMA</label>
+                <input value={editCulto.tema||""} onChange={e=>setEditCulto(p=>({...p,tema:e.target.value}))} placeholder="Ex: A graça de Deus" style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none"}}/>
+              </div>
+
+              {/* Campanha */}
+              <div style={{marginBottom:12}}>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>CAMPANHA</label>
+                <input value={editCulto.campanha||""} onChange={e=>setEditCulto(p=>({...p,campanha:e.target.value}))} placeholder="Ex: Campanha de Oração" style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none"}}/>
+              </div>
+
+              {/* Observações */}
+              <div style={{marginBottom:20}}>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>OBSERVAÇÕES</label>
+                <textarea value={editCulto.obs||""} onChange={e=>setEditCulto(p=>({...p,obs:e.target.value}))} placeholder="Anotações gerais..." rows={3} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none",resize:"vertical"}}/>
+              </div>
+
+              <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+                <button style={bGhost} onClick={()=>setEditCulto(null)}>Cancelar</button>
+                <button style={bGold} onClick={()=>doSaveEditCulto(editCulto)}>Salvar</button>
               </div>
             </div>
           </div>
