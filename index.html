@@ -408,6 +408,7 @@ function App(){
   const [editCulto,setEditCulto]=useState(null);
   const [newCF,setNCF]=useState(null);
   const [showFavPk,setFavPk]=useState(false);
+  const [openLouvor,setOpenLouvor]=useState(null); // louvor id expandido
 
   const loaded=useRef({cant:false,mus:false,cult:false,favs:false});
   const fromFb=useRef({cant:false,mus:false,cult:false,favs:false});
@@ -799,24 +800,71 @@ function App(){
                   </div>
                 </div>
                 {c.louvores.length===0&&<p style={{color:"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Nenhum louvor adicionado</p>}
-                {c.louvores.map((l,i)=>(
-                  <div key={l.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-                    <span style={{fontSize:12,color:"rgba(255,255,255,0.3)",minWidth:16}}>{i+1}</span>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",display:"flex",gap:6,alignItems:"center"}}>
-                        <span>{l.artista}</span>
-                        {l.cantor&&<span style={{color:accent.accent,fontWeight:600}}>· {l.cantor}</span>}
+                {c.louvores.map((l,i)=>{
+                  const isOpen=openLouvor===l.id;
+                  const escaladosCulto=musicos.filter(mt=>(c.musicos||[]).includes(mt.nome));
+                  const listaMus=escaladosCulto.length>0?escaladosCulto:musicos;
+                  const selMus=l.musicos||[];
+                  const toggleMusLouvor=nome=>{
+                    const nova=selMus.includes(nome)?selMus.filter(n=>n!==nome):[...selMus,nome];
+                    const cult=getC(c.id); if(!cult)return;
+                    updC({...cult,louvores:cult.louvores.map(x=>x.id===l.id?{...x,musicos:nova}:x)});
+                  };
+                  const salvarMusicos=()=>{ showToast("Músicos salvos ✓"); setOpenLouvor(null); };
+                  return(
+                    <div key={l.id} style={{borderBottom:"1px solid rgba(255,255,255,0.05)",overflow:"hidden"}}>
+                      {/* Linha clicável */}
+                      <div onClick={()=>setOpenLouvor(isOpen?null:l.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",cursor:"pointer"}}>
+                        <span style={{fontSize:12,color:"rgba(255,255,255,0.3)",minWidth:16,flexShrink:0}}>{i+1}</span>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",display:"flex",gap:4,alignItems:"center",flexWrap:"wrap",marginTop:2}}>
+                            {l.cantor&&<span style={{color:accent.accent,fontWeight:600}}>🎤 {l.cantor}</span>}
+                            {selMus.length>0&&<span style={{color:"rgba(107,191,163,0.85)"}}>
+                              · {selMus.map(nm=>{const mt=musicos.find(m=>m.nome===nm); return mt?mt.emoji+" "+nm:nm;}).join("  ")}
+                            </span>}
+                          </div>
+                        </div>
+                        <TomTag tom={l.tom}/>
+                        <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
+                          {getYTId(l.ytUrl||"")&&<button onClick={e=>{e.stopPropagation();setPlayL(l);}} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:16,padding:"3px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
+                          <button onClick={e=>{e.stopPropagation();setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}});}} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",borderRadius:16,padding:"3px 8px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✎</button>
+                          <button onClick={e=>{e.stopPropagation();moveLouvor(c.id,i,-1);}} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===0}>▲</button>
+                          <button onClick={e=>{e.stopPropagation();moveLouvor(c.id,i,1);}} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===c.louvores.length-1}>▼</button>
+                          <button onClick={e=>{e.stopPropagation();doRemLouvor(c.id,l.id);}} style={{...bDanger,padding:"3px 8px",fontSize:11}}>✕</button>
+                          <span style={{color:"rgba(255,255,255,0.25)",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(180deg)":"none"}}>▾</span>
+                        </div>
                       </div>
+
+                      {/* Painel expandido — seleção de músicos */}
+                      {isOpen&&(
+                        <div style={{padding:"8px 0 14px 22px",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
+                          <div style={{fontSize:9,letterSpacing:1.5,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",marginBottom:8}}>Músicos nesta música</div>
+                          <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:12}}>
+                            {listaMus.map(mt=>{
+                              const on=selMus.includes(mt.nome);
+                              return(
+                                <button key={mt.id} onClick={()=>toggleMusLouvor(mt.nome)} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:9,border:on?"1px solid rgba(107,191,163,0.5)":"1px solid rgba(255,255,255,0.07)",background:on?"rgba(107,191,163,0.1)":"rgba(255,255,255,0.02)",cursor:"pointer",fontFamily:"inherit",textAlign:"left",transition:"all 0.15s"}}>
+                                  <span style={{fontSize:18}}>{mt.emoji}</span>
+                                  <div style={{flex:1}}>
+                                    <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":"#EAE8F2"}}>{mt.nome}</div>
+                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
+                                  </div>
+                                  <span style={{fontSize:14,color:on?"#6BBFA3":"rgba(255,255,255,0.2)",fontWeight:700}}>{on?"✓":"+"}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {escaladosCulto.length===0&&<div style={{fontSize:10,color:"rgba(255,255,255,0.2)",fontStyle:"italic",marginBottom:10}}>Escale músicos no culto para filtrar aqui</div>}
+                          <div style={{display:"flex",gap:8,justifyContent:"flex-end",paddingRight:4}}>
+                            <button onClick={()=>setOpenLouvor(null)} style={{...bGhost,padding:"6px 14px",fontSize:12}}>Cancelar</button>
+                            <button onClick={salvarMusicos} style={{...bGold,padding:"6px 16px",fontSize:12}}>Salvar ✓</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <TomTag tom={l.tom}/>
-                    {getYTId(l.ytUrl||"")&&<button onClick={()=>setPlayL(l)} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:16,padding:"3px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
-                    <button onClick={()=>setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}})} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",borderRadius:16,padding:"3px 8px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✎</button>
-                    <button onClick={()=>moveLouvor(c.id,i,-1)} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===0}>▲</button>
-                    <button onClick={()=>moveLouvor(c.id,i,1)} style={{...bGhost,padding:"2px 6px",fontSize:12}} disabled={i===c.louvores.length-1}>▼</button>
-                    <button onClick={()=>doRemLouvor(c.id,l.id)} style={{...bDanger,padding:"3px 8px",fontSize:11}}>✕</button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Form novo louvor */}
@@ -891,6 +939,33 @@ function App(){
                     </select>
                   </div>
 
+                  {/* Músicos que vão tocar */}
+                  <div style={{marginBottom:12}}>
+                    <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>MÚSICOS QUE VÃO TOCAR</label>
+                    <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                      {(()=>{
+                        const escalados=musicos.filter(mt=>(c.musicos||[]).includes(mt.nome));
+                        const lista=escalados.length>0?escalados:musicos;
+                        const selecionados=newLF.musicos||[];
+                        const toggle=nome=>setNLF(p=>({...p,musicos:selecionados.includes(nome)?selecionados.filter(n=>n!==nome):[...selecionados,nome]}));
+                        return lista.map(mt=>{
+                          const on=selecionados.includes(mt.nome);
+                          return(
+                            <button key={mt.id} type="button" onClick={()=>toggle(mt.nome)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:9,border:on?"1px solid rgba(107,191,163,0.5)":"1px solid rgba(255,255,255,0.08)",background:on?"rgba(107,191,163,0.1)":"rgba(255,255,255,0.02)",cursor:"pointer",fontFamily:"inherit",textAlign:"left",transition:"all 0.15s"}}>
+                              <span style={{fontSize:18}}>{mt.emoji}</span>
+                              <div style={{flex:1}}>
+                                <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":"#EAE8F2"}}>{mt.nome}</div>
+                                <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
+                              </div>
+                              <span style={{fontSize:14,color:on?"#6BBFA3":"rgba(255,255,255,0.2)",fontWeight:700}}>{on?"✓":"+"}</span>
+                            </button>
+                          );
+                        });
+                      })()}
+                    </div>
+                    {(c.musicos||[]).length===0&&<div style={{fontSize:10,color:"rgba(255,255,255,0.25)",fontStyle:"italic",marginTop:6}}>Dica: escale músicos no culto para filtrar a lista aqui</div>}
+                  </div>
+
                   <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
                     <button style={bGhost} onClick={()=>setNLF(null)}>Cancelar</button>
                     <button style={bGold} onClick={()=>doAddLouvor(c.id,newLF)} disabled={!newLF.titulo.trim()}>Salvar</button>
@@ -930,6 +1005,30 @@ function App(){
                   <option value="">— Selecionar cantor —</option>
                   {cantores.map(ct=><option key={ct.id} value={ct.nome}>{ct.emoji} {ct.nome}</option>)}
                 </select>
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>MÚSICOS QUE VÃO TOCAR</label>
+                <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                  {(()=>{
+                    const culto=cultos.find(cu=>cu.id===editLF.cultoId);
+                    const escalados=culto?(musicos.filter(mt=>(culto.musicos||[]).includes(mt.nome))):[];
+                    const lista=escalados.length>0?escalados:musicos;
+                    const selecionados=editLF.louvor.musicos||[];
+                    return lista.map(mt=>{
+                      const on=selecionados.includes(mt.nome);
+                      return(
+                        <button key={mt.id} type="button" onClick={()=>setELF(p=>({...p,louvor:{...p.louvor,musicos:on?selecionados.filter(n=>n!==mt.nome):[...selecionados,mt.nome]}}))} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:9,border:on?"1px solid rgba(107,191,163,0.5)":"1px solid rgba(255,255,255,0.08)",background:on?"rgba(107,191,163,0.1)":"rgba(255,255,255,0.02)",cursor:"pointer",fontFamily:"inherit",textAlign:"left",transition:"all 0.15s"}}>
+                          <span style={{fontSize:18}}>{mt.emoji}</span>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":"#EAE8F2"}}>{mt.nome}</div>
+                            <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
+                          </div>
+                          <span style={{fontSize:14,color:on?"#6BBFA3":"rgba(255,255,255,0.2)",fontWeight:700}}>{on?"✓":"+"}</span>
+                        </button>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
               <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
                 <button style={bGhost} onClick={()=>setELF(null)}>Cancelar</button>
