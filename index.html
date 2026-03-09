@@ -187,7 +187,7 @@ async function ytSearch(q){
 }
 
 /* ── Mini componentes ── */
-const TomTag=({tom})=>tom?<span style={{fontSize:10,fontWeight:700,color:"#C9A84C",background:"rgba(201,168,76,0.12)",borderRadius:6,padding:"2px 7px",letterSpacing:.5}}>{tom}</span>:null;
+const TomTag=({tom})=>{const a=getAccent();return tom?<span style={{fontSize:10,fontWeight:700,color:a.accent,background:`rgba(${a.rgb},0.12)`,borderRadius:6,padding:"2px 7px",letterSpacing:.5}}>{tom}</span>:null;};
 
 function Ovl({children,onClose,wide,bg,border}){
   return(
@@ -229,7 +229,7 @@ function CustomSelect({value, onChange, options, style}){
         <span style={{fontSize:10,opacity:0.5,marginLeft:8,transition:"transform 0.2s",display:"inline-block",transform:open?"rotate(180deg)":"rotate(0deg)"}}>▼</span>
       </button>
       {open&&(
-        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:400,background:a.bgCard,border:a.light_theme?`1px solid rgba(${a.rgb},0.2)`:"1px solid rgba(255,255,255,0.12)",borderRadius:12,overflow:"hidden",boxShadow:a.light_theme?"0 8px 28px rgba(107,53,184,0.15)":"0 8px 32px rgba(0,0,0,0.6)"}}>
+        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:400,background:a.bgCard,border:a.light_theme?`1px solid rgba(${a.rgb},0.2)`:"1px solid rgba(255,255,255,0.12)",borderRadius:12,overflow:"hidden",overflowY:"auto",maxHeight:280,boxShadow:a.light_theme?"0 8px 28px rgba(107,53,184,0.15)":"0 8px 32px rgba(0,0,0,0.6)"}}>
           {options.map(o=>{
             const v=o.value||o; const l=o.label||o;
             const isSel=v===value;
@@ -288,7 +288,7 @@ function DatePicker({label,value,onChange}){
         <span style={{color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)",fontSize:12,transform:open?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
       </button>
       {open&&(
-        <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:300,background:getAccent().bgCard,border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
+        <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:300,background:getAccent().bgCard,border:getAccent().light_theme?`1px solid rgba(${getAccent().rgb},0.2)`:"1px solid rgba(255,255,255,0.12)",borderRadius:14,padding:14,maxHeight:"85vh",overflowY:"auto",boxShadow:getAccent().light_theme?"0 8px 28px rgba(107,53,184,0.15)":"0 8px 32px rgba(0,0,0,0.5)"}}>
           {/* Nav mês */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
             <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m-1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:getAccent().light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"#1A1028":getAccent().text,borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>‹</button>
@@ -607,7 +607,7 @@ function App(){
   gAccent=accent; // sync global ref for helper components
   const bGold={background:"linear-gradient(135deg,"+accent.accent+","+accent.light+")",color:"#0F0F1A",border:"none",borderRadius:10,padding:"9px 18px",cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"inherit",whiteSpace:"nowrap"};
   const bGhost={background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"rgba(0,0,0,0.55)":"rgba(255,255,255,0.55)",borderRadius:8,padding:"8px 15px",cursor:"pointer",fontSize:13,fontFamily:"inherit"};
-  const bDanger={background:"rgba(224,123,138,0.1)",border:"1px solid rgba(224,123,138,0.3)",color:"#E07B8A",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontFamily:"inherit"};
+  const bDanger={background:"rgba(192,57,75,0.08)",border:"1px solid rgba(192,57,75,0.25)",color:"#C0394B",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontFamily:"inherit"};
 
   const getC=id=>cultos.find(c=>c.id===id);
   const updC=c=>setCultos(p=>p.map(x=>x.id===c.id?c:x));
@@ -800,7 +800,7 @@ function App(){
       <div style={{position:"fixed",top:"-20%",left:"5%",width:"50vw",height:"50vw",borderRadius:"50%",background:`radial-gradient(circle,rgba(${accent.rgb},0.06),transparent 65%)`,pointerEvents:"none",zIndex:0}}/>
 
       {/* Header */}
-      <header style={{position:"sticky",top:0,zIndex:100,background:accent.bgHeader,backdropFilter:"blur(16px)",borderBottom:accent.light_theme?"1px solid rgba(0,0,0,0.08)":"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px"}} className="header-inner">
+      <header style={{position:"sticky",top:0,zIndex:100,height:56,background:accent.bgHeader,backdropFilter:"blur(16px)",borderBottom:accent.light_theme?"1px solid rgba(0,0,0,0.08)":"1px solid rgba(255,255,255,0.07)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px"}} className="header-inner">
         {/* Logo */}
         <div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 0",flexShrink:0}}>
           <img src="https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png" alt="Banda Aviva" style={{width:38,height:38,borderRadius:8,objectFit:"cover"}}/>
@@ -1180,7 +1180,7 @@ function App(){
                               );
                             })}
                           </div>
-                          {escaladosCulto.length===0&&<div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.2)",fontStyle:"italic",marginBottom:10}}>Escale músicos no culto para filtrar aqui</div>}
+                          {escaladosCulto.length===0&&<div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.30)":accent.light_theme?"rgba(0,0,0,0.28)":"rgba(255,255,255,0.2)",fontStyle:"italic",marginBottom:10}}>Escale músicos no culto para filtrar aqui</div>}
 
                           {/* Cifra Club link */}
                           <div style={{marginBottom:12}}>
@@ -1748,7 +1748,7 @@ function App(){
 
       {/* Toast */}
       {toast&&(
-        <div style={{position:"fixed",bottom:24,right:20,zIndex:9999,padding:"11px 18px",borderRadius:12,background:toast.ok?"rgba(76,175,125,0.97)":"rgba(224,123,138,0.97)",color:"#0F0F1A",fontWeight:700,fontSize:13,fontFamily:"inherit",boxShadow:"0 8px 28px rgba(0,0,0,0.5)",animation:"toastIn 0.25s ease"}}>
+        <div style={{position:"fixed",bottom:"calc(72px + env(safe-area-inset-bottom))",right:16,zIndex:9999,padding:"11px 18px",borderRadius:12,background:toast.ok?"rgba(76,175,125,0.97)":"rgba(224,123,138,0.97)",color:"#0F0F1A",fontWeight:700,fontSize:13,fontFamily:"inherit",boxShadow:"0 8px 28px rgba(0,0,0,0.5)",animation:"toastIn 0.25s ease"}}>
           {toast.msg}
         </div>
       )}
