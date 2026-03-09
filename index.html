@@ -58,14 +58,10 @@ const normCantor = c=>typeof c==="string"?mkCantor(c):{louvoresFav:[],...c};
 
 /* ── Constantes ── */
 const THEMES = {
-  gold:    {name:"Dourado",  accent:"#C9A84C", light:"#E8C96A", rgb:"201,168,76",  bg:"#0F0F1A", bgCard:"#161625", bgHeader:"rgba(15,15,26,0.97)",  text:"#EAE8F2", textSub:"rgba(234,232,242,0.45)", border:"rgba(255,255,255,0.07)", light_theme:false},
-  midnight:{name:"Midnight", accent:"#4F7FE8", light:"#7AA3FF", rgb:"79,127,232",  bg:"#07090F", bgCard:"#0E1220", bgHeader:"rgba(7,9,15,0.97)",    text:"#E8EEFF", textSub:"rgba(232,238,255,0.4)",  border:"rgba(255,255,255,0.07)", light_theme:false},
-  crimson: {name:"Crimson",  accent:"#C0392B", light:"#E05545", rgb:"192,57,43",   bg:"#0F0909", bgCard:"#1A0F0F", bgHeader:"rgba(15,9,9,0.97)",    text:"#F2E8E8", textSub:"rgba(242,232,232,0.4)",  border:"rgba(255,255,255,0.06)", light_theme:false},
-  slate:   {name:"Slate",    accent:"#C9B870", light:"#E8D88A", rgb:"201,184,112", bg:"#0D1118", bgCard:"#151C28", bgHeader:"rgba(13,17,24,0.97)",   text:"#E8EAF2", textSub:"rgba(232,234,242,0.4)",  border:"rgba(255,255,255,0.07)", light_theme:false},
-  carbon:  {name:"Carbon",   accent:"#E87C2A", light:"#FFA050", rgb:"232,124,42",  bg:"#0A0A0A", bgCard:"#141414", bgHeader:"rgba(10,10,10,0.97)",   text:"#F2F0EC", textSub:"rgba(242,240,236,0.4)",  border:"rgba(255,255,255,0.06)", light_theme:false},
-  obsidian:{name:"Obsidian", accent:"#E8E8F0", light:"#FFFFFF", rgb:"232,232,240", bg:"#1C1C1E", bgCard:"#2C2C2E", bgHeader:"rgba(28,28,30,0.97)",   text:"#F5F5F7", textSub:"rgba(245,245,247,0.45)", border:"rgba(255,255,255,0.1)",  light_theme:false},
-  ivory:   {name:"Ivory",    accent:"#6B3FA0", light:"#8B5FC0", rgb:"107,63,160",  bg:"#F5F0E8", bgCard:"#FFFFFF", bgHeader:"rgba(245,240,232,0.97)", text:"#1A1028", textSub:"rgba(26,16,40,0.5)",    border:"rgba(0,0,0,0.08)",       light_theme:true},
-  pearl:   {name:"Pearl",    accent:"#1A1A2E", light:"#2D2D4E", rgb:"26,26,46",    bg:"#F0F0F5", bgCard:"#FFFFFF", bgHeader:"rgba(240,240,245,0.97)", text:"#1A1A2E", textSub:"rgba(26,26,46,0.5)",    border:"rgba(0,0,0,0.08)",       light_theme:true},
+  gold:  {name:"Dourado",  accent:"#C9A84C", light:"#E8C96A", rgb:"201,168,76",  bg:"#0F0F1A", bgCard:"#161625", bgHeader:"rgba(15,15,26,0.97)",  text:"#EAE8F2", textSub:"rgba(234,232,242,0.45)", border:"rgba(255,255,255,0.07)", light_theme:false},
+  blue:  {name:"Azul",     accent:"#5B9BD5", light:"#7BB8F0", rgb:"91,155,213",  bg:"#0D1220", bgCard:"#131A2E", bgHeader:"rgba(13,18,32,0.97)",   text:"#E8EEFF", textSub:"rgba(232,238,255,0.4)",  border:"rgba(255,255,255,0.07)", light_theme:false},
+  purple:{name:"Roxo",     accent:"#9B6FD4", light:"#B890F0", rgb:"155,111,212", bg:"#11091A", bgCard:"#180F28", bgHeader:"rgba(17,9,26,0.97)",    text:"#EAE8F2", textSub:"rgba(234,232,242,0.4)",  border:"rgba(255,255,255,0.07)", light_theme:false},
+  rose:  {name:"Rosa",     accent:"#D4607A", light:"#F07A94", rgb:"212,96,122",  bg:"#1A0C10", bgCard:"#241018", bgHeader:"rgba(26,12,16,0.97)",   text:"#F2E8E8", textSub:"rgba(242,232,232,0.4)",  border:"rgba(255,255,255,0.06)", light_theme:false},
 };
 const CC = {
   quarta:{label:"Quarta-Feira",short:"Quarta",color:"#C9A84C",rgb:"201,168,76"},
