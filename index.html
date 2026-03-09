@@ -62,6 +62,9 @@ const THEMES = {
   purple:{name:"Roxo",     accent:"#9B6FD4", light:"#B890F0", rgb:"155,111,212", bg:"#11091A", bgCard:"#180F28", bgHeader:"rgba(17,9,26,0.97)",    text:"#EAE8F2", textSub:"rgba(234,232,242,0.4)",  border:"rgba(255,255,255,0.07)", light_theme:false},
   light: {name:"Light",    accent:"#7C4DBC", light:"#9B6FD4", rgb:"124,77,188",  bg:"#F4F2F8", bgCard:"#FFFFFF", bgHeader:"rgba(244,242,248,0.97)", text:"#1A1028", textSub:"rgba(26,16,40,0.5)",    border:"rgba(0,0,0,0.08)",       light_theme:true},
 };
+// Global ref so helper components (Ovl, MH, Fld, DatePicker) can access the current theme
+let gAccent = THEMES.gold;
+const getAccent = () => gAccent;
 const CC = {
   quarta:{label:"Quarta-Feira",short:"Quarta",color:"#C9A84C",rgb:"201,168,76"},
   sexta:{label:"Sexta-Feira",short:"Sexta",color:"#E07B8A",rgb:"224,123,138"},
@@ -186,10 +189,10 @@ async function ytSearch(q){
 /* ── Mini componentes ── */
 const TomTag=({tom})=>tom?<span style={{fontSize:10,fontWeight:700,color:"#C9A84C",background:"rgba(201,168,76,0.12)",borderRadius:6,padding:"2px 7px",letterSpacing:.5}}>{tom}</span>:null;
 
-function Ovl({children,onClose,wide,bg}){
+function Ovl({children,onClose,wide,bg,border}){
   return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:bg||"#161625",borderRadius:18,padding:22,width:"100%",maxWidth:wide?620:440,maxHeight:"90vh",overflowY:"auto",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:bg||"#161625",borderRadius:18,padding:22,width:"100%",maxWidth:wide?620:440,maxHeight:"90vh",overflowY:"auto",border:border||"1px solid rgba(255,255,255,0.1)"}}>
         {children}
       </div>
     </div>
@@ -201,15 +204,15 @@ function MH({title,sub,onClose}){
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
       <div>
         <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:19,fontWeight:700,color:"#EAE8F2"}}>{title}</div>
-        {sub&&<div style={{fontSize:12,color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",marginTop:2}}>{sub}</div>}
+        {sub&&<div style={{fontSize:12,color:getAccent().light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",marginTop:2}}>{sub}</div>}
       </div>
-      <button onClick={onClose} style={{background:accent.light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.07)",border:"none",color:accent.light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",borderRadius:8,padding:"5px 10px",cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>✕</button>
+      <button onClick={onClose} style={{background:getAccent().light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.07)",border:"none",color:getAccent().light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",borderRadius:8,padding:"5px 10px",cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>✕</button>
     </div>
   );
 }
 
 function Fld({label,value,onChange,placeholder,as,children,type="text"}){
-  const base={width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:accent.text,fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:12};
+  const base={width:"100%",background:getAccent().light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:getAccent().text,fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:12};
   return(
     <div>
       {label&&<label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
@@ -244,21 +247,21 @@ function DatePicker({label,value,onChange}){
   return(
     <div style={{marginBottom:12,position:"relative"}}>
       {label&&<label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
-      <button onClick={()=>setOpen(p=>!p)} style={{width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:sel?"#EAE8F2":"rgba(255,255,255,0.3)",fontSize:14,fontFamily:"inherit",outline:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",textAlign:"left"}}>
+      <button onClick={()=>setOpen(p=>!p)} style={{width:"100%",background:getAccent().light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:sel?"#EAE8F2":"rgba(255,255,255,0.3)",fontSize:14,fontFamily:"inherit",outline:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",textAlign:"left"}}>
         <span>📅 {fmtDisp(sel)}</span>
-        <span style={{color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:12,transform:open?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
+        <span style={{color:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:12,transform:open?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
       </button>
       {open&&(
-        <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:300,background:accent.bgCard,border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
+        <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:300,background:getAccent().bgCard,border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
           {/* Nav mês */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m-1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:accent.light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>‹</button>
+            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m-1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:getAccent().light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>‹</button>
             <span style={{fontSize:13,fontWeight:600,color:"#EAE8F2"}}>{MONTHS[view.m]} {view.y}</span>
-            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m+1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:accent.light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>›</button>
+            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m+1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:getAccent().light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>›</button>
           </div>
           {/* Dias da semana */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",marginBottom:4}}>
-            {DAYS.map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontWeight:600,padding:"2px 0"}}>{d}</div>)}
+            {DAYS.map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontWeight:600,padding:"2px 0"}}>{d}</div>)}
           </div>
           {/* Células */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
@@ -275,7 +278,7 @@ function DatePicker({label,value,onChange}){
             })}
           </div>
           {/* Hoje */}
-          <button onClick={()=>{ onChange({target:{value:today}}); setOpen(false); }} style={{width:"100%",marginTop:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,color:accent.light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",fontSize:11,padding:"6px",cursor:"pointer",fontFamily:"inherit"}}>Hoje</button>
+          <button onClick={()=>{ onChange({target:{value:today}}); setOpen(false); }} style={{width:"100%",marginTop:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,color:getAccent().light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",fontSize:11,padding:"6px",cursor:"pointer",fontFamily:"inherit"}}>Hoje</button>
         </div>
       )}
     </div>
@@ -565,6 +568,7 @@ function App(){
 
   const showToast=(msg,ok=true)=>{ setToast({msg,ok}); setTimeout(()=>setToast(null),2500); };
   const accent=THEMES[themeKey]||THEMES.gold;
+  gAccent=accent; // sync global ref for helper components
   const bGold={background:"linear-gradient(135deg,"+accent.accent+","+accent.light+")",color:"#0F0F1A",border:"none",borderRadius:10,padding:"9px 18px",cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"inherit",whiteSpace:"nowrap"};
   const bGhost={background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)",borderRadius:8,padding:"8px 15px",cursor:"pointer",fontSize:13,fontFamily:"inherit"};
   const bDanger={background:"rgba(224,123,138,0.1)",border:"1px solid rgba(224,123,138,0.3)",color:"#E07B8A",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontFamily:"inherit"};
@@ -1577,7 +1581,7 @@ function App(){
 
       {/* Player YouTube */}
       {playL&&(
-        <Ovl bg={accent.bgCard} onClose={()=>{setPlayL(null);setPlayerTranspose(0);}} wide>
+        <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>{setPlayL(null);setPlayerTranspose(0);}} wide>
           <MH title={playL.titulo||"Reproduzindo"} sub={playL.artista} onClose={()=>{setPlayL(null);setPlayerTranspose(0);}}/>
           {getYTId(playL.ytUrl||"")?(
             <>
@@ -1650,7 +1654,7 @@ function App(){
 
       {/* Novo culto */}
       {newCF&&(
-        <Ovl bg={accent.bgCard} onClose={()=>setNCF(null)}>
+        <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setNCF(null)}>
           <MH title="Novo Culto" onClose={()=>setNCF(null)}/>
           <div style={{display:"flex",background:"rgba(255,255,255,0.04)",borderRadius:8,overflow:"hidden",marginBottom:12}}>
             {["unico","campanha"].map(m=>(
@@ -1679,7 +1683,7 @@ function App(){
 
       {/* Favoritos picker */}
       {showFavPk&&sel&&(
-        <Ovl bg={accent.bgCard} onClose={()=>setFavPk(false)}>
+        <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setFavPk(false)}>
           <MH title="Adicionar Favorito" onClose={()=>setFavPk(false)}/>
           {favs.length===0&&<p style={{color:"rgba(255,255,255,0.35)",fontSize:13}}>Nenhum favorito ainda.</p>}
           {favs.map(f=>(
@@ -1696,7 +1700,7 @@ function App(){
 
       {/* Editar cantor */}
       {editCI!==null&&cantores[editCI]&&(
-        <Ovl bg={accent.bgCard} onClose={()=>setEditCI(null)}>
+        <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setEditCI(null)}>
           <MH title="Editar Cantor" onClose={()=>setEditCI(null)}/>
           <CantorModal cantor={cantores[editCI]} idx={editCI} cultos={cultos} onSave={saveCantorEdit} onDelete={deleteCantorAt} onClose={()=>setEditCI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger}/>
         </Ovl>
@@ -1704,7 +1708,7 @@ function App(){
 
       {/* Adicionar cantor */}
       {showAddC&&(
-        <Ovl bg={accent.bgCard} onClose={()=>setShowAddC(false)}>
+        <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setShowAddC(false)}>
           <MH title="Novo Cantor" onClose={()=>setShowAddC(false)}/>
           <Fld label="Nome" value={newCantN} placeholder="Nome do cantor" onChange={e=>setNewCantN(e.target.value)}/>
           <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
@@ -1716,7 +1720,7 @@ function App(){
 
       {/* Editar músico */}
       {editMI!==null&&musicos[editMI]&&(
-        <Ovl bg={accent.bgCard} onClose={()=>setEditMI(null)}>
+        <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setEditMI(null)}>
           <MH title="Editar Músico" onClose={()=>setEditMI(null)}/>
           <MusicoModal musico={musicos[editMI]} idx={editMI} onSave={saveMusicoEdit} onDelete={deleteMusicoAt} onClose={()=>setEditMI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger}/>
         </Ovl>
@@ -1724,7 +1728,7 @@ function App(){
 
       {/* Adicionar músico */}
       {showAddM&&(
-        <Ovl bg={accent.bgCard} onClose={()=>setShowAddM(false)}>
+        <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setShowAddM(false)}>
           <MH title="Novo Músico" onClose={()=>setShowAddM(false)}/>
           <Fld label="Nome" value={newMusN} placeholder="Nome do músico" onChange={e=>setNewMusN(e.target.value)}/>
           <Fld label="Instrumento" as="select" value={newMusInst} onChange={e=>setNewMusInst(e.target.value)}>
@@ -1739,7 +1743,7 @@ function App(){
 
       {/* Tema */}
       {showTheme&&(
-        <Ovl bg={accent.bgCard} onClose={()=>setShowTheme(false)}>
+        <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setShowTheme(false)}>
           <MH title="Tema" onClose={()=>setShowTheme(false)}/>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:8}}>
             {Object.entries(THEMES).map(([k,t])=>(
