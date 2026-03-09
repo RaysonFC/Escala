@@ -188,6 +188,21 @@ async function ytSearch(q){
 
 /* ── Mini componentes ── */
 const TomTag=({tom})=>{const a=getAccent();return tom?<span style={{fontSize:10,fontWeight:700,color:a.accent,background:`rgba(${a.rgb},0.12)`,borderRadius:6,padding:"2px 7px",letterSpacing:.5}}>{tom}</span>:null;};
+const emojiClass=(instrumento,emoji)=>{
+  if(!instrumento&&!emoji) return "emoji-default";
+  const s=(instrumento||"").toLowerCase();
+  if(s.includes("bater")||s.includes("drum")) return "emoji-drum";
+  if(s.includes("guitar")||s.includes("viola")||s.includes("baixo")||s.includes("contra")) return s.includes("baixo")||s.includes("contra")?"emoji-bass":"emoji-guitar";
+  if(s.includes("teclado")||s.includes("piano")||s.includes("key")) return "emoji-keys";
+  if(s.includes("voz")||s.includes("vocal")||s.includes("cant")) return "emoji-singer";
+  const e=emoji||"";
+  if(["🥁","🪘"].some(x=>e.includes(x))) return "emoji-drum";
+  if(["🎸","🪕","🎻"].some(x=>e.includes(x))) return "emoji-guitar";
+  if(["🎹","🎛","🎚"].some(x=>e.includes(x))) return "emoji-keys";
+  if(["🎤","🎧","🎙"].some(x=>e.includes(x))) return "emoji-singer";
+  if(["🎵","🎶"].some(x=>e.includes(x))) return "emoji-bass";
+  return "emoji-default";
+};
 
 function Ovl({children,onClose,wide,bg,border}){
   return(
@@ -748,6 +763,22 @@ function App(){
         select{color-scheme:${accent.light_theme?"light":"dark"};}
         .cday{border-top:1px solid ${accent.light_theme?"rgba(107,53,184,0.07)":"rgba(255,255,255,0.04)"}!important;}
         ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:rgba(${accent.rgb},0.25);}
+        @keyframes emojiFloat{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-6px) rotate(4deg);}}
+        @keyframes emojiSpin{0%{transform:rotate(0deg) scale(1);}40%{transform:rotate(-15deg) scale(1.15);}60%{transform:rotate(15deg) scale(1.15);}100%{transform:rotate(0deg) scale(1);}}
+        @keyframes emojiBeat{0%,100%{transform:scale(1);}30%{transform:scale(1.22);}60%{transform:scale(0.92);}80%{transform:scale(1.1);}}
+        @keyframes emojiShake{0%,100%{transform:translateX(0) rotate(0);}20%{transform:translateX(-4px) rotate(-8deg);}40%{transform:translateX(4px) rotate(8deg);}60%{transform:translateX(-3px) rotate(-5deg);}80%{transform:translateX(3px) rotate(5deg);}}
+        @keyframes emojiBounce{0%,100%{transform:translateY(0) scaleY(1);}40%{transform:translateY(-10px) scaleY(1.05);}70%{transform:translateY(-4px) scaleY(0.97);}85%{transform:translateY(-7px) scaleY(1.02);}}
+        @keyframes emojiWiggle{0%,100%{transform:rotate(0);}25%{transform:rotate(-12deg);}50%{transform:rotate(0);}75%{transform:rotate(12deg);}}
+        @keyframes emojiPop{0%,100%{transform:scale(1) rotate(0);}50%{transform:scale(1.3) rotate(-8deg);}}
+        @keyframes emojiGlow{0%,100%{filter:drop-shadow(0 0 0px rgba(255,255,255,0));}50%{filter:drop-shadow(0 0 8px rgba(255,220,100,0.9));}}
+        .emoji-singer{animation:emojiBeat 1.4s ease-in-out infinite;}
+        .emoji-drum{animation:emojiShake 0.7s ease-in-out infinite;}
+        .emoji-guitar{animation:emojiWiggle 1.2s ease-in-out infinite;}
+        .emoji-keys{animation:emojiFloat 2s ease-in-out infinite;}
+        .emoji-bass{animation:emojiBounce 1.6s ease-in-out infinite;}
+        .emoji-default{animation:emojiPop 2.2s ease-in-out infinite;}
+        .emoji-glow{animation:emojiGlow 2s ease-in-out infinite;}
+        .ccard:hover .emoji-singer,.ccard:hover .emoji-drum,.ccard:hover .emoji-guitar,.ccard:hover .emoji-keys,.ccard:hover .emoji-bass,.ccard:hover .emoji-default{animation-duration:0.5s !important;}
         @media(max-width:600px){
           .nav-label{display:none!important;}
           .main-content{padding-bottom:80px!important;}
@@ -987,7 +1018,7 @@ function App(){
                     const on=c.cantores.includes(ct.nome);
                     return(
                       <button key={ct.id} onClick={()=>toggleCantor(c.id,ct.nome)} className="pill" style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.07)",background:on?`rgba(${cf.rgb},0.1)`:"rgba(255,255,255,0.02)",color:on?cf.color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:on?600:400,marginBottom:5,transition:"all 0.15s"}}>
-                        <span style={{fontSize:16}}>{ct.emoji}</span><span style={{flex:1,textAlign:"left"}}>{ct.nome}</span>{on&&<span>✓</span>}
+                        <span className={"emoji-singer emoji-glow"} style={{fontSize:16,display:"inline-block"}}>{ct.emoji}</span><span style={{flex:1,textAlign:"left"}}>{ct.nome}</span>{on&&<span>✓</span>}
                       </button>
                     );
                   })}
@@ -998,7 +1029,7 @@ function App(){
                     const on=(c.musicos||[]).includes(mt.nome);
                     return(
                       <button key={mt.id} onClick={()=>toggleMusico(c.id,mt.nome)} className="pill" style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.07)",background:on?`rgba(${cf.rgb},0.1)`:"rgba(255,255,255,0.02)",color:on?cf.color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:on?600:400,marginBottom:5,transition:"all 0.15s"}}>
-                        <span style={{fontSize:16}}>{mt.emoji}</span>
+                        <span className={emojiClass(mt.instrumento,mt.emoji)} style={{fontSize:16,display:"inline-block"}}>{mt.emoji}</span>
                         <div style={{flex:1,textAlign:"left"}}>
                           <div>{mt.nome}</div>
                           <div style={{fontSize:10,opacity:0.5}}>{mt.instrumento}</div>
@@ -1148,7 +1179,7 @@ function App(){
                               const on=selMus.includes(mt.nome);
                               return(
                                 <button key={mt.id} onClick={()=>toggleMusLouvor(mt.nome)} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:9,border:on?"1px solid rgba(107,191,163,0.5)":"1px solid rgba(255,255,255,0.07)",background:on?"rgba(107,191,163,0.1)":"rgba(255,255,255,0.02)",cursor:"pointer",fontFamily:"inherit",textAlign:"left",transition:"all 0.15s"}}>
-                                  <span style={{fontSize:18}}>{mt.emoji}</span>
+                                  <span className={emojiClass(mt.instrumento,mt.emoji)} style={{fontSize:18,display:"inline-block"}}>{mt.emoji}</span>
                                   <div style={{flex:1}}>
                                     <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":accent.text}}>{mt.nome}</div>
                                     <div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
@@ -1262,7 +1293,7 @@ function App(){
                           const on=selecionados.includes(mt.nome);
                           return(
                             <button key={mt.id} type="button" onClick={()=>toggle(mt.nome)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:9,border:on?"1px solid rgba(107,191,163,0.5)":"1px solid rgba(255,255,255,0.08)",background:on?"rgba(107,191,163,0.1)":"rgba(255,255,255,0.02)",cursor:"pointer",fontFamily:"inherit",textAlign:"left",transition:"all 0.15s"}}>
-                              <span style={{fontSize:18}}>{mt.emoji}</span>
+                              <span className={emojiClass(mt.instrumento,mt.emoji)} style={{fontSize:18,display:"inline-block"}}>{mt.emoji}</span>
                               <div style={{flex:1}}>
                                 <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":accent.text}}>{mt.nome}</div>
                                 <div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
@@ -1328,7 +1359,7 @@ function App(){
                       const on=selecionados.includes(mt.nome);
                       return(
                         <button key={mt.id} type="button" onClick={()=>setELF(p=>({...p,louvor:{...p.louvor,musicos:on?selecionados.filter(n=>n!==mt.nome):[...selecionados,mt.nome]}}))} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:9,border:on?"1px solid rgba(107,191,163,0.5)":"1px solid rgba(255,255,255,0.08)",background:on?"rgba(107,191,163,0.1)":"rgba(255,255,255,0.02)",cursor:"pointer",fontFamily:"inherit",textAlign:"left",transition:"all 0.15s"}}>
-                          <span style={{fontSize:18}}>{mt.emoji}</span>
+                          <span className={emojiClass(mt.instrumento,mt.emoji)} style={{fontSize:18,display:"inline-block"}}>{mt.emoji}</span>
                           <div style={{flex:1}}>
                             <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":accent.text}}>{mt.nome}</div>
                             <div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
@@ -1424,7 +1455,7 @@ function App(){
                 return(
                   <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                      <span style={{fontSize:26}}>{ct.emoji}</span>
+                      <span className={emojiClass("",ct.emoji)+" emoji-glow"} style={{fontSize:26,display:"inline-block"}}>{ct.emoji}</span>
                       <div>
                         <div style={{fontSize:12,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text}}>{ct.nome}</div>
                         <div style={{fontSize:10,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)"}}>{n} culto{n!==1?"s":""}</div>
@@ -1455,7 +1486,7 @@ function App(){
                 const n=cultos.filter(c=>(c.musicos||[]).includes(mt.nome)).length;
                 return(
                   <div key={mt.id} onClick={()=>setEditMI(i)} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",textAlign:"center",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
-                    <div style={{fontSize:28,marginBottom:6}}>{mt.emoji}</div>
+                    <div style={{fontSize:28,marginBottom:6}}><span className={emojiClass(mt.instrumento,mt.emoji)} style={{display:"inline-block"}}>{mt.emoji}</span></div>
                     <div style={{fontSize:12,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text}}>{mt.nome}</div>
                     <div style={{fontSize:10,color:accent.accent,fontWeight:600,marginTop:2}}>{mt.instrumento}</div>
                     <div style={{fontSize:10,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)"}}>{n} culto{n!==1?"s":""}</div>
@@ -1506,7 +1537,7 @@ function App(){
                                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                                   {cantores.map(ct=>{
                                     const on=c.cantores.includes(ct.nome);
-                                    return <button key={ct.id} onClick={()=>toggleCantor(c.id,ct.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.08)",background:on?`rgba(${cf.rgb},0.12)`:"transparent",color:on?cf.color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span style={{fontSize:12}}>{ct.emoji}</span>{ct.nome}</button>;
+                                    return <button key={ct.id} onClick={()=>toggleCantor(c.id,ct.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.08)",background:on?`rgba(${cf.rgb},0.12)`:"transparent",color:on?cf.color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span className="emoji-singer" style={{fontSize:12,display:"inline-block"}}>{ct.emoji}</span>{ct.nome}</button>;
                                   })}
                                 </div>
                               </div>
@@ -1515,7 +1546,7 @@ function App(){
                                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                                   {musicos.map(mt=>{
                                     const on=(c.musicos||[]).includes(mt.nome);
-                                    return <button key={mt.id} onClick={()=>toggleMusico(c.id,mt.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.06)",background:on?`rgba(${cf.rgb},0.1)`:"transparent",color:on?cf.color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span style={{fontSize:12}}>{mt.emoji}</span>{mt.nome}</button>;
+                                    return <button key={mt.id} onClick={()=>toggleMusico(c.id,mt.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.06)",background:on?`rgba(${cf.rgb},0.1)`:"transparent",color:on?cf.color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span className={emojiClass(mt.instrumento,mt.emoji)} style={{fontSize:12,display:"inline-block"}}>{mt.emoji}</span>{mt.nome}</button>;
                                   })}
                                 </div>
                               </div>
