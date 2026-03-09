@@ -236,15 +236,52 @@ function YTThumb({ytid,onPlay}){
 
 function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
   const id=getYTId(l.ytUrl||"");
+  const [inline,setInline]=React.useState(false);
+  const [pt,setPt]=React.useState(0); // player transpose
+  const sinal=pt>0?"+":"";
+  const mudou=pt!==0;
+
+  const toggleInline=()=>{ setInline(p=>!p); setPt(0); };
+
   return(
     <div style={{background:"#161625",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,overflow:"hidden"}}>
-      {!compact&&<YTThumb ytid={id} onPlay={onPlay?()=>onPlay(l):undefined}/>}
+      {/* Thumbnail — só aparece se não estiver inline */}
+      {!compact&&!inline&&<YTThumb ytid={id} onPlay={id?toggleInline:undefined}/>}
+
+      {/* Player inline */}
+      {inline&&id&&(
+        <div>
+          <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000"}}>
+            <iframe
+              src={"https://www.youtube.com/embed/"+id+"?autoplay=1&rel=0&playsinline=1"}
+              title={l.titulo}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}
+            />
+          </div>
+          {/* Transpose inline */}
+          <div style={{background:"rgba(0,0,0,0.4)",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"}}>
+            <button onClick={()=>setPt(p=>p-1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:10,width:36,height:36,fontSize:20,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
+            <div style={{textAlign:"center",flex:1}}>
+              <div style={{fontSize:22,fontWeight:700,color:mudou?accent.accent:"rgba(255,255,255,0.4)",lineHeight:1}}>{mudou?sinal+pt:"0"}</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",letterSpacing:1,textTransform:"uppercase",marginTop:2}}>{mudou?(pt>0?"semitons acima":"semitons abaixo"):"tom original"}</div>
+              {l.tom&&<div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:2}}>ref: <span style={{color:accent.accent,fontWeight:700}}>{l.tom}</span></div>}
+            </div>
+            <button onClick={()=>setPt(p=>p+1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:10,width:36,height:36,fontSize:20,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
+            {mudou&&<button onClick={()=>setPt(0)} style={{background:"none",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.35)",borderRadius:8,padding:"4px 8px",fontSize:10,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>↺</button>}
+            <button onClick={toggleInline} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:18,cursor:"pointer",fontFamily:"inherit",padding:"4px 6px",flexShrink:0}}>✕</button>
+          </div>
+        </div>
+      )}
+
       <div style={{padding:compact?"10px 12px":"12px 14px"}}>
         <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo||"Sem título"}</div>
         <div style={{fontSize:11,color:"rgba(255,255,255,0.38)",marginBottom:6}}>{l.artista}</div>
         <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
           <TomTag tom={l.tom}/>
-          {id&&onPlay&&<button onClick={()=>onPlay(l)} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
+          {id&&!inline&&<button onClick={toggleInline} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
+          {id&&inline&&<button onClick={toggleInline} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",borderRadius:20,padding:"3px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>■ Fechar</button>}
           {onFav&&<button onClick={onFav} style={{background:isFav?"rgba(201,168,76,0.18)":"rgba(255,255,255,0.08)",border:isFav?"1px solid rgba(201,168,76,0.5)":"1px solid rgba(255,255,255,0.22)",color:isFav?"#E8C96A":"rgba(255,255,255,0.75)",borderRadius:20,padding:"3px 10px",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>{isFav?"★":"☆"}</button>}
           {onAdd&&<button onClick={onAdd} style={{background:"rgba(107,191,163,0.12)",border:"1px solid rgba(107,191,163,0.3)",color:"#6BBFA3",borderRadius:20,padding:"3px 10px",cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700}}>+ Culto</button>}
         </div>
@@ -1341,52 +1378,47 @@ function App(){
 
               {/* Transpose no player */}
               {(()=>{
-                const TONS_MAJ=["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
-                const TONS_MIN=["Cm","C#m","Dbm","Dm","D#m","Ebm","Em","Fm","F#m","Gbm","Gm","G#m","Abm","Am","A#m","Bbm","Bm"];
-                const tomOriginal=playL.tom||"";
-                const isMin=tomOriginal.endsWith("m");
-                const lista=isMin?TONS_MIN:TONS_MAJ;
-                const idxOriginal=lista.indexOf(tomOriginal);
-                const idxAtual=idxOriginal>=0?(idxOriginal+playerTranspose+lista.length*12)%lista.length:-1;
-                const tomAtual=idxOriginal>=0?lista[idxAtual]:"";
                 const mudou=playerTranspose!==0;
+                const sinal=playerTranspose>0?"+":"";
 
                 const salvarNoPlayer=()=>{
-                  if(!mudou||!tomAtual)return;
+                  if(!mudou)return;
                   // Salva em todos os cultos que tiverem esse louvor
                   const novosCultos=cultos.map(cu=>({
                     ...cu,
-                    louvores:cu.louvores.map(x=>x.id===playL.id?{...x,tom:tomAtual}:x)
+                    louvores:cu.louvores.map(x=>x.id===playL.id?{...x,tom:playL.tom}:x)
                   }));
                   setCultos(novosCultos);
                   fbSet("cultos",novosCultos);
-                  setPlayL(p=>({...p,tom:tomAtual}));
                   setPlayerTranspose(0);
-                  showToast("Tom salvo: "+tomAtual+" ✓");
+                  showToast("Tom salvo ✓");
                 };
 
                 return(
                   <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:"14px 16px",marginTop:12}}>
-                    <div style={{fontSize:9,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:10,textAlign:"center"}}>🎵 Transpose</div>
-                    <div style={{display:"flex",alignItems:"center",gap:12,justifyContent:"center",marginBottom:10}}>
-                      <button onClick={()=>setPlayerTranspose(p=>p-1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:12,width:44,height:44,fontSize:22,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
-                      <div style={{textAlign:"center",minWidth:80}}>
-                        {tomOriginal?(
-                          <>
-                            <div style={{fontSize:28,fontWeight:700,color:mudou?accent.accent:"#EAE8F2",letterSpacing:1}}>{tomAtual||tomOriginal}</div>
-                            {mudou&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>original: {tomOriginal}</div>}
-                            {!mudou&&<div style={{fontSize:10,color:"rgba(255,255,255,0.25)"}}>tom original</div>}
-                          </>
-                        ):(
-                          <div style={{fontSize:13,color:"rgba(255,255,255,0.3)"}}>sem tom definido</div>
-                        )}
+                    <div style={{fontSize:9,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:12,textAlign:"center"}}>🎵 Transpose</div>
+                    <div style={{display:"flex",alignItems:"center",gap:12,justifyContent:"center",marginBottom:6}}>
+                      <button onClick={()=>setPlayerTranspose(p=>p-1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:12,width:52,height:52,fontSize:26,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                      <div style={{textAlign:"center",minWidth:90}}>
+                        <div style={{fontSize:34,fontWeight:700,color:mudou?accent.accent:"rgba(255,255,255,0.5)",letterSpacing:1,lineHeight:1}}>
+                          {mudou?sinal+playerTranspose:"0"}
+                        </div>
+                        <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:4}}>
+                          {mudou?(playerTranspose>0?"semitons acima":"semitons abaixo"):"tom original"}
+                        </div>
                       </div>
-                      <button onClick={()=>setPlayerTranspose(p=>p+1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:12,width:44,height:44,fontSize:22,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                      <button onClick={()=>setPlayerTranspose(p=>p+1)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:12,width:52,height:52,fontSize:26,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
                     </div>
-                    <div style={{display:"flex",gap:8,justifyContent:"center"}}>
-                      {mudou&&<button onClick={()=>setPlayerTranspose(0)} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.4)",borderRadius:10,padding:"5px 14px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↺ Original</button>}
-                      {mudou&&tomAtual&&<button onClick={salvarNoPlayer} style={{...bGold,padding:"5px 16px",fontSize:12}}>Salvar {tomAtual} ✓</button>}
-                    </div>
+                    {playL.tom&&(
+                      <div style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,0.3)",marginBottom:10}}>
+                        Tom do louvor: <span style={{color:accent.accent,fontWeight:700}}>{playL.tom}</span>
+                      </div>
+                    )}
+                    {mudou&&(
+                      <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+                        <button onClick={()=>setPlayerTranspose(0)} style={{background:"none",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.4)",borderRadius:10,padding:"6px 16px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↺ Zerar</button>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
