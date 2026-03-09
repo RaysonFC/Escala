@@ -222,6 +222,68 @@ function Fld({label,value,onChange,placeholder,as,children,type="text"}){
   );
 }
 
+function DatePicker({label,value,onChange}){
+  const [open,setOpen]=React.useState(false);
+  const MONTHS=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const DAYS=["D","S","T","Q","Q","S","S"];
+  const parsed=value?new Date(value+"T00:00"):new Date();
+  const [view,setView]=React.useState({y:parsed.getFullYear(),m:parsed.getMonth()});
+  const sel=value||"";
+
+  const cells=()=>{
+    const{y,m}=view;
+    const first=new Date(y,m,1).getDay();
+    const total=new Date(y,m+1,0).getDate();
+    const arr=[];
+    for(let i=0;i<first;i++) arr.push(null);
+    for(let d=1;d<=total;d++) arr.push(d);
+    return arr;
+  };
+  const toStr=(y,m,d)=>`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  const today=toStr(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
+  const fmtDisp=v=>{ if(!v)return "Selecionar data"; const[y,m,d]=v.split("-"); return `${d}/${m}/${y}`; };
+
+  return(
+    <div style={{marginBottom:12,position:"relative"}}>
+      {label&&<label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
+      <button onClick={()=>setOpen(p=>!p)} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:sel?"#EAE8F2":"rgba(255,255,255,0.3)",fontSize:14,fontFamily:"inherit",outline:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",textAlign:"left"}}>
+        <span>📅 {fmtDisp(sel)}</span>
+        <span style={{color:"rgba(255,255,255,0.3)",fontSize:12,transform:open?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
+      </button>
+      {open&&(
+        <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:300,background:"#1A1A2E",border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
+          {/* Nav mês */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m-1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>‹</button>
+            <span style={{fontSize:13,fontWeight:600,color:"#EAE8F2"}}>{MONTHS[view.m]} {view.y}</span>
+            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m+1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>›</button>
+          </div>
+          {/* Dias da semana */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",marginBottom:4}}>
+            {DAYS.map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.3)",fontWeight:600,padding:"2px 0"}}>{d}</div>)}
+          </div>
+          {/* Células */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+            {cells().map((d,i)=>{
+              if(!d) return <div key={i}/>;
+              const ds=toStr(view.y,view.m,d);
+              const isSel=ds===sel;
+              const isToday=ds===today;
+              return(
+                <button key={i} onClick={()=>{ onChange({target:{value:ds}}); setOpen(false); }} style={{padding:"7px 0",borderRadius:8,border:isSel?"1px solid rgba(201,168,76,0.6)":isToday?"1px solid rgba(255,255,255,0.15)":"1px solid transparent",background:isSel?"rgba(201,168,76,0.2)":isToday?"rgba(255,255,255,0.06)":"transparent",color:isSel?"#E8C96A":isToday?"#EAE8F2":"rgba(255,255,255,0.7)",fontSize:12,fontWeight:isSel||isToday?700:400,cursor:"pointer",fontFamily:"inherit",transition:"all 0.1s"}}>
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+          {/* Hoje */}
+          <button onClick={()=>{ onChange({target:{value:today}}); setOpen(false); }} style={{width:"100%",marginTop:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,color:"rgba(255,255,255,0.5)",fontSize:11,padding:"6px",cursor:"pointer",fontFamily:"inherit"}}>Hoje</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function YTThumb({ytid,onPlay}){
   if(!ytid) return <div style={{width:"100%",paddingBottom:"56.25%",background:"#111",borderRadius:"8px 8px 0 0"}}/>;
   return(
@@ -1277,10 +1339,7 @@ function App(){
               </div>
 
               {/* Data */}
-              <div style={{marginBottom:12}}>
-                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>DATA</label>
-                <input type="date" value={editCulto.data} onChange={e=>setEditCulto(p=>({...p,data:e.target.value}))} style={{width:"100%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:"#EAE8F2",fontSize:14,fontFamily:"inherit",outline:"none",colorScheme:"dark"}}/>
-              </div>
+              <DatePicker label="DATA" value={editCulto.data} onChange={e=>setEditCulto(p=>({...p,data:e.target.value}))}/>
 
               {/* Tipo */}
               <div style={{marginBottom:12}}>
@@ -1605,7 +1664,7 @@ function App(){
           <Fld label="Tipo" as="select" value={newCF.tipo} onChange={e=>setNCF(p=>({...p,tipo:e.target.value}))}>
             {Object.entries(CC).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
           </Fld>
-          <Fld label="Data" type="date" value={newCF.data} onChange={e=>setNCF(p=>({...p,data:e.target.value}))}/>
+          <DatePicker label="Data" value={newCF.data} onChange={e=>setNCF(p=>({...p,data:e.target.value}))}/>
           <Fld label="Tema (opcional)" value={newCF.tema} onChange={e=>setNCF(p=>({...p,tema:e.target.value}))} placeholder="Ex: Gratidão"/>
           {newCF.modo==="campanha"&&<>
             <Fld label="Nome da Campanha" value={newCF.campanha} onChange={e=>setNCF(p=>({...p,campanha:e.target.value}))} placeholder="Ex: Semana de Oração"/>
