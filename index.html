@@ -770,7 +770,7 @@ function App(){
           <img src="https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png" alt="Banda Aviva" style={{width:38,height:38,borderRadius:8,objectFit:"cover"}}/>
           <div>
             <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,lineHeight:1}}>Banda Aviva</div>
-            <div style={{fontSize:9,letterSpacing:2,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",textTransform:"uppercase"}}>Ministério de Música</div>
+            <div style={{fontSize:9,letterSpacing:2,color:"rgba(255,255,255,0.65)",textTransform:"uppercase",fontWeight:400}}>Ministério de Música</div>
           </div>
         </div>
         {/* Nav desktop */}
@@ -1056,31 +1056,45 @@ function App(){
                   };
 
                   return(
-                    <div key={l.id} style={{borderBottom:"1px solid rgba(255,255,255,0.05)",overflow:"hidden"}}>
+                    <div key={l.id} style={{borderBottom:accent.light_theme?`1px solid rgba(${accent.rgb},0.08)`:"1px solid rgba(255,255,255,0.06)",overflow:"hidden"}}>
                       {/* Linha clicável */}
                       <div
                         draggable
                         onDragStart={e=>{ e.dataTransfer.setData("louvorIdx",String(i)); e.dataTransfer.setData("cultoId",c.id); }}
                         onDragOver={e=>e.preventDefault()}
                         onDrop={e=>{ e.preventDefault(); const from=parseInt(e.dataTransfer.getData("louvorIdx")); const cid=e.dataTransfer.getData("cultoId"); if(cid!==c.id||from===i)return; const cult=getC(c.id); if(!cult)return; const arr=[...cult.louvores]; const [moved]=arr.splice(from,1); arr.splice(i,0,moved); updC({...cult,louvores:arr}); }}
-                        onClick={()=>{ setOpenLouvor(isOpen?null:l.id); if(!isOpen) setTransposeMap(p=>({...p,[l.id]:l.tom||""})); }} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",cursor:"grab"}}>
-                        <span style={{fontSize:12,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",minWidth:16,flexShrink:0}}>{i+1}</span>
-                        <span style={{color:getAccent().light_theme?"rgba(0,0,0,0.20)":"rgba(255,255,255,0.15)",fontSize:14,flexShrink:0,cursor:"grab"}}>⠿</span>
+                        onClick={()=>{ setOpenLouvor(isOpen?null:l.id); if(!isOpen) setTransposeMap(p=>({...p,[l.id]:l.tom||""})); }}
+                        style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",cursor:"pointer",background:isOpen?`rgba(${accent.rgb},0.07)`:"transparent",borderLeft:`3px solid ${isOpen?accent.accent:"transparent"}`,transition:"all 0.15s",borderRadius:isOpen?"0 8px 8px 0":"0"}}>
+                        {/* Número + drag */}
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,flexShrink:0,minWidth:20}}>
+                          <span style={{fontSize:10,fontWeight:700,color:isOpen?accent.accent:accent.light_theme?"rgba(0,0,0,0.3)":"rgba(255,255,255,0.25)",lineHeight:1}}>{i+1}</span>
+                          <span style={{color:accent.light_theme?"rgba(0,0,0,0.18)":"rgba(255,255,255,0.15)",fontSize:12,cursor:"grab",lineHeight:1}}>⠿</span>
+                        </div>
+                        {/* Info principal */}
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:13,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</div>
-                          <div style={{fontSize:11,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",display:"flex",gap:4,alignItems:"center",flexWrap:"wrap",marginTop:2}}>
-                            {l.cantor&&<span style={{color:accent.accent,fontWeight:600}}>🎤 {l.cantor}</span>}
-                            {selMus.length>0&&<span style={{color:"rgba(107,191,163,0.85)"}}>
-                              · {selMus.map(nm=>{const mt=musicos.find(m=>m.nome===nm); return mt?mt.emoji+" "+nm:nm;}).join("  ")}
+                          <div style={{fontSize:13,fontWeight:700,color:accent.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:3}}>{l.titulo}</div>
+                          <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                            {l.cantor&&<span style={{fontSize:11,color:accent.accent,fontWeight:600,display:"flex",alignItems:"center",gap:2}}><span style={{fontSize:10}}>🎤</span>{l.cantor}</span>}
+                            {l.artista&&!l.cantor&&<span style={{fontSize:11,color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)"}}>{l.artista}</span>}
+                            {selMus.length>0&&<span style={{fontSize:10,color:accent.light_theme?"rgba(107,77,160,0.7)":"rgba(107,191,163,0.8)",display:"flex",gap:3,flexWrap:"wrap"}}>
+                              {selMus.map(nm=>{const mt=musicos.find(m=>m.nome===nm); return <span key={nm}>{mt?mt.emoji:""}</span>;})}
                             </span>}
                           </div>
                         </div>
-                        <TomTag tom={l.tom}/>
-                        <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
-                          {getYTId(l.ytUrl||"")&&<button onClick={e=>{e.stopPropagation();setOpenLouvor(vidOpen?null:"vid_"+l.id);}} style={{background:vidOpen?"rgba(204,0,0,0.25)":"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:16,padding:"3px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{vidOpen?"■":"▶"}</button>}
-                          <button onClick={e=>{e.stopPropagation();setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}});}} style={{background:accent.light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:accent.light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",borderRadius:16,padding:"3px 8px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✎</button>
-                          <button onClick={e=>{e.stopPropagation();doRemLouvor(c.id,l.id);}} style={{...bDanger,padding:"3px 8px",fontSize:11}}>✕</button>
-                          <span style={{color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(180deg)":"none"}}>▾</span>
+                        {/* Tom + ações */}
+                        <div style={{display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+                          <TomTag tom={l.tom}/>
+                          {getYTId(l.ytUrl||"")&&(
+                            <button onClick={e=>{e.stopPropagation();setOpenLouvor(vidOpen?null:"vid_"+l.id);}}
+                              style={{width:28,height:28,borderRadius:"50%",background:vidOpen?"rgba(204,0,0,0.3)":"rgba(204,0,0,0.15)",border:"1px solid rgba(204,0,0,0.3)",color:"#ff6b6b",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                              {vidOpen?"■":"▶"}
+                            </button>
+                          )}
+                          <button onClick={e=>{e.stopPropagation();setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}});}}
+                            style={{width:28,height:28,borderRadius:"50%",background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.07)",border:accent.light_theme?"1px solid rgba(0,0,0,0.1)":"1px solid rgba(255,255,255,0.1)",color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.45)",fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✎</button>
+                          <button onClick={e=>{e.stopPropagation();doRemLouvor(c.id,l.id);}}
+                            style={{width:28,height:28,borderRadius:"50%",background:"rgba(192,57,75,0.1)",border:"1px solid rgba(192,57,75,0.2)",color:"#C0394B",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+                          <span style={{color:accent.light_theme?"rgba(0,0,0,0.25)":"rgba(255,255,255,0.2)",fontSize:13,transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(180deg)":"none",marginLeft:2}}>▾</span>
                         </div>
                       </div>
 
@@ -1105,7 +1119,7 @@ function App(){
 
                       {/* Painel expandido */}
                       {isOpen&&(
-                        <div style={{padding:"10px 0 14px 22px",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
+                        <div style={{padding:"10px 0 14px 22px",borderTop:accent.light_theme?`1px solid rgba(${accent.rgb},0.1)`:"1px solid rgba(255,255,255,0.06)"}}>
 
                           {/* Transpose */}
                           {l.tom&&(
