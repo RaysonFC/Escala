@@ -188,10 +188,10 @@ async function ytSearch(q){
 /* ── Mini componentes ── */
 const TomTag=({tom})=>tom?<span style={{fontSize:10,fontWeight:700,color:"#C9A84C",background:"rgba(201,168,76,0.12)",borderRadius:6,padding:"2px 7px",letterSpacing:.5}}>{tom}</span>:null;
 
-function Ovl({children,onClose,wide}){
+function Ovl({children,onClose,wide,bg}){
   return(
     <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:accent.bgCard,borderRadius:18,padding:22,width:"100%",maxWidth:wide?620:440,maxHeight:"90vh",overflowY:"auto",border:"1px solid rgba(255,255,255,0.1)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:bg||"#161625",borderRadius:18,padding:22,width:"100%",maxWidth:wide?620:440,maxHeight:"90vh",overflowY:"auto",border:"1px solid rgba(255,255,255,0.1)"}}>
         {children}
       </div>
     </div>
@@ -1579,7 +1579,7 @@ function App(){
 
       {/* Player YouTube */}
       {playL&&(
-        <Ovl onClose={()=>{setPlayL(null);setPlayerTranspose(0);}} wide>
+        <Ovl bg={accent.bgCard} onClose={()=>{setPlayL(null);setPlayerTranspose(0);}} wide>
           <MH title={playL.titulo||"Reproduzindo"} sub={playL.artista} onClose={()=>{setPlayL(null);setPlayerTranspose(0);}}/>
           {getYTId(playL.ytUrl||"")?(
             <>
@@ -1652,7 +1652,7 @@ function App(){
 
       {/* Novo culto */}
       {newCF&&(
-        <Ovl onClose={()=>setNCF(null)}>
+        <Ovl bg={accent.bgCard} onClose={()=>setNCF(null)}>
           <MH title="Novo Culto" onClose={()=>setNCF(null)}/>
           <div style={{display:"flex",background:"rgba(255,255,255,0.04)",borderRadius:8,overflow:"hidden",marginBottom:12}}>
             {["unico","campanha"].map(m=>(
@@ -1681,7 +1681,7 @@ function App(){
 
       {/* Favoritos picker */}
       {showFavPk&&sel&&(
-        <Ovl onClose={()=>setFavPk(false)}>
+        <Ovl bg={accent.bgCard} onClose={()=>setFavPk(false)}>
           <MH title="Adicionar Favorito" onClose={()=>setFavPk(false)}/>
           {favs.length===0&&<p style={{color:"rgba(255,255,255,0.35)",fontSize:13}}>Nenhum favorito ainda.</p>}
           {favs.map(f=>(
@@ -1698,7 +1698,7 @@ function App(){
 
       {/* Editar cantor */}
       {editCI!==null&&cantores[editCI]&&(
-        <Ovl onClose={()=>setEditCI(null)}>
+        <Ovl bg={accent.bgCard} onClose={()=>setEditCI(null)}>
           <MH title="Editar Cantor" onClose={()=>setEditCI(null)}/>
           <CantorModal cantor={cantores[editCI]} idx={editCI} cultos={cultos} onSave={saveCantorEdit} onDelete={deleteCantorAt} onClose={()=>setEditCI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger}/>
         </Ovl>
@@ -1706,7 +1706,7 @@ function App(){
 
       {/* Adicionar cantor */}
       {showAddC&&(
-        <Ovl onClose={()=>setShowAddC(false)}>
+        <Ovl bg={accent.bgCard} onClose={()=>setShowAddC(false)}>
           <MH title="Novo Cantor" onClose={()=>setShowAddC(false)}/>
           <Fld label="Nome" value={newCantN} placeholder="Nome do cantor" onChange={e=>setNewCantN(e.target.value)}/>
           <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
@@ -1718,7 +1718,7 @@ function App(){
 
       {/* Editar músico */}
       {editMI!==null&&musicos[editMI]&&(
-        <Ovl onClose={()=>setEditMI(null)}>
+        <Ovl bg={accent.bgCard} onClose={()=>setEditMI(null)}>
           <MH title="Editar Músico" onClose={()=>setEditMI(null)}/>
           <MusicoModal musico={musicos[editMI]} idx={editMI} onSave={saveMusicoEdit} onDelete={deleteMusicoAt} onClose={()=>setEditMI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger}/>
         </Ovl>
@@ -1726,7 +1726,7 @@ function App(){
 
       {/* Adicionar músico */}
       {showAddM&&(
-        <Ovl onClose={()=>setShowAddM(false)}>
+        <Ovl bg={accent.bgCard} onClose={()=>setShowAddM(false)}>
           <MH title="Novo Músico" onClose={()=>setShowAddM(false)}/>
           <Fld label="Nome" value={newMusN} placeholder="Nome do músico" onChange={e=>setNewMusN(e.target.value)}/>
           <Fld label="Instrumento" as="select" value={newMusInst} onChange={e=>setNewMusInst(e.target.value)}>
@@ -1741,7 +1741,7 @@ function App(){
 
       {/* Tema */}
       {showTheme&&(
-        <Ovl onClose={()=>setShowTheme(false)}>
+        <Ovl bg={accent.bgCard} onClose={()=>setShowTheme(false)}>
           <MH title="Tema" onClose={()=>setShowTheme(false)}/>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:8}}>
             {Object.entries(THEMES).map(([k,t])=>(
