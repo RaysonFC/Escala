@@ -978,8 +978,8 @@ function App(){
 
         {/* ── Modal editar louvor ── */}
         {editLF&&(
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,padding:"0 0 0 0"}} onClick={e=>{if(e.target===e.currentTarget)setELF(null);}}>
-            <div style={{background:"#1A1A2E",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto"}}>
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,paddingBottom:70}} onClick={e=>{if(e.target===e.currentTarget)setELF(null);}}>
+            <div style={{background:"#1A1A2E",borderRadius:"20px 20px 0 0",padding:"20px 16px 24px",width:"100%",maxWidth:500,maxHeight:"80vh",overflowY:"auto"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                 <div style={{fontSize:14,fontWeight:700,color:"#EAE8F2"}}>✎ Editar Louvor</div>
                 <button onClick={()=>setELF(null)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",borderRadius:"50%",width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>✕</button>
@@ -1040,8 +1040,8 @@ function App(){
 
         {/* ── Modal editar culto ── */}
         {editCulto&&(
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200}} onClick={e=>{if(e.target===e.currentTarget)setEditCulto(null);}}>
-            <div style={{background:"#1A1A2E",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto"}}>
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,paddingBottom:70}} onClick={e=>{if(e.target===e.currentTarget)setEditCulto(null);}}>
+            <div style={{background:"#1A1A2E",borderRadius:"20px 20px 0 0",padding:"20px 16px 24px",width:"100%",maxWidth:500,maxHeight:"80vh",overflowY:"auto"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                 <div style={{fontSize:14,fontWeight:700,color:"#EAE8F2"}}>✎ Editar Culto</div>
                 <button onClick={()=>setEditCulto(null)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",borderRadius:"50%",width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>✕</button>
