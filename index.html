@@ -409,6 +409,7 @@ function App(){
   const [newCF,setNCF]=useState(null);
   const [showFavPk,setFavPk]=useState(false);
   const [openLouvor,setOpenLouvor]=useState(null); // louvor id expandido
+  const [transposeMap,setTransposeMap]=useState({}); // {louvorId: tomAtual}
 
   const loaded=useRef({cant:false,mus:false,cult:false,favs:false});
   const fromFb=useRef({cant:false,mus:false,cult:false,favs:false});
@@ -805,16 +806,39 @@ function App(){
                   const escaladosCulto=musicos.filter(mt=>(c.musicos||[]).includes(mt.nome));
                   const listaMus=escaladosCulto.length>0?escaladosCulto:musicos;
                   const selMus=l.musicos||[];
+
+                  // Transpose
+                  const TONS_MAJ=["C","C#","Db","D","D#","Eb","E","F","F#","Gb","G","G#","Ab","A","A#","Bb","B"];
+                  const TONS_MIN=["Cm","C#m","Dbm","Dm","D#m","Ebm","Em","Fm","F#m","Gbm","Gm","G#m","Abm","Am","A#m","Bbm","Bm"];
+                  const tomAtual=transposeMap[l.id]||l.tom||"";
+                  const isMin=tomAtual.endsWith("m");
+                  const lista=isMin?TONS_MIN:TONS_MAJ;
+                  const idxAtual=lista.indexOf(tomAtual);
+                  const transpor=delta=>{
+                    if(!tomAtual)return;
+                    const novoIdx=(idxAtual+delta+lista.length)%lista.length;
+                    setTransposeMap(p=>({...p,[l.id]:lista[novoIdx]}));
+                  };
+                  const tomMudou=tomAtual&&tomAtual!==l.tom;
+
                   const toggleMusLouvor=nome=>{
                     const nova=selMus.includes(nome)?selMus.filter(n=>n!==nome):[...selMus,nome];
                     const cult=getC(c.id); if(!cult)return;
                     updC({...cult,louvores:cult.louvores.map(x=>x.id===l.id?{...x,musicos:nova}:x)});
                   };
-                  const salvarMusicos=()=>{ showToast("Músicos salvos ✓"); setOpenLouvor(null); };
+                  const salvar=()=>{
+                    if(tomMudou){
+                      const cult=getC(c.id); if(!cult)return;
+                      updC({...cult,louvores:cult.louvores.map(x=>x.id===l.id?{...x,tom:tomAtual}:x)});
+                    }
+                    showToast("Salvo ✓");
+                    setOpenLouvor(null);
+                  };
+
                   return(
                     <div key={l.id} style={{borderBottom:"1px solid rgba(255,255,255,0.05)",overflow:"hidden"}}>
                       {/* Linha clicável */}
-                      <div onClick={()=>setOpenLouvor(isOpen?null:l.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",cursor:"pointer"}}>
+                      <div onClick={()=>{ setOpenLouvor(isOpen?null:l.id); if(!isOpen) setTransposeMap(p=>({...p,[l.id]:l.tom||""})); }} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",cursor:"pointer"}}>
                         <span style={{fontSize:12,color:"rgba(255,255,255,0.3)",minWidth:16,flexShrink:0}}>{i+1}</span>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</div>
@@ -836,9 +860,31 @@ function App(){
                         </div>
                       </div>
 
-                      {/* Painel expandido — seleção de músicos */}
+                      {/* Painel expandido */}
                       {isOpen&&(
-                        <div style={{padding:"8px 0 14px 22px",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
+                        <div style={{padding:"10px 0 14px 22px",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
+
+                          {/* Transpose */}
+                          {l.tom&&(
+                            <div style={{marginBottom:14}}>
+                              <div style={{fontSize:9,letterSpacing:1.5,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",marginBottom:8}}>🎵 Tom / Transpose</div>
+                              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                                <button onClick={()=>transpor(-1)} style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:10,width:36,height:36,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                                <div style={{flex:1,textAlign:"center"}}>
+                                  <div style={{fontSize:24,fontWeight:700,color:tomMudou?accent.accent:"#EAE8F2",letterSpacing:1}}>{tomAtual||"—"}</div>
+                                  {tomMudou&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>original: {l.tom}</div>}
+                                </div>
+                                <button onClick={()=>transpor(+1)} style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:10,width:36,height:36,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                              </div>
+                              {tomMudou&&(
+                                <button onClick={()=>setTransposeMap(p=>({...p,[l.id]:l.tom}))} style={{width:"100%",marginTop:6,background:"none",border:"none",color:"rgba(255,255,255,0.3)",fontSize:11,cursor:"pointer",fontFamily:"inherit",textAlign:"center"}}>
+                                  ↺ Voltar ao original ({l.tom})
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Músicos */}
                           <div style={{fontSize:9,letterSpacing:1.5,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",marginBottom:8}}>Músicos nesta música</div>
                           <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:12}}>
                             {listaMus.map(mt=>{
@@ -857,8 +903,8 @@ function App(){
                           </div>
                           {escaladosCulto.length===0&&<div style={{fontSize:10,color:"rgba(255,255,255,0.2)",fontStyle:"italic",marginBottom:10}}>Escale músicos no culto para filtrar aqui</div>}
                           <div style={{display:"flex",gap:8,justifyContent:"flex-end",paddingRight:4}}>
-                            <button onClick={()=>setOpenLouvor(null)} style={{...bGhost,padding:"6px 14px",fontSize:12}}>Cancelar</button>
-                            <button onClick={salvarMusicos} style={{...bGold,padding:"6px 16px",fontSize:12}}>Salvar ✓</button>
+                            <button onClick={()=>{setOpenLouvor(null);setTransposeMap(p=>({...p,[l.id]:l.tom}));}} style={{...bGhost,padding:"6px 14px",fontSize:12}}>Cancelar</button>
+                            <button onClick={salvar} style={{...bGold,padding:"6px 16px",fontSize:12}}>Salvar ✓</button>
                           </div>
                         </div>
                       )}
