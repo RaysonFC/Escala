@@ -203,7 +203,7 @@ function MH({title,sub,onClose}){
   return(
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
       <div>
-        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:19,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text}}>{title}</div>
+        <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:19,fontWeight:700,color:"#EAE8F2"}}>{title}</div>
         {sub&&<div style={{fontSize:12,color:getAccent().light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",marginTop:2}}>{sub}</div>}
       </div>
       <button onClick={onClose} style={{background:getAccent().light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.07)",border:"none",color:getAccent().light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",borderRadius:8,padding:"5px 10px",cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>✕</button>
@@ -215,7 +215,7 @@ function Fld({label,value,onChange,placeholder,as,children,type="text"}){
   const base={width:"100%",background:getAccent().light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:getAccent().text,fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:12};
   return(
     <div>
-      {label&&<label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
+      {label&&<label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
       {as==="textarea"?<textarea value={value} onChange={onChange} placeholder={placeholder} rows={3} style={{...base,resize:"vertical"}}/>
        :as==="select"?<select value={value} onChange={onChange} style={base}>{children}</select>
        :<input type={type} value={value} onChange={onChange} placeholder={placeholder} style={base}/>}
@@ -246,8 +246,8 @@ function DatePicker({label,value,onChange}){
 
   return(
     <div style={{marginBottom:12,position:"relative"}}>
-      {label&&<label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
-      <button onClick={()=>setOpen(p=>!p)} style={{width:"100%",background:getAccent().light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:sel?getAccent().text:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:14,fontFamily:"inherit",outline:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",textAlign:"left"}}>
+      {label&&<label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
+      <button onClick={()=>setOpen(p=>!p)} style={{width:"100%",background:getAccent().light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:sel?"#EAE8F2":"rgba(255,255,255,0.3)",fontSize:14,fontFamily:"inherit",outline:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",textAlign:"left"}}>
         <span>📅 {fmtDisp(sel)}</span>
         <span style={{color:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:12,transform:open?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
       </button>
@@ -255,9 +255,9 @@ function DatePicker({label,value,onChange}){
         <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:300,background:getAccent().bgCard,border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
           {/* Nav mês */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m-1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:getAccent().light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>‹</button>
-            <span style={{fontSize:13,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text}}>{MONTHS[view.m]} {view.y}</span>
-            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m+1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:getAccent().light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>›</button>
+            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m-1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:getAccent().light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>‹</button>
+            <span style={{fontSize:13,fontWeight:600,color:"#EAE8F2"}}>{MONTHS[view.m]} {view.y}</span>
+            <button onClick={()=>setView(p=>{ const d=new Date(p.y,p.m+1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:getAccent().light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit"}}>›</button>
           </div>
           {/* Dias da semana */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",marginBottom:4}}>
@@ -271,14 +271,14 @@ function DatePicker({label,value,onChange}){
               const isSel=ds===sel;
               const isToday=ds===today;
               return(
-                <button key={i} onClick={()=>{ onChange({target:{value:ds}}); setOpen(false); }} style={{padding:"7px 0",borderRadius:8,border:isSel?`1px solid rgba(${getAccent().rgb},0.6)`:isToday?`1px solid ${getAccent().light_theme?"rgba(0,0,0,0.2)":"rgba(255,255,255,0.15)"}`:"1px solid transparent",background:isSel?`rgba(${getAccent().rgb},0.15)`:isToday?getAccent().light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.06)":"transparent",color:isSel?getAccent().accent:isToday?getAccent().text:getAccent().light_theme?"rgba(0,0,0,0.6)":"rgba(255,255,255,0.7)",fontSize:12,fontWeight:isSel||isToday?700:400,cursor:"pointer",fontFamily:"inherit",transition:"all 0.1s"}}>
+                <button key={i} onClick={()=>{ onChange({target:{value:ds}}); setOpen(false); }} style={{padding:"7px 0",borderRadius:8,border:isSel?"1px solid rgba(201,168,76,0.6)":isToday?"1px solid rgba(255,255,255,0.15)":"1px solid transparent",background:isSel?"rgba(201,168,76,0.2)":isToday?"rgba(255,255,255,0.06)":"transparent",color:isSel?"#E8C96A":isToday?"#EAE8F2":"rgba(255,255,255,0.7)",fontSize:12,fontWeight:isSel||isToday?700:400,cursor:"pointer",fontFamily:"inherit",transition:"all 0.1s"}}>
                   {d}
                 </button>
               );
             })}
           </div>
           {/* Hoje */}
-          <button onClick={()=>{ onChange({target:{value:today}}); setOpen(false); }} style={{width:"100%",marginTop:10,background:accent.light_theme?"rgba(0,0,0,0.03)":"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,color:getAccent().light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",fontSize:11,padding:"6px",cursor:"pointer",fontFamily:"inherit"}}>Hoje</button>
+          <button onClick={()=>{ onChange({target:{value:today}}); setOpen(false); }} style={{width:"100%",marginTop:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,color:getAccent().light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",fontSize:11,padding:"6px",cursor:"pointer",fontFamily:"inherit"}}>Hoje</button>
         </div>
       )}
     </div>
@@ -325,22 +325,22 @@ function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
           </div>
           {/* Transpose inline */}
           <div style={{background:"rgba(0,0,0,0.4)",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"}}>
-            <button onClick={()=>setPt(p=>p-1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:10,width:36,height:36,fontSize:20,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
+            <button onClick={()=>setPt(p=>p-1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:10,width:36,height:36,fontSize:20,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>−</button>
             <div style={{textAlign:"center",flex:1}}>
               <div style={{fontSize:22,fontWeight:700,color:mudou?accent.accent:"rgba(255,255,255,0.4)",lineHeight:1}}>{mudou?sinal+pt:"0"}</div>
-              <div style={{fontSize:9,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",letterSpacing:1,textTransform:"uppercase",marginTop:2}}>{mudou?(pt>0?"semitons acima":"semitons abaixo"):"tom original"}</div>
-              {l.tom&&<div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",marginTop:2}}>ref: <span style={{color:accent.accent,fontWeight:700}}>{l.tom}</span></div>}
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",letterSpacing:1,textTransform:"uppercase",marginTop:2}}>{mudou?(pt>0?"semitons acima":"semitons abaixo"):"tom original"}</div>
+              {l.tom&&<div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:2}}>ref: <span style={{color:accent.accent,fontWeight:700}}>{l.tom}</span></div>}
             </div>
-            <button onClick={()=>setPt(p=>p+1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:10,width:36,height:36,fontSize:20,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
-            {mudou&&<button onClick={()=>setPt(0)} style={{background:"none",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",borderRadius:8,padding:"4px 8px",fontSize:10,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>↺</button>}
+            <button onClick={()=>setPt(p=>p+1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:10,width:36,height:36,fontSize:20,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
+            {mudou&&<button onClick={()=>setPt(0)} style={{background:"none",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.35)",borderRadius:8,padding:"4px 8px",fontSize:10,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>↺</button>}
             <button onClick={toggleInline} style={{background:"none",border:"none",color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:18,cursor:"pointer",fontFamily:"inherit",padding:"4px 6px",flexShrink:0}}>✕</button>
           </div>
         </div>
       )}
 
       <div style={{padding:compact?"10px 12px":"12px 14px"}}>
-        <div style={{fontSize:13,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text,marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo||"Sem título"}</div>
-        <div style={{fontSize:11,color:getAccent().light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.38)",marginBottom:6}}>{l.artista}</div>
+        <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo||"Sem título"}</div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.38)",marginBottom:6}}>{l.artista}</div>
         <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
           <TomTag tom={l.tom}/>
           {id&&!inline&&<button onClick={toggleInline} style={{background:"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>▶</button>}
@@ -383,7 +383,7 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
   return(
     <>
       {/* Card visual do cantor */}
-      <div style={{background:accent.light_theme?"rgba(0,0,0,0.02)":"rgba(255,255,255,0.03)",borderRadius:14,padding:"20px 16px",marginBottom:16,textAlign:"center"}}>
+      <div style={{background:"rgba(255,255,255,0.03)",borderRadius:14,padding:"20px 16px",marginBottom:16,textAlign:"center"}}>
         {/* Emoji clicável */}
         <div onClick={()=>setPickingEmoji(true)} style={{fontSize:56,cursor:"pointer",display:"inline-block",position:"relative",marginBottom:8}}>
           {emoji}
@@ -391,8 +391,8 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
         </div>
         {/* Nome clicável */}
         {editingName
-          ? <input autoFocus value={nome} onChange={e=>setNome(e.target.value)} onBlur={()=>setEditingName(false)} onKeyDown={e=>{if(e.key==="Enter")setEditingName(false);}} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"6px 12px",color:getAccent().light_theme?"#1A1028":accent.text,fontSize:18,fontWeight:700,textAlign:"center",width:"100%",fontFamily:"inherit",outline:"none"}}/>
-          : <div onClick={()=>setEditingName(true)} style={{fontSize:18,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6}}>
+          ? <input autoFocus value={nome} onChange={e=>setNome(e.target.value)} onBlur={()=>setEditingName(false)} onKeyDown={e=>{if(e.key==="Enter")setEditingName(false);}} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"6px 12px",color:"#EAE8F2",fontSize:18,fontWeight:700,textAlign:"center",width:"100%",fontFamily:"inherit",outline:"none"}}/>
+          : <div onClick={()=>setEditingName(true)} style={{fontSize:18,fontWeight:700,color:"#EAE8F2",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6}}>
               {nome} <span style={{fontSize:12,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)"}}>✎</span>
             </div>
         }
@@ -403,14 +403,14 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
       {historico.length>0&&(
         <div style={{marginBottom:14}}>
           <label style={{fontSize:10,letterSpacing:1.5,color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>🎵 Louvores cantados</label>
-          <div style={{background:accent.light_theme?"rgba(0,0,0,0.02)":"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
+          <div style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
             {historico.map((l,i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:8,justifyContent:"space-between"}}>
                 <div style={{display:"flex",alignItems:"center",gap:6,overflow:"hidden"}}>
                   <span style={{color:accent.accent,flexShrink:0,fontSize:12}}>♪</span>
                   <div style={{overflow:"hidden"}}>
-                    <div style={{fontSize:12,color:getAccent().light_theme?"#1A1028":accent.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo}</div>
-                    {l.artista&&<div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{l.artista}</div>}
+                    <div style={{fontSize:12,color:"#EAE8F2",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo}</div>
+                    {l.artista&&<div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{l.artista}</div>}
                   </div>
                 </div>
                 {l.tom&&<span style={{fontSize:10,fontWeight:700,color:accent.accent,background:"rgba("+accent.rgb+",0.12)",borderRadius:6,padding:"2px 7px",flexShrink:0}}>{l.tom}</span>}
@@ -420,7 +420,7 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
         </div>
       )}
       {historico.length===0&&(
-        <p style={{textAlign:"center",color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.2)",fontSize:12,fontStyle:"italic",marginBottom:14}}>Sem louvores registrados ainda</p>
+        <p style={{textAlign:"center",color:"rgba(255,255,255,0.2)",fontSize:12,fontStyle:"italic",marginBottom:14}}>Sem louvores registrados ainda</p>
       )}
 
       <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
@@ -441,10 +441,10 @@ function MusicoModal({musico,idx,onSave,onDelete,onClose,accent,bGold,bGhost,bDa
   const [emoji,setEmoji]=useState(musico.emoji);
   return(
     <>
-      <div style={{display:"flex",alignItems:"center",gap:14,padding:14,background:accent.light_theme?"rgba(0,0,0,0.02)":"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:12}}>
+      <div style={{display:"flex",alignItems:"center",gap:14,padding:14,background:"rgba(255,255,255,0.03)",borderRadius:10,marginBottom:12}}>
         <span style={{fontSize:40}}>{emoji}</span>
         <div>
-          <div style={{fontSize:16,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text}}>{nome}</div>
+          <div style={{fontSize:16,fontWeight:700,color:"#EAE8F2"}}>{nome}</div>
           <div style={{fontSize:12,color:accent.accent}}>{inst}</div>
         </div>
       </div>
@@ -453,7 +453,7 @@ function MusicoModal({musico,idx,onSave,onDelete,onClose,accent,bGold,bGhost,bDa
         {["Bateria","Guitarra","Teclado","Contra Baixo","Violão","Baixo","Saxofone","Outro"].map(i=><option key={i}>{i}</option>)}
       </Fld>
       <div style={{marginBottom:12}}>
-        <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>Emoji</label>
+        <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>Emoji</label>
         <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
           {EMOJIS.map(e=>(
             <button key={e} onClick={()=>setEmoji(e)} style={{fontSize:20,padding:6,borderRadius:8,border:"none",cursor:"pointer",background:emoji===e?"rgba("+accent.rgb+",0.25)":"rgba(255,255,255,0.05)",outline:emoji===e?"2px solid "+accent.accent:"none"}}>{e}</button>
@@ -570,7 +570,7 @@ function App(){
   const accent=THEMES[themeKey]||THEMES.gold;
   gAccent=accent; // sync global ref for helper components
   const bGold={background:"linear-gradient(135deg,"+accent.accent+","+accent.light+")",color:"#0F0F1A",border:"none",borderRadius:10,padding:"9px 18px",cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"inherit",whiteSpace:"nowrap"};
-  const bGhost={background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"rgba(0,0,0,0.55)":"rgba(255,255,255,0.55)",borderRadius:8,padding:"8px 15px",cursor:"pointer",fontSize:13,fontFamily:"inherit"};
+  const bGhost={background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)",borderRadius:8,padding:"8px 15px",cursor:"pointer",fontSize:13,fontFamily:"inherit"};
   const bDanger={background:"rgba(224,123,138,0.1)",border:"1px solid rgba(224,123,138,0.3)",color:"#E07B8A",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontFamily:"inherit"};
 
   const getC=id=>cultos.find(c=>c.id===id);
@@ -722,7 +722,7 @@ function App(){
 
       {/* Carregando... */}
       <div style={{animation:"fadeIn 0.7s ease 0.5s both",display:"flex",alignItems:"center",gap:8,marginTop:6}}>
-        <span style={{fontSize:12,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",letterSpacing:2,textTransform:"uppercase",fontFamily:"'DM Sans',sans-serif",fontWeight:300,animation:"pulse 1.8s ease-in-out infinite"}}>
+        <span style={{fontSize:12,color:"rgba(255,255,255,0.35)",letterSpacing:2,textTransform:"uppercase",fontFamily:"'DM Sans',sans-serif",fontWeight:300,animation:"pulse 1.8s ease-in-out infinite"}}>
           carregando
         </span>
       </div>
@@ -766,7 +766,7 @@ function App(){
         <div style={{display:"flex",alignItems:"center",gap:8,padding:"12px 0",flexShrink:0}}>
           <img src="https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png" alt="Banda Aviva" style={{width:38,height:38,borderRadius:8,objectFit:"cover"}}/>
           <div>
-            <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,lineHeight:1}}>Banda Aviva</div>
+            <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,fontWeight:700,color:"#EAE8F2",lineHeight:1}}>Banda Aviva</div>
             <div style={{fontSize:9,letterSpacing:2,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",textTransform:"uppercase"}}>Ministério de Música</div>
           </div>
         </div>
@@ -794,7 +794,7 @@ function App(){
         {NAVS.map(n=>(
           <button key={n.id} onClick={()=>{setTab(n.id);setSelId(null);}} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 12px",fontFamily:"inherit",flex:1}}>
             <span style={{fontSize:22,filter:tab===n.id?`drop-shadow(0 0 6px rgba(${accent.rgb},0.8))`:"none",transition:"filter 0.2s"}}>{n.icon}</span>
-            <span style={{fontSize:9,fontWeight:600,letterSpacing:.5,color:tab===n.id?accent.accent:accent.light_theme?"rgba(0,0,0,0.4)":"rgba(255,255,255,0.35)",transition:"color 0.2s",textTransform:"uppercase"}}>{n.label}</span>
+            <span style={{fontSize:9,fontWeight:600,letterSpacing:.5,color:tab===n.id?accent.accent:"rgba(255,255,255,0.35)",transition:"color 0.2s",textTransform:"uppercase"}}>{n.label}</span>
           </button>
         ))}
       </nav>
@@ -807,7 +807,7 @@ function App(){
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:20,flexWrap:"wrap",gap:12}}>
               <div>
                 <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Ministério de Música</div>
-                <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,margin:0}}>Calendário</h1>
+                <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",margin:0}}>Calendário</h1>
               </div>
               <button style={bGold} onClick={()=>setNCF({data:today,tipo:"domingo",modo:"unico",tema:"",campanha:"",repeticoes:4})}>+ Novo Culto</button>
             </div>
@@ -831,7 +831,7 @@ function App(){
                     const temLouvores=c.louvores.length>0;
                     const completo=temCantores&&temMusicos&&temLouvores;
                     return(
-                      <div key={c.id} onClick={()=>{setSelId(c.id);setTab("culto");}} className="ccard" style={{background:accent.light_theme?"rgba(0,0,0,0.02)":"rgba(255,255,255,0.03)",border:`1px solid rgba(${cf.rgb},0.2)`,borderLeft:`3px solid ${cf.color}`,borderRadius:10,padding:"12px 14px",marginBottom:8,cursor:"pointer",transition:"all 0.15s"}}>
+                      <div key={c.id} onClick={()=>{setSelId(c.id);setTab("culto");}} className="ccard" style={{background:"rgba(255,255,255,0.03)",border:`1px solid rgba(${cf.rgb},0.2)`,borderLeft:`3px solid ${cf.color}`,borderRadius:10,padding:"12px 14px",marginBottom:8,cursor:"pointer",transition:"all 0.15s"}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
                           <div style={{flex:1}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -858,7 +858,7 @@ function App(){
             {/* Próximos */}
             {proximos.length>0&&(
               <div style={{marginBottom:20}}>
-                <div style={{fontSize:10,letterSpacing:2,color:getAccent().light_theme?"rgba(0,0,0,0.60)":"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600,marginBottom:8}}>PRÓXIMOS CULTOS</div>
+                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600,marginBottom:8}}>PRÓXIMOS CULTOS</div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                   {proximos.map(c=>{
                     const cf=CC[c.tipo];
@@ -866,8 +866,8 @@ function App(){
                       <div key={c.id} onClick={()=>{setSelId(c.id);setTab("culto");}} className="pill" style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:10,border:`1px solid rgba(${cf.rgb},0.3)`,background:`rgba(${cf.rgb},0.05)`,cursor:"pointer",minWidth:120}}>
                         <div style={{width:6,height:6,borderRadius:2,background:cf.color,flexShrink:0}}/>
                         <div style={{flex:1}}>
-                          <div style={{fontSize:11,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text}}>{cf.short}</div>
-                          <div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{fmtDate(c.data)}</div>
+                          <div style={{fontSize:11,fontWeight:600,color:"#EAE8F2"}}>{cf.short}</div>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{fmtDate(c.data)}</div>
                         </div>
                         <div style={{fontSize:10,fontWeight:700,color:c.diff==="Hoje"?"#6BBFA3":c.diff==="Amanhã"?accent.accent:"rgba(255,255,255,0.3)"}}>{c.diff}</div>
                       </div>
@@ -878,10 +878,10 @@ function App(){
             )}
 
             {/* Grade calendário */}
-            <div style={{background:accent.bgCard,border:`1px solid rgba(${accent.rgb},0.25)`,borderRadius:14,overflow:"hidden"}}>
+            <div style={{background:accent.bgCard,border:`1px solid ${accent.border}`,borderRadius:14,overflow:"hidden"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
                 <button onClick={()=>setCalMonth(p=>{ const d=new Date(p.y,p.m-1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:"none",border:"none",color:accent.light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:18,padding:"0 4px"}}>‹</button>
-                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text}}>{MONTHS_PT[calMonth.m]} {calMonth.y}</div>
+                <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#EAE8F2"}}>{MONTHS_PT[calMonth.m]} {calMonth.y}</div>
                 <button onClick={()=>setCalMonth(p=>{ const d=new Date(p.y,p.m+1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:"none",border:"none",color:accent.light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:18,padding:"0 4px"}}>›</button>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",textAlign:"center"}}>
@@ -914,12 +914,12 @@ function App(){
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:10,letterSpacing:2,color:cf.color,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>{cf.label}</div>
-                    <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text}}>{fmtDate(c.data)}</div>
-                    {c.tema&&<div style={{fontSize:13,color:getAccent().light_theme?"rgba(0,0,0,0.65)":"rgba(255,255,255,0.7)",marginTop:6,fontStyle:"italic"}}>📖 {c.tema}</div>}
+                    <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:22,fontWeight:700,color:"#EAE8F2"}}>{fmtDate(c.data)}</div>
+                    {c.tema&&<div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:6,fontStyle:"italic"}}>📖 {c.tema}</div>}
                     {c.campanha&&<div style={{fontSize:12,color:cf.color,fontWeight:700,marginTop:4}}>🔥 {c.campanha}</div>}
                     {c.obs&&<div style={{fontSize:11,color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",marginTop:4}}>{c.obs}</div>}
                     {!c.tema&&!c.campanha&&(
-                      <div onClick={()=>setEditCulto({...c})} style={{fontSize:11,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",marginTop:6,cursor:"pointer",fontStyle:"italic"}}>Toque em ✎ para adicionar tema...</div>
+                      <div onClick={()=>setEditCulto({...c})} style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginTop:6,cursor:"pointer",fontStyle:"italic"}}>Toque em ✎ para adicionar tema...</div>
                     )}
                   </div>
                   {/* Indicador completo/incompleto */}
@@ -978,8 +978,8 @@ function App(){
 
               {/* Cantores + Músicos */}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-                <div style={{background:accent.bgCard,border:`1px solid rgba(${accent.rgb},0.25)`,borderRadius:14,padding:16}}>
-                  <div style={{fontSize:12,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,marginBottom:10}}>🎤 Cantores</div>
+                <div style={{background:accent.bgCard,border:`1px solid ${accent.border}`,borderRadius:14,padding:16}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#EAE8F2",marginBottom:10}}>🎤 Cantores</div>
                   {cantores.map(ct=>{
                     const on=c.cantores.includes(ct.nome);
                     return(
@@ -989,8 +989,8 @@ function App(){
                     );
                   })}
                 </div>
-                <div style={{background:accent.bgCard,border:`1px solid rgba(${accent.rgb},0.25)`,borderRadius:14,padding:16}}>
-                  <div style={{fontSize:12,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,marginBottom:10}}>🎸 Músicos</div>
+                <div style={{background:accent.bgCard,border:`1px solid ${accent.border}`,borderRadius:14,padding:16}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#EAE8F2",marginBottom:10}}>🎸 Músicos</div>
                   {musicos.map(mt=>{
                     const on=(c.musicos||[]).includes(mt.nome);
                     return(
@@ -1008,15 +1008,15 @@ function App(){
               </div>
 
               {/* Louvores */}
-              <div style={{background:accent.bgCard,border:`1px solid rgba(${accent.rgb},0.25)`,borderRadius:14,padding:16,marginBottom:12}}>
+              <div style={{background:accent.bgCard,border:`1px solid ${accent.border}`,borderRadius:14,padding:16,marginBottom:12}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                  <div style={{fontSize:12,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text}}>🎵 Louvores</div>
+                  <div style={{fontSize:12,fontWeight:700,color:"#EAE8F2"}}>🎵 Louvores</div>
                   <div style={{display:"flex",gap:6}}>
                     <button style={{...bGhost,padding:"5px 10px",fontSize:11}} onClick={()=>setFavPk(true)}>★ Favs</button>
                     <button style={{...bGold,padding:"5px 12px",fontSize:11}} onClick={()=>setNLF({titulo:"",artista:"",ytUrl:"",tom:"",cifra:"",obs:""})}>+ Louvor</button>
                   </div>
                 </div>
-                {c.louvores.length===0&&<p style={{color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Nenhum louvor adicionado</p>}
+                {c.louvores.length===0&&<p style={{color:"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Nenhum louvor adicionado</p>}
                 {c.louvores.map((l,i)=>{
                   const isOpen=openLouvor===l.id;
                   const vidOpen=openLouvor===("vid_"+l.id);
@@ -1062,10 +1062,10 @@ function App(){
                         onDrop={e=>{ e.preventDefault(); const from=parseInt(e.dataTransfer.getData("louvorIdx")); const cid=e.dataTransfer.getData("cultoId"); if(cid!==c.id||from===i)return; const cult=getC(c.id); if(!cult)return; const arr=[...cult.louvores]; const [moved]=arr.splice(from,1); arr.splice(i,0,moved); updC({...cult,louvores:arr}); }}
                         onClick={()=>{ setOpenLouvor(isOpen?null:l.id); if(!isOpen) setTransposeMap(p=>({...p,[l.id]:l.tom||""})); }} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",cursor:"grab"}}>
                         <span style={{fontSize:12,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",minWidth:16,flexShrink:0}}>{i+1}</span>
-                        <span style={{color:getAccent().light_theme?"rgba(0,0,0,0.20)":"rgba(255,255,255,0.15)",fontSize:14,flexShrink:0,cursor:"grab"}}>⠿</span>
+                        <span style={{color:"rgba(255,255,255,0.15)",fontSize:14,flexShrink:0,cursor:"grab"}}>⠿</span>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:13,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</div>
-                          <div style={{fontSize:11,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",display:"flex",gap:4,alignItems:"center",flexWrap:"wrap",marginTop:2}}>
+                          <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.titulo}</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",display:"flex",gap:4,alignItems:"center",flexWrap:"wrap",marginTop:2}}>
                             {l.cantor&&<span style={{color:accent.accent,fontWeight:600}}>🎤 {l.cantor}</span>}
                             {selMus.length>0&&<span style={{color:"rgba(107,191,163,0.85)"}}>
                               · {selMus.map(nm=>{const mt=musicos.find(m=>m.nome===nm); return mt?mt.emoji+" "+nm:nm;}).join("  ")}
@@ -1077,7 +1077,7 @@ function App(){
                           {getYTId(l.ytUrl||"")&&<button onClick={e=>{e.stopPropagation();setOpenLouvor(vidOpen?null:"vid_"+l.id);}} style={{background:vidOpen?"rgba(204,0,0,0.25)":"rgba(204,0,0,0.12)",border:"1px solid rgba(204,0,0,0.25)",color:"#ff7b7b",borderRadius:16,padding:"3px 8px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{vidOpen?"■":"▶"}</button>}
                           <button onClick={e=>{e.stopPropagation();setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}});}} style={{background:accent.light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.06)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:accent.light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",borderRadius:16,padding:"3px 8px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✎</button>
                           <button onClick={e=>{e.stopPropagation();doRemLouvor(c.id,l.id);}} style={{...bDanger,padding:"3px 8px",fontSize:11}}>✕</button>
-                          <span style={{color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(180deg)":"none"}}>▾</span>
+                          <span style={{color:"rgba(255,255,255,0.25)",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(180deg)":"none"}}>▾</span>
                         </div>
                       </div>
 
@@ -1088,13 +1088,13 @@ function App(){
                             <iframe src={"https://www.youtube.com/embed/"+getYTId(l.ytUrl)+"?autoplay=1&rel=0&playsinline=1"} title={l.titulo} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}/>
                           </div>
                           <div style={{background:"rgba(0,0,0,0.5)",padding:"8px 14px",display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"}}>
-                            <button onClick={()=>setPlayerTranspose(p=>p-1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                            <button onClick={()=>setPlayerTranspose(p=>p-1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
                             <div style={{textAlign:"center",flex:1}}>
                               <div style={{fontSize:20,fontWeight:700,color:playerTranspose!==0?accent.accent:"rgba(255,255,255,0.4)",lineHeight:1}}>{playerTranspose>0?"+"+playerTranspose:playerTranspose}</div>
-                              <div style={{fontSize:9,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",textTransform:"uppercase",letterSpacing:1}}>{playerTranspose!==0?(playerTranspose>0?"semitons acima":"semitons abaixo"):"tom original"}</div>
+                              <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",letterSpacing:1}}>{playerTranspose!==0?(playerTranspose>0?"semitons acima":"semitons abaixo"):"tom original"}</div>
                               {l.tom&&<div style={{fontSize:10,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)"}}>ref: <span style={{color:accent.accent,fontWeight:700}}>{l.tom}</span></div>}
                             </div>
-                            <button onClick={()=>setPlayerTranspose(p=>p+1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                            <button onClick={()=>setPlayerTranspose(p=>p+1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:"#EAE8F2",borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
                             {playerTranspose!==0&&<button onClick={()=>setPlayerTranspose(0)} style={{background:"none",border:"none",color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>↺</button>}
                           </div>
                         </div>
@@ -1109,12 +1109,12 @@ function App(){
                             <div style={{marginBottom:14}}>
                               <div style={{fontSize:9,letterSpacing:1.5,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",textTransform:"uppercase",marginBottom:8}}>🎵 Tom / Transpose</div>
                               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                                <button onClick={()=>transpor(-1)} style={{background:accent.light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:10,width:36,height:36,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                                <button onClick={()=>transpor(-1)} style={{background:accent.light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:10,width:36,height:36,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
                                 <div style={{flex:1,textAlign:"center"}}>
-                                  <div style={{fontSize:24,fontWeight:700,color:tomMudou?accent.accent:accent.text,letterSpacing:1}}>{tomAtual||"—"}</div>
+                                  <div style={{fontSize:24,fontWeight:700,color:tomMudou?accent.accent:"#EAE8F2",letterSpacing:1}}>{tomAtual||"—"}</div>
                                   {tomMudou&&<div style={{fontSize:10,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)"}}>original: {l.tom}</div>}
                                 </div>
-                                <button onClick={()=>transpor(+1)} style={{background:accent.light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:10,width:36,height:36,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                                <button onClick={()=>transpor(+1)} style={{background:accent.light_theme?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:10,width:36,height:36,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
                               </div>
                               {tomMudou&&(
                                 <button onClick={()=>setTransposeMap(p=>({...p,[l.id]:l.tom}))} style={{width:"100%",marginTop:6,background:"none",border:"none",color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:11,cursor:"pointer",fontFamily:"inherit",textAlign:"center"}}>
@@ -1133,19 +1133,19 @@ function App(){
                                 <button key={mt.id} onClick={()=>toggleMusLouvor(mt.nome)} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",borderRadius:9,border:on?"1px solid rgba(107,191,163,0.5)":"1px solid rgba(255,255,255,0.07)",background:on?"rgba(107,191,163,0.1)":"rgba(255,255,255,0.02)",cursor:"pointer",fontFamily:"inherit",textAlign:"left",transition:"all 0.15s"}}>
                                   <span style={{fontSize:18}}>{mt.emoji}</span>
                                   <div style={{flex:1}}>
-                                    <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":accent.text}}>{mt.nome}</div>
-                                    <div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
+                                    <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":"#EAE8F2"}}>{mt.nome}</div>
+                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
                                   </div>
                                   <span style={{fontSize:14,color:on?"#6BBFA3":"rgba(255,255,255,0.2)",fontWeight:700}}>{on?"✓":"+"}</span>
                                 </button>
                               );
                             })}
                           </div>
-                          {escaladosCulto.length===0&&<div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.2)",fontStyle:"italic",marginBottom:10}}>Escale músicos no culto para filtrar aqui</div>}
+                          {escaladosCulto.length===0&&<div style={{fontSize:10,color:"rgba(255,255,255,0.2)",fontStyle:"italic",marginBottom:10}}>Escale músicos no culto para filtrar aqui</div>}
 
                           {/* Cifra Club link */}
                           <div style={{marginBottom:12}}>
-                            <a href={"https://www.cifraclub.com.br/pesquisar/?q="+encodeURIComponent((l.titulo||"")+" "+(l.artista||""))} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:11,color:getAccent().light_theme?"rgba(0,0,0,0.50)":"rgba(255,255,255,0.45)",background:accent.light_theme?"rgba(0,0,0,0.03)":"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"5px 10px",textDecoration:"none",transition:"all 0.15s"}}>
+                            <a href={"https://www.cifraclub.com.br/pesquisar/?q="+encodeURIComponent((l.titulo||"")+" "+(l.artista||""))} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:11,color:"rgba(255,255,255,0.45)",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"5px 10px",textDecoration:"none",transition:"all 0.15s"}}>
                               🎸 Buscar cifra no Cifra Club
                             </a>
                           </div>
@@ -1163,14 +1163,14 @@ function App(){
               {/* Form novo louvor */}
               {newLF&&(
                 <div style={{background:accent.bgCard,border:`1px solid rgba(${accent.rgb},0.2)`,borderRadius:14,padding:16,marginBottom:12}}>
-                  <div style={{fontSize:12,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,marginBottom:12}}>Novo Louvor</div>
+                  <div style={{fontSize:12,fontWeight:700,color:"#EAE8F2",marginBottom:12}}>Novo Louvor</div>
                   <Fld label="Título" value={newLF.titulo} onChange={e=>setNLF(p=>({...p,titulo:e.target.value}))} placeholder="Nome da música"/>
                   <Fld label="Artista" value={newLF.artista} onChange={e=>setNLF(p=>({...p,artista:e.target.value}))} placeholder="Nome do artista"/>
                   <Fld label="Link YouTube (opcional)" value={newLF.ytUrl} onChange={e=>setNLF(p=>({...p,ytUrl:e.target.value}))} placeholder="https://youtu.be/..."/>
 
                   {/* Tom com optgroup */}
                   <div style={{marginBottom:12}}>
-                    <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TOM</label>
+                    <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TOM</label>
                     <select value={newLF.tom} onChange={e=>setNLF(p=>({...p,tom:e.target.value}))} style={{width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:accent.text,fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:0}}>
                       <option value="">— Selecionar tom —</option>
                       <optgroup label="── Maiores ──">
@@ -1216,7 +1216,7 @@ function App(){
 
                   {/* Cantor */}
                   <div style={{marginBottom:12}}>
-                    <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>CANTOR(A)</label>
+                    <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>CANTOR(A)</label>
                     <select value={newLF.cantor||""} onChange={e=>setNLF(p=>({...p,cantor:e.target.value}))} style={{width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:accent.text,fontSize:14,fontFamily:"inherit",outline:"none"}}>
                       <option value="">— Selecionar cantor —</option>
                       {c.cantores.length>0&&<optgroup label="── Escalados neste culto ──">
@@ -1234,7 +1234,7 @@ function App(){
 
                   {/* Músicos que vão tocar */}
                   <div style={{marginBottom:12}}>
-                    <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>MÚSICOS QUE VÃO TOCAR</label>
+                    <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>MÚSICOS QUE VÃO TOCAR</label>
                     <div style={{display:"flex",flexDirection:"column",gap:5}}>
                       {(()=>{
                         const escalados=musicos.filter(mt=>(c.musicos||[]).includes(mt.nome));
@@ -1247,8 +1247,8 @@ function App(){
                             <button key={mt.id} type="button" onClick={()=>toggle(mt.nome)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:9,border:on?"1px solid rgba(107,191,163,0.5)":"1px solid rgba(255,255,255,0.08)",background:on?"rgba(107,191,163,0.1)":"rgba(255,255,255,0.02)",cursor:"pointer",fontFamily:"inherit",textAlign:"left",transition:"all 0.15s"}}>
                               <span style={{fontSize:18}}>{mt.emoji}</span>
                               <div style={{flex:1}}>
-                                <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":accent.text}}>{mt.nome}</div>
-                                <div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
+                                <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":"#EAE8F2"}}>{mt.nome}</div>
+                                <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
                               </div>
                               <span style={{fontSize:14,color:on?"#6BBFA3":"rgba(255,255,255,0.2)",fontWeight:700}}>{on?"✓":"+"}</span>
                             </button>
@@ -1256,7 +1256,7 @@ function App(){
                         });
                       })()}
                     </div>
-                    {(c.musicos||[]).length===0&&<div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",fontStyle:"italic",marginTop:6}}>Dica: escale músicos no culto para filtrar a lista aqui</div>}
+                    {(c.musicos||[]).length===0&&<div style={{fontSize:10,color:"rgba(255,255,255,0.25)",fontStyle:"italic",marginTop:6}}>Dica: escale músicos no culto para filtrar a lista aqui</div>}
                   </div>
 
                   <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
@@ -1274,14 +1274,14 @@ function App(){
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,paddingBottom:70}} onClick={e=>{if(e.target===e.currentTarget)setELF(null);}}>
             <div style={{background:accent.bgCard,borderRadius:"20px 20px 0 0",padding:"20px 16px 24px",width:"100%",maxWidth:500,maxHeight:"80vh",overflowY:"auto"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                <div style={{fontSize:14,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text}}>✎ Editar Louvor</div>
-                <button onClick={()=>setELF(null)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"none",color:getAccent().light_theme?"rgba(0,0,0,0.60)":"rgba(255,255,255,0.6)",borderRadius:"50%",width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>✕</button>
+                <div style={{fontSize:14,fontWeight:700,color:"#EAE8F2"}}>✎ Editar Louvor</div>
+                <button onClick={()=>setELF(null)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",borderRadius:"50%",width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>✕</button>
               </div>
               <Fld label="Título" value={editLF.louvor.titulo} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,titulo:e.target.value}}))} placeholder="Nome da música"/>
               <Fld label="Artista" value={editLF.louvor.artista||""} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,artista:e.target.value}}))} placeholder="Nome do artista"/>
               <Fld label="Link YouTube (opcional)" value={editLF.louvor.ytUrl||""} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,ytUrl:e.target.value}}))} placeholder="https://youtu.be/..."/>
               <div style={{marginBottom:12}}>
-                <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TOM</label>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TOM</label>
                 <select value={editLF.louvor.tom||""} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,tom:e.target.value}}))} style={{width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:accent.text,fontSize:14,fontFamily:"inherit",outline:"none"}}>
                   <option value="">— Selecionar tom —</option>
                   <optgroup label="── Maiores ──">
@@ -1293,14 +1293,14 @@ function App(){
                 </select>
               </div>
               <div style={{marginBottom:16}}>
-                <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>CANTOR(A)</label>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>CANTOR(A)</label>
                 <select value={editLF.louvor.cantor||""} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,cantor:e.target.value}}))} style={{width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:accent.text,fontSize:14,fontFamily:"inherit",outline:"none"}}>
                   <option value="">— Selecionar cantor —</option>
                   {cantores.map(ct=><option key={ct.id} value={ct.nome}>{ct.emoji} {ct.nome}</option>)}
                 </select>
               </div>
               <div style={{marginBottom:16}}>
-                <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>MÚSICOS QUE VÃO TOCAR</label>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>MÚSICOS QUE VÃO TOCAR</label>
                 <div style={{display:"flex",flexDirection:"column",gap:5}}>
                   {(()=>{
                     const culto=cultos.find(cu=>cu.id===editLF.cultoId);
@@ -1313,8 +1313,8 @@ function App(){
                         <button key={mt.id} type="button" onClick={()=>setELF(p=>({...p,louvor:{...p.louvor,musicos:on?selecionados.filter(n=>n!==mt.nome):[...selecionados,mt.nome]}}))} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:9,border:on?"1px solid rgba(107,191,163,0.5)":"1px solid rgba(255,255,255,0.08)",background:on?"rgba(107,191,163,0.1)":"rgba(255,255,255,0.02)",cursor:"pointer",fontFamily:"inherit",textAlign:"left",transition:"all 0.15s"}}>
                           <span style={{fontSize:18}}>{mt.emoji}</span>
                           <div style={{flex:1}}>
-                            <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":accent.text}}>{mt.nome}</div>
-                            <div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
+                            <div style={{fontSize:12,fontWeight:600,color:on?"#6BBFA3":"#EAE8F2"}}>{mt.nome}</div>
+                            <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{mt.instrumento}</div>
                           </div>
                           <span style={{fontSize:14,color:on?"#6BBFA3":"rgba(255,255,255,0.2)",fontWeight:700}}>{on?"✓":"+"}</span>
                         </button>
@@ -1336,8 +1336,8 @@ function App(){
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200,paddingBottom:70}} onClick={e=>{if(e.target===e.currentTarget)setEditCulto(null);}}>
             <div style={{background:accent.bgCard,borderRadius:"20px 20px 0 0",padding:"20px 16px 24px",width:"100%",maxWidth:500,maxHeight:"80vh",overflowY:"auto"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                <div style={{fontSize:14,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text}}>✎ Editar Culto</div>
-                <button onClick={()=>setEditCulto(null)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"none",color:getAccent().light_theme?"rgba(0,0,0,0.60)":"rgba(255,255,255,0.6)",borderRadius:"50%",width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>✕</button>
+                <div style={{fontSize:14,fontWeight:700,color:"#EAE8F2"}}>✎ Editar Culto</div>
+                <button onClick={()=>setEditCulto(null)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",borderRadius:"50%",width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit"}}>✕</button>
               </div>
 
               {/* Data */}
@@ -1345,7 +1345,7 @@ function App(){
 
               {/* Tipo */}
               <div style={{marginBottom:12}}>
-                <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TIPO</label>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TIPO</label>
                 <select value={editCulto.tipo} onChange={e=>setEditCulto(p=>({...p,tipo:e.target.value}))} style={{width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:accent.text,fontSize:14,fontFamily:"inherit",outline:"none"}}>
                   {Object.entries(CC).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
                 </select>
@@ -1353,19 +1353,19 @@ function App(){
 
               {/* Tema */}
               <div style={{marginBottom:12}}>
-                <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TEMA</label>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>TEMA</label>
                 <input value={editCulto.tema||""} onChange={e=>setEditCulto(p=>({...p,tema:e.target.value}))} placeholder="Ex: A graça de Deus" style={{width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:accent.text,fontSize:14,fontFamily:"inherit",outline:"none"}}/>
               </div>
 
               {/* Campanha */}
               <div style={{marginBottom:12}}>
-                <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>CAMPANHA</label>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>CAMPANHA</label>
                 <input value={editCulto.campanha||""} onChange={e=>setEditCulto(p=>({...p,campanha:e.target.value}))} placeholder="Ex: Campanha de Oração" style={{width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:accent.text,fontSize:14,fontFamily:"inherit",outline:"none"}}/>
               </div>
 
               {/* Observações */}
               <div style={{marginBottom:20}}>
-                <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>OBSERVAÇÕES</label>
+                <label style={{fontSize:10,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>OBSERVAÇÕES</label>
                 <textarea value={editCulto.obs||""} onChange={e=>setEditCulto(p=>({...p,obs:e.target.value}))} placeholder="Anotações gerais..." rows={3} style={{width:"100%",background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:accent.text,fontSize:14,fontFamily:"inherit",outline:"none",resize:"vertical"}}/>
               </div>
 
@@ -1383,7 +1383,7 @@ function App(){
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:16,flexWrap:"wrap",gap:12}}>
               <div>
                 <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Ministério de Música</div>
-                <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,margin:0}}>Escalas</h1>
+                <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",margin:0}}>Escalas</h1>
               </div>
               <button style={bGold} onClick={()=>setShowAddC(true)}>+ Cantor</button>
             </div>
@@ -1395,7 +1395,7 @@ function App(){
             </div>
 
             {/* Cantores */}
-            <div style={{fontSize:10,letterSpacing:2,color:getAccent().light_theme?"rgba(0,0,0,0.60)":"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>🎤 CANTORES</div>
+            <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600,marginBottom:10}}>🎤 CANTORES</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}}>
               {cantores.map((ct,i)=>{
                 const n=cultos.filter(c=>c.cantores.includes(ct.nome)).length;
@@ -1409,7 +1409,7 @@ function App(){
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                       <span style={{fontSize:26}}>{ct.emoji}</span>
                       <div>
-                        <div style={{fontSize:12,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text}}>{ct.nome}</div>
+                        <div style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{ct.nome}</div>
                         <div style={{fontSize:10,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)"}}>{n} culto{n!==1?"s":""}</div>
                       </div>
                     </div>
@@ -1417,9 +1417,9 @@ function App(){
                       <div style={{fontSize:10,color:accent.accent,marginTop:4}}>♪ {historico.length} música{historico.length!==1?"s":""}</div>
                     )}
                     {historico.length===0&&(
-                      <div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.25)":"rgba(255,255,255,0.18)",fontStyle:"italic"}}>Sem louvores ainda</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.18)",fontStyle:"italic"}}>Sem louvores ainda</div>
                     )}
-                    <div style={{position:"absolute",top:6,right:8,fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.2)"}}>✎</div>
+                    <div style={{position:"absolute",top:6,right:8,fontSize:10,color:"rgba(255,255,255,0.2)"}}>✎</div>
                   </div>
                 );
               })}
@@ -1428,7 +1428,7 @@ function App(){
             {/* Músicos */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showMusicos?10:0}}>
               <button onClick={()=>setShowMusicos(p=>!p)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:6,padding:0}}>
-                <div style={{fontSize:10,letterSpacing:2,color:getAccent().light_theme?"rgba(0,0,0,0.60)":"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600}}>🎸 MÚSICOS</div>
+                <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600}}>🎸 MÚSICOS</div>
                 <span style={{color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:showMusicos?"rotate(180deg)":"none"}}>▾</span>
               </button>
               {showMusicos&&<button style={{...bGold,padding:"5px 12px",fontSize:11,boxShadow:"none"}} onClick={()=>setShowAddM(true)}>+ Músico</button>}
@@ -1439,10 +1439,10 @@ function App(){
                 return(
                   <div key={mt.id} onClick={()=>setEditMI(i)} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:"1px solid rgba(255,255,255,0.07)",boxShadow:n>0?`0 0 0 1px rgba(${accent.rgb},0.15) inset`:"none",borderRadius:12,padding:"14px 10px",textAlign:"center",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
                     <div style={{fontSize:28,marginBottom:6}}>{mt.emoji}</div>
-                    <div style={{fontSize:12,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text}}>{mt.nome}</div>
+                    <div style={{fontSize:12,fontWeight:600,color:"#EAE8F2"}}>{mt.nome}</div>
                     <div style={{fontSize:10,color:accent.accent,fontWeight:600,marginTop:2}}>{mt.instrumento}</div>
                     <div style={{fontSize:10,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)"}}>{n} culto{n!==1?"s":""}</div>
-                    <div style={{position:"absolute",top:6,right:8,fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.2)"}}>✎</div>
+                    <div style={{position:"absolute",top:6,right:8,fontSize:10,color:"rgba(255,255,255,0.2)"}}>✎</div>
                   </div>
                 );
               })}
@@ -1463,7 +1463,7 @@ function App(){
                 return(
                   <div key={tipo} style={{background:accent.bgCard,border:"1px solid rgba(255,255,255,0.07)",borderTop:`3px solid ${cf.color}`,borderRadius:14,padding:14}}>
                     <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,fontWeight:700,color:cf.color,marginBottom:10}}>{cf.label}</div>
-                    {cs.length===0&&<p style={{color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Sem cultos</p>}
+                    {cs.length===0&&<p style={{color:"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Sem cultos</p>}
                     {cs.map(c=>{
                       const open=!!openCards[c.id];
                       const nC=c.cantores.length, nM=(c.musicos||[]).length;
@@ -1471,7 +1471,7 @@ function App(){
                         <div key={c.id} style={{borderRadius:10,border:"1px solid rgba(255,255,255,0.07)",marginBottom:7,overflow:"hidden"}}>
                           <button onClick={()=>setOpenCards(p=>({...p,[c.id]:!p[c.id]}))} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 11px",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit",gap:6}}>
                             <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
-                              <span style={{fontSize:12,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,whiteSpace:"nowrap"}}>{fmtDate(c.data)}</span>
+                              <span style={{fontSize:12,fontWeight:700,color:"#EAE8F2",whiteSpace:"nowrap"}}>{fmtDate(c.data)}</span>
                               <span style={{fontSize:12,opacity:0.7}}>
                                 {cantores.filter(ct=>c.cantores.includes(ct.nome)).map(ct=>ct.emoji).join("")}
                                 {musicos.filter(mt=>(c.musicos||[]).includes(mt.nome)).map(mt=>mt.emoji).join("")}
@@ -1485,20 +1485,20 @@ function App(){
                           {open&&(
                             <div style={{padding:"0 11px 11px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
                               <div style={{paddingTop:8,marginBottom:6}}>
-                                <div style={{fontSize:9,letterSpacing:1,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",textTransform:"uppercase",marginBottom:4}}>Cantores</div>
+                                <div style={{fontSize:9,letterSpacing:1,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",marginBottom:4}}>Cantores</div>
                                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                                   {cantores.map(ct=>{
                                     const on=c.cantores.includes(ct.nome);
-                                    return <button key={ct.id} onClick={()=>toggleCantor(c.id,ct.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.08)",background:on?`rgba(${cf.rgb},0.12)`:"transparent",color:on?cf.color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span style={{fontSize:12}}>{ct.emoji}</span>{ct.nome}</button>;
+                                    return <button key={ct.id} onClick={()=>toggleCantor(c.id,ct.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.08)",background:on?`rgba(${cf.rgb},0.12)`:"transparent",color:on?cf.color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span style={{fontSize:12}}>{ct.emoji}</span>{ct.nome}</button>;
                                   })}
                                 </div>
                               </div>
                               <div style={{marginBottom:6}}>
-                                <div style={{fontSize:9,letterSpacing:1,color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",textTransform:"uppercase",marginBottom:4}}>Músicos</div>
+                                <div style={{fontSize:9,letterSpacing:1,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",marginBottom:4}}>Músicos</div>
                                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                                   {musicos.map(mt=>{
                                     const on=(c.musicos||[]).includes(mt.nome);
-                                    return <button key={mt.id} onClick={()=>toggleMusico(c.id,mt.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.06)",background:on?`rgba(${cf.rgb},0.1)`:"transparent",color:on?cf.color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span style={{fontSize:12}}>{mt.emoji}</span>{mt.nome}</button>;
+                                    return <button key={mt.id} onClick={()=>toggleMusico(c.id,mt.nome)} className="pill" style={{borderRadius:16,padding:"2px 8px",border:on?`1px solid rgba(${cf.rgb},0.45)`:"1px solid rgba(255,255,255,0.06)",background:on?`rgba(${cf.rgb},0.1)`:"transparent",color:on?cf.color:"rgba(255,255,255,0.25)",cursor:"pointer",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:3,transition:"all 0.15s"}}><span style={{fontSize:12}}>{mt.emoji}</span>{mt.nome}</button>;
                                   })}
                                 </div>
                               </div>
@@ -1520,7 +1520,7 @@ function App(){
           <div style={{animation:"fadeUp 0.3s ease"}}>
             <div style={{marginBottom:20}}>
               <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Banco de Músicas</div>
-              <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,margin:0}}>Buscar Louvores</h1>
+              <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",margin:0}}>Buscar Louvores</h1>
             </div>
             <div style={{display:"flex",background:accent.bgCard,border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,overflow:"hidden",marginBottom:20}}>
               <span style={{padding:"0 14px",color:accent.accent,fontSize:17,display:"flex",alignItems:"center"}}>♪</span>
@@ -1544,8 +1544,8 @@ function App(){
               </>
             )}
             {/* Colar link */}
-            <div style={{background:accent.bgCard,border:`1px solid rgba(${accent.rgb},0.25)`,borderRadius:14,padding:18}}>
-              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,marginBottom:10}}>Colar link do YouTube</div>
+            <div style={{background:accent.bgCard,border:`1px solid ${accent.border}`,borderRadius:14,padding:18}}>
+              <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:"#EAE8F2",marginBottom:10}}>Colar link do YouTube</div>
               <Fld value={paste} placeholder="https://youtu.be/..." onChange={e=>setPaste(e.target.value)}/>
               {getYTId(paste)&&(
                 <div style={{marginTop:10}}>
@@ -1564,7 +1564,7 @@ function App(){
           <div style={{animation:"fadeUp 0.3s ease"}}>
             <div style={{marginBottom:20}}>
               <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Minha lista</div>
-              <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,margin:0}}>Favoritos</h1>
+              <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:"#EAE8F2",margin:0}}>Favoritos</h1>
             </div>
             {favs.length===0&&<p style={{color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:14,fontStyle:"italic"}}>Nenhum favorito ainda. Busque músicas e marque com ★</p>}
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
@@ -1614,10 +1614,10 @@ function App(){
                 };
 
                 return(
-                  <div style={{background:accent.light_theme?"rgba(0,0,0,0.03)":"rgba(255,255,255,0.04)",borderRadius:14,padding:"14px 16px",marginTop:12}}>
-                    <div style={{fontSize:9,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:12,textAlign:"center"}}>🎵 Transpose</div>
+                  <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:"14px 16px",marginTop:12}}>
+                    <div style={{fontSize:9,letterSpacing:1.5,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:12,textAlign:"center"}}>🎵 Transpose</div>
                     <div style={{display:"flex",alignItems:"center",gap:12,justifyContent:"center",marginBottom:6}}>
-                      <button onClick={()=>setPlayerTranspose(p=>p-1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:12,width:52,height:52,fontSize:26,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                      <button onClick={()=>setPlayerTranspose(p=>p-1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:12,width:52,height:52,fontSize:26,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
                       <div style={{textAlign:"center",minWidth:90}}>
                         <div style={{fontSize:34,fontWeight:700,color:mudou?accent.accent:"rgba(255,255,255,0.5)",letterSpacing:1,lineHeight:1}}>
                           {mudou?sinal+playerTranspose:"0"}
@@ -1626,7 +1626,7 @@ function App(){
                           {mudou?(playerTranspose>0?"semitons acima":"semitons abaixo"):"tom original"}
                         </div>
                       </div>
-                      <button onClick={()=>setPlayerTranspose(p=>p+1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:12,width:52,height:52,fontSize:26,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                      <button onClick={()=>setPlayerTranspose(p=>p+1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#EAE8F2",borderRadius:12,width:52,height:52,fontSize:26,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
                     </div>
                     {playL.tom&&(
                       <div style={{textAlign:"center",fontSize:11,color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",marginBottom:10}}>
@@ -1656,7 +1656,7 @@ function App(){
       {newCF&&(
         <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setNCF(null)}>
           <MH title="Novo Culto" onClose={()=>setNCF(null)}/>
-          <div style={{display:"flex",background:accent.light_theme?"rgba(0,0,0,0.03)":"rgba(255,255,255,0.04)",borderRadius:8,overflow:"hidden",marginBottom:12}}>
+          <div style={{display:"flex",background:"rgba(255,255,255,0.04)",borderRadius:8,overflow:"hidden",marginBottom:12}}>
             {["unico","campanha"].map(m=>(
               <button key={m} onClick={()=>setNCF(p=>({...p,modo:m}))} style={{flex:1,padding:"8px",background:newCF.modo===m?`rgba(${accent.rgb},0.2)`:"transparent",border:"none",color:newCF.modo===m?accent.accent:"rgba(255,255,255,0.4)",cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:newCF.modo===m?600:400}}>
                 {m==="unico"?"Culto Único":"Campanha / Série"}
@@ -1685,11 +1685,11 @@ function App(){
       {showFavPk&&sel&&(
         <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setFavPk(false)}>
           <MH title="Adicionar Favorito" onClose={()=>setFavPk(false)}/>
-          {favs.length===0&&<p style={{color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",fontSize:13}}>Nenhum favorito ainda.</p>}
+          {favs.length===0&&<p style={{color:"rgba(255,255,255,0.35)",fontSize:13}}>Nenhum favorito ainda.</p>}
           {favs.map(f=>(
-            <div key={f.id} onClick={()=>{ doAddLouvor(sel.id,f); setFavPk(false); }} className="pill" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,border:"1px solid rgba(255,255,255,0.07)",marginBottom:6,cursor:"pointer",background:accent.light_theme?"rgba(0,0,0,0.02)":"rgba(255,255,255,0.02)"}}>
+            <div key={f.id} onClick={()=>{ doAddLouvor(sel.id,f); setFavPk(false); }} className="pill" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,border:"1px solid rgba(255,255,255,0.07)",marginBottom:6,cursor:"pointer",background:"rgba(255,255,255,0.02)"}}>
               <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text}}>{f.titulo}</div>
+                <div style={{fontSize:13,fontWeight:600,color:"#EAE8F2"}}>{f.titulo}</div>
                 <div style={{fontSize:11,color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)"}}>{f.artista}</div>
               </div>
               <TomTag tom={f.tom}/>
