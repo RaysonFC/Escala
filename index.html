@@ -212,7 +212,7 @@ function MH({title,sub,onClose}){
 }
 
 function Fld({label,value,onChange,placeholder,as,children,type="text"}){
-  const base={width:"100%",background:getAccent().light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:getAccent().text,fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:12};
+  const base={width:"100%",colorScheme:getAccent().light_theme?"light":"dark",background:getAccent().light_theme?`rgba(${getAccent().rgb},0.06)`+"":"rgba(255,255,255,0.05)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:getAccent().text,fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:12};
   return(
     <div>
       {label&&<label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
@@ -249,7 +249,7 @@ function DatePicker({label,value,onChange}){
       {label&&<label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
       <button onClick={()=>setOpen(p=>!p)} style={{width:"100%",background:getAccent().light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:sel?getAccent().text:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:14,fontFamily:"inherit",outline:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",textAlign:"left"}}>
         <span>📅 {fmtDisp(sel)}</span>
-        <span style={{color:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:12,transform:open?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
+        <span style={{color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)",fontSize:12,transform:open?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
       </button>
       {open&&(
         <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:300,background:getAccent().bgCard,border:"1px solid rgba(255,255,255,0.12)",borderRadius:14,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
@@ -261,7 +261,7 @@ function DatePicker({label,value,onChange}){
           </div>
           {/* Dias da semana */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",marginBottom:4}}>
-            {DAYS.map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontWeight:600,padding:"2px 0"}}>{d}</div>)}
+            {DAYS.map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)",fontWeight:600,padding:"2px 0"}}>{d}</div>)}
           </div>
           {/* Células */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
@@ -333,7 +333,7 @@ function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
             </div>
             <button onClick={()=>setPt(p=>p+1)} style={{background:getAccent().light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:getAccent().light_theme?"#1A1028":getAccent().text,borderRadius:10,width:36,height:36,fontSize:20,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
             {mudou&&<button onClick={()=>setPt(0)} style={{background:"none",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",borderRadius:8,padding:"4px 8px",fontSize:10,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>↺</button>}
-            <button onClick={toggleInline} style={{background:"none",border:"none",color:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:18,cursor:"pointer",fontFamily:"inherit",padding:"4px 6px",flexShrink:0}}>✕</button>
+            <button onClick={toggleInline} style={{background:"none",border:"none",color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)",fontSize:18,cursor:"pointer",fontFamily:"inherit",padding:"4px 6px",flexShrink:0}}>✕</button>
           </div>
         </div>
       )}
@@ -393,10 +393,10 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
         {editingName
           ? <input autoFocus value={nome} onChange={e=>setNome(e.target.value)} onBlur={()=>setEditingName(false)} onKeyDown={e=>{if(e.key==="Enter")setEditingName(false);}} style={{background:getAccent().light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"6px 12px",color:getAccent().light_theme?"#1A1028":getAccent().text,fontSize:18,fontWeight:700,textAlign:"center",width:"100%",fontFamily:"inherit",outline:"none"}}/>
           : <div onClick={()=>setEditingName(true)} style={{fontSize:18,fontWeight:700,color:getAccent().light_theme?"#1A1028":getAccent().text,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6}}>
-              {nome} <span style={{fontSize:12,color:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)"}}>✎</span>
+              {nome} <span style={{fontSize:12,color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)"}}>✎</span>
             </div>
         }
-        <div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",marginTop:4}}>Toque no emoji ou nome para editar</div>
+        <div style={{fontSize:10,color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)",marginTop:4}}>Toque no emoji ou nome para editar</div>
       </div>
 
       {/* Histórico de louvores */}
@@ -744,7 +744,10 @@ function App(){
         .pill:hover{filter:brightness(1.15);}
         .ccard:hover{transform:translateY(-2px);border-color:rgba(${accent.rgb},0.4)!important;} .ccard{transition:all 0.15s;}
         .yt-w:hover .yt-ov{opacity:1!important;}
-        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);}
+        select option{background:${accent.bgCard};color:${accent.text};}
+        select{color-scheme:${accent.light_theme?"light":"dark"};}
+        .cday{border-top:1px solid ${accent.light_theme?"rgba(107,53,184,0.07)":"rgba(255,255,255,0.04)"}!important;}
+        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:rgba(${accent.rgb},0.25);}
         @media(max-width:600px){
           .nav-label{display:none!important;}
           .main-content{padding-bottom:80px!important;}
@@ -878,7 +881,7 @@ function App(){
             )}
 
             {/* Grade calendário */}
-            <div style={{background:accent.bgCard,border:`1px solid rgba(${accent.rgb},0.25)`,borderRadius:14,overflow:"hidden"}}>
+            <div style={{background:accent.bgCard,border:`1px solid rgba(${accent.rgb},0.2)`,borderRadius:14,overflow:"hidden",boxShadow:accent.light_theme?"0 4px 20px rgba(107,53,184,0.1)":"none"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
                 <button onClick={()=>setCalMonth(p=>{ const d=new Date(p.y,p.m-1,1); return{y:d.getFullYear(),m:d.getMonth()}; })} style={{background:"none",border:"none",color:accent.light_theme?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:18,padding:"0 4px"}}>‹</button>
                 <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:15,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text}}>{MONTHS_PT[calMonth.m]} {calMonth.y}</div>
@@ -890,9 +893,9 @@ function App(){
                   const cs=cultosDia(d);
                   const isToday=d&&`${calMonth.y}-${String(calMonth.m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`===today;
                   return(
-                    <div key={i} className="cday" onClick={()=>{ if(cs.length===1){setSelId(cs[0].id);setTab("culto");} }} style={{minHeight:52,padding:"4px 2px",borderTop:"1px solid rgba(255,255,255,0.04)",cursor:cs.length?"pointer":"default",background:isToday?`rgba(${accent.rgb},0.05)`:"transparent",transition:"background 0.15s"}}>
+                    <div key={i} className="cday" onClick={()=>{ if(cs.length===1){setSelId(cs[0].id);setTab("culto");} }} style={{minHeight:52,padding:"4px 2px",borderTop:"none",cursor:cs.length?"pointer":"default",background:isToday?`rgba(${accent.rgb},0.05)`:"transparent",transition:"background 0.15s"}}>
                       {d&&<>
-                        <div style={{fontSize:11,color:isToday?accent.accent:"rgba(255,255,255,0.4)",fontWeight:isToday?700:400,marginBottom:2}}>{d}</div>
+                        <div style={{fontSize:11,color:isToday?accent.accent:accent.light_theme?"rgba(26,10,48,0.45)":"rgba(255,255,255,0.4)",fontWeight:isToday?700:400,marginBottom:2}}>{d}</div>
                         {cs.map(c=><div key={c.id} style={{fontSize:9,background:`rgba(${CC[c.tipo].rgb},0.2)`,color:CC[c.tipo].color,borderRadius:3,padding:"1px 3px",marginBottom:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{CC[c.tipo].short}</div>)}
                       </>}
                     </div>
