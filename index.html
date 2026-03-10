@@ -597,14 +597,13 @@ function MusicoModal({musico,idx,onSave,onDelete,onClose,accent,bGold,bGhost,bDa
 /* ══════════════════════════════════════════
    APP PRINCIPAL
 ══════════════════════════════════════════ */
-function App(){
+function AppMain({session,setSession}){
   const [cantores,setCantores]=useState(INIT_CANTORES);
   const [musicos,setMusicos]=useState(INIT_MUSICOS);
   const [cultos,setCultos]=useState(INIT_CULTOS);
   const [favs,setFavs]=useState(INIT_FAVS);
   const [themeKey,setThemeKey]=useState("gold");
   const [tab,setTab]=useState("calendario");
-  const [session,setSession]=useState(getSession); // {role,nome,perfil} | null
   const role=session?.role||null;
   // helpers de permissão
   const canEdit  = role==="admin"||role==="cantor";
@@ -699,7 +698,6 @@ function App(){
   const showToast=(msg,ok=true)=>{ setToast({msg,ok}); setTimeout(()=>setToast(null),2500); };
   const accent=THEMES[themeKey]||THEMES.gold;
   gAccent=accent;
-  if(!session) return <TelaAcesso onOk={s=>setSession(s)}/>;
   // Banner modo visualização (definido aqui para uso inline no JSX)
   const ViewerBanner=()=>role==="musico_viewer"?(
     <div style={{background:"rgba(155,111,212,0.12)",borderBottom:"1px solid rgba(155,111,212,0.2)",padding:"6px 16px",textAlign:"center",fontSize:11,color:"rgba(155,111,212,0.9)",letterSpacing:0.5}}>
@@ -1986,6 +1984,12 @@ function App(){
 
     </div>
   );
+}
+
+function App(){
+  const [session,setSession]=useState(getSession);
+  if(!session) return <TelaAcesso onOk={s=>setSession(s)}/>;
+  return <AppMain session={session} setSession={setSession}/>;
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
