@@ -1097,27 +1097,34 @@ function AppMain({session,setSession}){
               );
             })()}
 
-                                    {/* ── Bot de alerta — só admin ── */}
+                                                {/* ── Bot de alerta — só admin ── */}
             {isAdmin&&(()=>{
-              const fmt=d=>{ const dd=new Date(d); return dd.toISOString().split("T")[0]; };
-              const now=new Date(today);
+              // Data de hoje no formato YYYY-MM-DD
+              const now=new Date(today+"T12:00:00");
               const dow=now.getDay(); // 0=Dom,1=Seg,2=Ter,3=Qua,4=Qui,5=Sex,6=Sab
 
-              // Acha a Quarta desta semana (próxima ou hoje)
-              const diff=(3-dow+7)%7;
-              const qDate=new Date(now); qDate.setDate(now.getDate()+diff);
-              const datas={
-                Quarta: fmt(qDate),
-                Sexta:  fmt(new Date(qDate).setDate(qDate.getDate()+2)&&new Date(qDate.getTime()+2*86400000)),
-                Sabado: fmt(new Date(qDate.getTime()+3*86400000)),
-                Domingo:fmt(new Date(qDate.getTime()+4*86400000)),
+              // Função segura para somar dias e retornar YYYY-MM-DD
+              const addDias=(base,n)=>{
+                const d=new Date(base.getTime());
+                d.setDate(d.getDate()+n);
+                return d.toISOString().split("T")[0];
               };
 
-              // Olha os cultos do Firebase e verifica cada data
-              const problemas=Object.entries(datas).map(([label,ds])=>{
+              // Próxima Quarta (ou hoje se já for Quarta)
+              const diffQ=(3-dow+7)%7;
+              const quarta=new Date(now.getTime()); quarta.setDate(now.getDate()+diffQ);
+
+              const ciclo=[
+                {label:"Quarta",  ds:addDias(quarta,0)},
+                {label:"Sexta",   ds:addDias(quarta,2)},
+                {label:"Sabado",  ds:addDias(quarta,3)},
+                {label:"Domingo", ds:addDias(quarta,4)},
+              ];
+
+              const problemas=ciclo.map(({label,ds})=>{
                 const card=cultos.find(c=>c.data===ds);
-                if(!card) return {label,msg:"sem card criado"};
-                if(!card.cantores||card.cantores.length===0) return {label,msg:"sem cantores escalados"};
+                if(!card) return {label,ds,msg:"sem card criado"};
+                if(!card.cantores||card.cantores.length===0) return {label,ds,msg:"sem cantores escalados"};
                 return null;
               }).filter(Boolean);
 
@@ -1128,7 +1135,7 @@ function AppMain({session,setSession}){
                 </div>
               );
 
-              const msgLinhas=problemas.map(p=>"- "+p.label+": "+p.msg).join("\n");
+              const msgLinhas=problemas.map(p=>"- "+p.label+" ("+p.ds+"): "+p.msg).join("\n");
               const msg="Paz, Missionaria! Aqui e o Robozinho da Banda\n\nAinda falta atencao nos cultos desta semana:\n"+msgLinhas+"\n\nPoderia atualizar no app? Obrigado!";
               const waUrl="https://wa.me/5592984859079?text="+encodeURIComponent(msg);
 
@@ -1139,8 +1146,7 @@ function AppMain({session,setSession}){
                       <div style={{fontSize:12,fontWeight:700,color:accent.accent,marginBottom:8}}>🤖 Alerta de Escala</div>
                       {problemas.map((p,i)=>(
                         <div key={i} style={{fontSize:12,color:"rgba(255,200,0,0.9)",marginBottom:4,display:"flex",gap:6}}>
-                          <span>⚠️</span>
-                          <span><b>{p.label}</b> — {p.msg}</span>
+                          <span>⚠️</span><span><b>{p.label}</b> — {p.msg}</span>
                         </div>
                       ))}
                     </div>
