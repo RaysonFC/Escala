@@ -690,33 +690,33 @@ function AppMain({session,setSession}){
   const [playerTranspose,setPlayerTranspose]=useState(0); // semitons no player
   const [escalaFiltro,setEscalaFiltro]=useState(""); // filtro aba escalas
 
-  const loaded=useRef({cant:false,mus:false,cult:false,favs:false,cart:false});
-  const fromFb=useRef({cant:false,mus:false,cult:false,favs:false,cart:false});
+  const loaded=useRef({cant:false,mus:false,cult:false,favs:false});
+  const fromFb=useRef({cant:false,mus:false,cult:false,favs:false});
   const [fbReady,setFbReady]=useState(false);
-  const readyCount=useRef(0); // aguarda 5 coleções
-  const markReady=()=>{ readyCount.current+=1; if(readyCount.current>=5) setFbReady(true); };
+  const [calMonth,setCalMonth]=useState(()=>{ const d=new Date(); return{y:d.getFullYear(),m:d.getMonth()}; });
+  const [cartazes,setCartazes]=useState([]);
+  const [cartazAberto,setCartazAberto]=useState(null);
+  const readyCount=useRef(0); // aguarda 4 coleções
+  const markReady=()=>{ readyCount.current+=1; if(readyCount.current>=4) setFbReady(true); };
 
   useEffect(()=>{
     const uC=fbListen("cantores",d=>{ fromFb.current.cant=true; setCantores(d.map(normCantor)); if(!loaded.current.cant){loaded.current.cant=true;markReady();} });
     const uM=fbListen("musicos",d=>{ fromFb.current.mus=true; setMusicos(d.map(m=>({...m}))); if(!loaded.current.mus){loaded.current.mus=true;markReady();} });
     const uCu=fbListen("cultos",d=>{ fromFb.current.cult=true; setCultos(d); if(!loaded.current.cult){loaded.current.cult=true;markReady();} });
     const uF=fbListen("favs",d=>{ fromFb.current.favs=true; setFavs(d); if(!loaded.current.favs){loaded.current.favs=true;markReady();} });
-    const uCart=fbListen("cartazes",meta=>{
-      if(!Array.isArray(meta)){ if(!loaded.current.cart){loaded.current.cart=true;markReady();} return; }
-      fromFb.current.cart=true;
-      const comUrl=meta.map(c=>{ try{ const url=localStorage.getItem("cart_"+c.id); return url?{...c,url}:null; }catch{return null;} }).filter(Boolean);
-      setCartazes(comUrl);
-      if(!loaded.current.cart){loaded.current.cart=true;markReady();}
-    });
+    // Cartazes — carrega do localStorage direto, sem Firebase
+    try{
+      const saved=localStorage.getItem("ba_cartazes");
+      if(saved) setCartazes(JSON.parse(saved));
+    }catch{}
     try{ const t=localStorage.getItem("esc_theme"); if(t) setThemeKey(t); }catch{}
     fbGet("cantores",null).then(v=>{ if(!v) fbSet("cantores",INIT_CANTORES); });
     fbGet("musicos",null).then(v=>{ if(!v) fbSet("musicos",INIT_MUSICOS); });
     fbGet("cultos",null).then(v=>{ if(!v) fbSet("cultos",INIT_CULTOS); });
     fbGet("favs",null).then(v=>{ if(!v) fbSet("favs",INIT_FAVS); });
-    fbGet("cartazes",null).then(v=>{ if(!v) fbSet("cartazes",[]); });
-    // Timeout de segurança — se Firebase demorar mais de 6s, entra mesmo assim
-    setTimeout(()=>setFbReady(true), 6000);
-    return()=>{ uC(); uM(); uCu(); uF(); uCart(); };
+    // Timeout de segurança — se Firebase demorar mais de 5s, entra mesmo assim
+    setTimeout(()=>setFbReady(true), 5000);
+    return()=>{ uC(); uM(); uCu(); uF(); };
   },[]);
 
   useEffect(()=>{ if(!loaded.current.cant)return; if(fromFb.current.cant){fromFb.current.cant=false;return;} fbSet("cantores",cantores); },[cantores]);
@@ -724,11 +724,7 @@ function AppMain({session,setSession}){
   useEffect(()=>{ if(!loaded.current.cult)return; if(fromFb.current.cult){fromFb.current.cult=false;return;} fbSet("cultos",cultos); },[cultos]);
   useEffect(()=>{ if(!loaded.current.favs)return; if(fromFb.current.favs){fromFb.current.favs=false;return;} fbSet("favs",favs); },[favs]);
   useEffect(()=>{
-    if(!loaded.current.cart)return;
-    if(fromFb.current.cart){fromFb.current.cart=false;return;}
-    // Salva imagens no localStorage, metadados no Firebase
-    const meta=cartazes.map(c=>{ try{localStorage.setItem("cart_"+c.id,c.url);}catch(e){} return {id:c.id,nome:c.nome}; });
-    fbSet("cartazes",meta);
+    try{ localStorage.setItem("ba_cartazes",JSON.stringify(cartazes)); }catch(e){}
   },[cartazes]);
   useEffect(()=>{ try{localStorage.setItem("esc_theme",themeKey);}catch{} },[themeKey]);
 
@@ -866,9 +862,7 @@ function AppMain({session,setSession}){
   };
 
   // Calendário
-  const [calMonth,setCalMonth]=useState(()=>{ const d=new Date(); return{y:d.getFullYear(),m:d.getMonth()}; });
-  const [cartazes,setCartazes]=useState([]);
-  const [cartazAberto,setCartazAberto]=useState(null);
+
   const calDays=()=>{
     const{y,m}=calMonth; const first=new Date(y,m,1).getDay(); const total=new Date(y,m+1,0).getDate();
     const cells=[]; for(let i=0;i<first;i++) cells.push(null);
