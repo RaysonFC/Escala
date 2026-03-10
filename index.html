@@ -853,6 +853,7 @@ function AppMain({session,setSession}){
   // Calendário
   const [calMonth,setCalMonth]=useState(()=>{ const d=new Date(); return{y:d.getFullYear(),m:d.getMonth()}; });
   const [cartazes,setCartazes]=useState([]);
+  const [cartazAberto,setCartazAberto]=useState(null);
   const calDays=()=>{
     const{y,m}=calMonth; const first=new Date(y,m,1).getDay(); const total=new Date(y,m+1,0).getDate();
     const cells=[]; for(let i=0;i<first;i++) cells.push(null);
@@ -1040,31 +1041,41 @@ function AppMain({session,setSession}){
                 reader.readAsDataURL(file);
               };
               if(!cartazes.length&&!canEdit) return null;
+              const cardW="calc(50vw - 28px)";
+              const cardH="calc((50vw - 28px) * 1.42)";
               return(
                 <div style={{marginBottom:24}}>
                   <div style={{fontSize:10,letterSpacing:2,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:12}}>🖼 Cartazes</div>
-                  <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8,scrollbarWidth:"none"}}>
+                  <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8,scrollbarWidth:"none",WebkitOverflowScrolling:"touch",scrollSnapType:"x mandatory"}}>
 
                     {/* Botão adicionar — só admin/cantor */}
                     {canEdit&&(
-                      <label style={{flexShrink:0,width:110,height:155,border:`2px dashed rgba(${accent.rgb},0.4)`,borderRadius:12,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",background:`rgba(${accent.rgb},0.04)`,gap:6,transition:"all 0.2s"}}>
+                      <label style={{flexShrink:0,width:cardW,height:cardH,minWidth:cardW,border:`2px dashed rgba(${accent.rgb},0.4)`,borderRadius:16,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",background:`rgba(${accent.rgb},0.04)`,gap:8,transition:"all 0.2s",scrollSnapAlign:"start"}}>
                         <input type="file" accept="image/*" style={{display:"none"}} onChange={addCartaz}/>
-                        <span style={{fontSize:28,color:`rgba(${accent.rgb},0.5)`}}>+</span>
-                        <span style={{fontSize:9,color:`rgba(${accent.rgb},0.5)`,letterSpacing:1,textTransform:"uppercase"}}>Cartaz</span>
+                        <span style={{fontSize:40,color:`rgba(${accent.rgb},0.5)`,lineHeight:1}}>+</span>
+                        <span style={{fontSize:10,color:`rgba(${accent.rgb},0.5)`,letterSpacing:1.5,textTransform:"uppercase"}}>Adicionar cartaz</span>
                       </label>
                     )}
 
                     {/* Cartazes salvos */}
                     {cartazes.map(c=>(
-                      <div key={c.id} style={{flexShrink:0,position:"relative",width:110,height:155,borderRadius:12,overflow:"hidden",border:`1px solid rgba(${accent.rgb},0.2)`}}>
+                      <div key={c.id} onClick={()=>setCartazAberto(c)} style={{flexShrink:0,position:"relative",width:cardW,height:cardH,minWidth:cardW,borderRadius:16,overflow:"hidden",border:`1px solid rgba(${accent.rgb},0.25)`,cursor:"pointer",scrollSnapAlign:"start",boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>
                         <img src={c.url} alt={c.nome} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                         {canEdit&&(
-                          <button onClick={()=>askConfirm("Remover este cartaz?",()=>setCartazes(p=>p.filter(x=>x.id!==c.id)))}
-                            style={{position:"absolute",top:4,right:4,background:"rgba(0,0,0,0.6)",border:"none",color:"white",borderRadius:"50%",width:22,height:22,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button>
+                          <button onClick={e=>{e.stopPropagation();askConfirm("Remover este cartaz?",()=>setCartazes(p=>p.filter(x=>x.id!==c.id)));}}
+                            style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.65)",border:"none",color:"white",borderRadius:"50%",width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,backdropFilter:"blur(4px)"}}>✕</button>
                         )}
                       </div>
                     ))}
                   </div>
+
+                  {/* Lightbox — cartaz expandido */}
+                  {cartazAberto&&(
+                    <div onClick={()=>setCartazAberto(null)} style={{position:"fixed",inset:0,zIndex:900,background:"rgba(0,0,0,0.92)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:16,backdropFilter:"blur(8px)"}}>
+                      <img src={cartazAberto.url} alt={cartazAberto.nome} onClick={e=>e.stopPropagation()} style={{maxWidth:"92vw",maxHeight:"85vh",borderRadius:16,objectFit:"contain",boxShadow:"0 0 60px rgba(0,0,0,0.8)"}}/>
+                      <button onClick={()=>setCartazAberto(null)} style={{marginTop:20,background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",color:"white",borderRadius:10,padding:"10px 28px",cursor:"pointer",fontSize:14,fontFamily:"inherit",backdropFilter:"blur(4px)"}}>Fechar</button>
+                    </div>
+                  )}
                 </div>
               );
             })()}
