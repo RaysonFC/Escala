@@ -254,30 +254,24 @@ function TelaAcesso({onOk}){
   return(
     <div style={{minHeight:"100vh",background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',system-ui,sans-serif",position:"relative",overflow:"hidden"}}>
 
-      {/* ── Aurora pulsante + ondas contínuas ── */}
+      {/* ── Arco girando ao redor do logo ── */}
       <style>{`
-        @keyframes pulseA{0%,100%{opacity:0.5;transform:scale(1);}50%{opacity:0.85;transform:scale(1.1);}}
-        @keyframes pulseB{0%,100%{opacity:0.4;transform:scale(1);}50%{opacity:0.75;transform:scale(1.12);}}
-        @keyframes pulseC{0%,100%{opacity:0.3;transform:scale(1);}50%{opacity:0.60;transform:scale(1.08);}}
-        @keyframes wave1{0%,100%{transform:translateX(-8%) scaleX(1);opacity:0.55;}50%{transform:translateX(8%) scaleX(1.04);opacity:0.9;}}
-        @keyframes wave2{0%,100%{transform:translateX(8%) scaleX(1);opacity:0.45;}50%{transform:translateX(-8%) scaleX(1.04);opacity:0.75;}}
-        @keyframes wave3{0%,100%{transform:translateX(-5%) scaleX(1);opacity:0.35;}50%{transform:translateX(5%) scaleX(1.02);opacity:0.60;}}
+        @keyframes spinArc{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
       `}</style>
-
-      {/* Orb 1 — roxo intenso topo esquerdo */}
-      <div style={{position:"absolute",width:"80%",height:"70%",top:"-25%",left:"-20%",background:"radial-gradient(ellipse,rgba(120,50,230,0.9) 0%,rgba(80,20,180,0.5) 40%,transparent 70%)",filter:"blur(50px)",animation:"pulseA 8s ease-in-out infinite",pointerEvents:"none"}}/>
-      {/* Orb 2 — âmbar/ouro nobre baixo direito */}
-      <div style={{position:"absolute",width:"75%",height:"65%",bottom:"-25%",right:"-20%",background:"radial-gradient(ellipse,rgba(210,165,60,0.85) 0%,rgba(170,110,20,0.45) 40%,transparent 70%)",filter:"blur(55px)",animation:"pulseB 11s ease-in-out infinite",animationDelay:"2s",pointerEvents:"none"}}/>
-      {/* Orb 3 — violeta centro suave */}
-      <div style={{position:"absolute",width:"90%",height:"50%",top:"25%",left:"5%",background:"radial-gradient(ellipse,rgba(90,40,200,0.55) 0%,transparent 65%)",filter:"blur(65px)",animation:"pulseC 14s ease-in-out infinite",animationDelay:"4s",pointerEvents:"none"}}/>
-
-      {/* Onda 1 — faixa roxa oscilando */}
-      <div style={{position:"absolute",left:"-10%",right:"-10%",top:"42%",height:"18%",background:"linear-gradient(90deg,transparent 0%,rgba(140,70,255,0.55) 25%,rgba(180,120,255,0.7) 50%,rgba(140,70,255,0.55) 75%,transparent 100%)",filter:"blur(22px)",animation:"wave1 7s ease-in-out infinite",pointerEvents:"none"}}/>
-      {/* Onda 2 — faixa âmbar oscilando ao contrário */}
-      <div style={{position:"absolute",left:"-10%",right:"-10%",top:"50%",height:"14%",background:"linear-gradient(90deg,transparent 0%,rgba(200,150,40,0.5) 25%,rgba(230,185,70,0.65) 50%,rgba(200,150,40,0.5) 75%,transparent 100%)",filter:"blur(26px)",animation:"wave2 10s ease-in-out infinite",animationDelay:"1.5s",pointerEvents:"none"}}/>
-      {/* Onda 3 — faixa fina violeta abaixo */}
-      <div style={{position:"absolute",left:"-10%",right:"-10%",top:"57%",height:"10%",background:"linear-gradient(90deg,transparent 0%,rgba(110,50,220,0.4) 30%,rgba(160,90,255,0.55) 50%,rgba(110,50,220,0.4) 70%,transparent 100%)",filter:"blur(30px)",animation:"wave3 13s ease-in-out infinite",animationDelay:"3s",pointerEvents:"none"}}/>
-      <img src="https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png" alt="Banda Aviva" style={{width:110,height:110,objectFit:"contain",marginBottom:12,borderRadius:16}}/>
+      <div style={{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:16,width:126,height:126}}>
+        {/* Arco girando — SVG com gradiente */}
+        <svg width="126" height="126" style={{position:"absolute",top:0,left:0,animation:"spinArc 3s linear infinite"}} viewBox="0 0 126 126">
+          <defs>
+            <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(210,165,50,0)" />
+              <stop offset="60%" stopColor="rgba(210,165,50,0.9)" />
+              <stop offset="100%" stopColor="rgba(240,200,80,1)" />
+            </linearGradient>
+          </defs>
+          <circle cx="63" cy="63" r="60" fill="none" stroke="url(#arcGrad)" strokeWidth="3" strokeLinecap="round" strokeDasharray="200 178"/>
+        </svg>
+        <img src="https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png" alt="Banda Aviva" style={{width:110,height:110,objectFit:"contain",borderRadius:"50%",display:"block",position:"relative",zIndex:1}}/>
+      </div>
       <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:26,fontWeight:700,color:"#EAE8F2",marginBottom:4}}>Banda Aviva</div>
       <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:36}}>Ministério Avivamento da Fé</div>
 
@@ -499,7 +493,7 @@ function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
 }
 
 /* ── Cantor Edit Modal ── */
-function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger}){
+function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger,soEmojiMode=false}){
   const [nome,setNome]=useState(cantor.nome);
   const [emoji,setEmoji]=useState(cantor.emoji);
   const [pickingEmoji,setPickingEmoji]=useState(false);
@@ -1621,7 +1615,7 @@ function AppMain({session,setSession}){
                   .map(l=>[l.titulo,l])
                 ).values()].slice(0,5);
                 return(
-                  <div key={ct.id} onClick={()=>{if(canEdit)setEditCI(i);}} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
+                  <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                       <span className={emojiClass("",ct.emoji)+" emoji-glow"} style={{fontSize:26,display:"inline-block"}}>{ct.emoji}</span>
                       <div>
@@ -1929,7 +1923,7 @@ function AppMain({session,setSession}){
       {editCI!==null&&cantores[editCI]&&(
         <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setEditCI(null)}>
           <MH title="Editar Cantor" onClose={()=>setEditCI(null)}/>
-          <CantorModal cantor={cantores[editCI]} idx={editCI} cultos={cultos} onSave={saveCantorEdit} onDelete={deleteCantorAt} onClose={()=>setEditCI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger}/>
+          <CantorModal cantor={cantores[editCI]} idx={editCI} cultos={cultos} onSave={saveCantorEdit} onDelete={deleteCantorAt} onClose={()=>setEditCI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger} soEmojiMode={!canEdit}/>
         </Ovl>
       )}
 
