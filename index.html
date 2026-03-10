@@ -254,38 +254,29 @@ function TelaAcesso({onOk}){
   return(
     <div style={{minHeight:"100vh",background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',system-ui,sans-serif",position:"relative",overflow:"hidden"}}>
 
-      {/* ── Aurora + onda de maré ── */}
+      {/* ── Aurora pulsante + ondas contínuas ── */}
       <style>{`
-        @keyframes aurora1{0%,100%{transform:translateX(0) translateY(0) scale(1);opacity:0.45;}50%{transform:translateX(8%) translateY(-5%) scale(1.08);opacity:0.65;}}
-        @keyframes aurora2{0%,100%{transform:translateX(0) translateY(0) scale(1);opacity:0.38;}50%{transform:translateX(-7%) translateY(6%) scale(1.1);opacity:0.55;}}
-        @keyframes aurora3{0%,100%{transform:translateX(0) scale(1);opacity:0.25;}50%{transform:translateX(5%) scale(1.06);opacity:0.40;}}
-        @keyframes tide{
-          0%   {transform:translateX(-100%) scaleY(1);   opacity:0;}
-          15%  {opacity:1;}
-          50%  {transform:translateX(10%) scaleY(1.15);  opacity:0.85;}
-          85%  {opacity:1;}
-          100% {transform:translateX(110%) scaleY(1);    opacity:0;}
-        }
-        @keyframes tide2{
-          0%   {transform:translateX(110%) scaleY(1);    opacity:0;}
-          15%  {opacity:0.7;}
-          50%  {transform:translateX(-10%) scaleY(1.1);  opacity:0.6;}
-          85%  {opacity:0.7;}
-          100% {transform:translateX(-100%) scaleY(1);   opacity:0;}
-        }
+        @keyframes pulseA{0%,100%{opacity:0.5;transform:scale(1);}50%{opacity:0.85;transform:scale(1.1);}}
+        @keyframes pulseB{0%,100%{opacity:0.4;transform:scale(1);}50%{opacity:0.75;transform:scale(1.12);}}
+        @keyframes pulseC{0%,100%{opacity:0.3;transform:scale(1);}50%{opacity:0.60;transform:scale(1.08);}}
+        @keyframes wave1{0%,100%{transform:translateX(-8%) scaleX(1);opacity:0.55;}50%{transform:translateX(8%) scaleX(1.04);opacity:0.9;}}
+        @keyframes wave2{0%,100%{transform:translateX(8%) scaleX(1);opacity:0.45;}50%{transform:translateX(-8%) scaleX(1.04);opacity:0.75;}}
+        @keyframes wave3{0%,100%{transform:translateX(-5%) scaleX(1);opacity:0.35;}50%{transform:translateX(5%) scaleX(1.02);opacity:0.60;}}
       `}</style>
 
-      {/* Aurora — roxo topo esquerdo */}
-      <div style={{position:"absolute",width:"75%",height:"65%",top:"-20%",left:"-20%",background:"radial-gradient(ellipse at center,rgba(130,60,220,0.75) 0%,transparent 65%)",filter:"blur(55px)",animation:"aurora1 11s ease-in-out infinite",pointerEvents:"none"}}/>
-      {/* Aurora — dourado baixo direito */}
-      <div style={{position:"absolute",width:"70%",height:"60%",bottom:"-20%",right:"-15%",background:"radial-gradient(ellipse at center,rgba(200,145,35,0.65) 0%,transparent 65%)",filter:"blur(60px)",animation:"aurora2 14s ease-in-out infinite",pointerEvents:"none"}}/>
-      {/* Aurora — índigo centro */}
-      <div style={{position:"absolute",width:"85%",height:"45%",top:"28%",left:"8%",background:"radial-gradient(ellipse at center,rgba(70,40,170,0.5) 0%,transparent 60%)",filter:"blur(70px)",animation:"aurora3 17s ease-in-out infinite",pointerEvents:"none"}}/>
+      {/* Orb 1 — roxo intenso topo esquerdo */}
+      <div style={{position:"absolute",width:"80%",height:"70%",top:"-25%",left:"-20%",background:"radial-gradient(ellipse,rgba(120,50,230,0.9) 0%,rgba(80,20,180,0.5) 40%,transparent 70%)",filter:"blur(50px)",animation:"pulseA 8s ease-in-out infinite",pointerEvents:"none"}}/>
+      {/* Orb 2 — âmbar/ouro nobre baixo direito */}
+      <div style={{position:"absolute",width:"75%",height:"65%",bottom:"-25%",right:"-20%",background:"radial-gradient(ellipse,rgba(210,165,60,0.85) 0%,rgba(170,110,20,0.45) 40%,transparent 70%)",filter:"blur(55px)",animation:"pulseB 11s ease-in-out infinite",animationDelay:"2s",pointerEvents:"none"}}/>
+      {/* Orb 3 — violeta centro suave */}
+      <div style={{position:"absolute",width:"90%",height:"50%",top:"25%",left:"5%",background:"radial-gradient(ellipse,rgba(90,40,200,0.55) 0%,transparent 65%)",filter:"blur(65px)",animation:"pulseC 14s ease-in-out infinite",animationDelay:"4s",pointerEvents:"none"}}/>
 
-      {/* Onda de maré 1 — esquerda → direita → volta */}
-      <div style={{position:"absolute",left:0,right:0,top:"38%",height:"22%",background:"linear-gradient(90deg,transparent 0%,rgba(150,80,255,0.18) 30%,rgba(200,150,50,0.22) 55%,rgba(150,80,255,0.18) 75%,transparent 100%)",filter:"blur(28px)",animation:"tide 9s ease-in-out infinite",pointerEvents:"none"}}/>
-      {/* Onda de maré 2 — direita → esquerda (defasada) */}
-      <div style={{position:"absolute",left:0,right:0,top:"45%",height:"16%",background:"linear-gradient(90deg,transparent 0%,rgba(100,60,200,0.14) 25%,rgba(220,170,40,0.18) 55%,rgba(100,60,200,0.14) 80%,transparent 100%)",filter:"blur(35px)",animation:"tide2 12s ease-in-out infinite",animationDelay:"3s",pointerEvents:"none"}}/>
+      {/* Onda 1 — faixa roxa oscilando */}
+      <div style={{position:"absolute",left:"-10%",right:"-10%",top:"42%",height:"18%",background:"linear-gradient(90deg,transparent 0%,rgba(140,70,255,0.55) 25%,rgba(180,120,255,0.7) 50%,rgba(140,70,255,0.55) 75%,transparent 100%)",filter:"blur(22px)",animation:"wave1 7s ease-in-out infinite",pointerEvents:"none"}}/>
+      {/* Onda 2 — faixa âmbar oscilando ao contrário */}
+      <div style={{position:"absolute",left:"-10%",right:"-10%",top:"50%",height:"14%",background:"linear-gradient(90deg,transparent 0%,rgba(200,150,40,0.5) 25%,rgba(230,185,70,0.65) 50%,rgba(200,150,40,0.5) 75%,transparent 100%)",filter:"blur(26px)",animation:"wave2 10s ease-in-out infinite",animationDelay:"1.5s",pointerEvents:"none"}}/>
+      {/* Onda 3 — faixa fina violeta abaixo */}
+      <div style={{position:"absolute",left:"-10%",right:"-10%",top:"57%",height:"10%",background:"linear-gradient(90deg,transparent 0%,rgba(110,50,220,0.4) 30%,rgba(160,90,255,0.55) 50%,rgba(110,50,220,0.4) 70%,transparent 100%)",filter:"blur(30px)",animation:"wave3 13s ease-in-out infinite",animationDelay:"3s",pointerEvents:"none"}}/>
       <img src="https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png" alt="Banda Aviva" style={{width:110,height:110,objectFit:"contain",marginBottom:12,borderRadius:16}}/>
       <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:26,fontWeight:700,color:"#EAE8F2",marginBottom:4}}>Banda Aviva</div>
       <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:36}}>Ministério Avivamento da Fé</div>
