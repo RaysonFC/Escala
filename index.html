@@ -852,6 +852,7 @@ function AppMain({session,setSession}){
 
   // Calendário
   const [calMonth,setCalMonth]=useState(()=>{ const d=new Date(); return{y:d.getFullYear(),m:d.getMonth()}; });
+  const [cartazes,setCartazes]=useState([]);
   const calDays=()=>{
     const{y,m}=calMonth; const first=new Date(y,m,1).getDay(); const total=new Date(y,m+1,0).getDate();
     const cells=[]; for(let i=0;i<first;i++) cells.push(null);
@@ -1026,6 +1027,47 @@ function AppMain({session,setSession}){
               </div>
               {canEdit&&<button style={bGold} onClick={()=>setNCF({data:today,tipo:"domingo",modo:"unico",tema:"",campanha:"",repeticoes:4})}>+ Novo Culto</button>}
             </div>
+
+            {/* ── Galeria de Cartazes ── */}
+            {(()=>{
+              const addCartaz=(e)=>{
+                const file=e.target.files?.[0]; if(!file) return;
+                const reader=new FileReader();
+                reader.onload=ev=>{
+                  const nova={id:Date.now(),url:ev.target.result,nome:file.name};
+                  setCartazes(p=>[nova,...p]);
+                };
+                reader.readAsDataURL(file);
+              };
+              if(!cartazes.length&&!canEdit) return null;
+              return(
+                <div style={{marginBottom:24}}>
+                  <div style={{fontSize:10,letterSpacing:2,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:12}}>🖼 Cartazes</div>
+                  <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8,scrollbarWidth:"none"}}>
+
+                    {/* Botão adicionar — só admin/cantor */}
+                    {canEdit&&(
+                      <label style={{flexShrink:0,width:110,height:155,border:`2px dashed rgba(${accent.rgb},0.4)`,borderRadius:12,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",background:`rgba(${accent.rgb},0.04)`,gap:6,transition:"all 0.2s"}}>
+                        <input type="file" accept="image/*" style={{display:"none"}} onChange={addCartaz}/>
+                        <span style={{fontSize:28,color:`rgba(${accent.rgb},0.5)`}}>+</span>
+                        <span style={{fontSize:9,color:`rgba(${accent.rgb},0.5)`,letterSpacing:1,textTransform:"uppercase"}}>Cartaz</span>
+                      </label>
+                    )}
+
+                    {/* Cartazes salvos */}
+                    {cartazes.map(c=>(
+                      <div key={c.id} style={{flexShrink:0,position:"relative",width:110,height:155,borderRadius:12,overflow:"hidden",border:`1px solid rgba(${accent.rgb},0.2)`}}>
+                        <img src={c.url} alt={c.nome} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                        {canEdit&&(
+                          <button onClick={()=>askConfirm("Remover este cartaz?",()=>setCartazes(p=>p.filter(x=>x.id!==c.id)))}
+                            style={{position:"absolute",top:4,right:4,background:"rgba(0,0,0,0.6)",border:"none",color:"white",borderRadius:"50%",width:22,height:22,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Escala da semana */}
             {(()=>{
