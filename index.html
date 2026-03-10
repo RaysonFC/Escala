@@ -234,22 +234,42 @@ function ConfirmModal({msg,onOk,onCancel}){
 function TelaAcesso({onOk}){
   const [perfil,setPerfil]=React.useState(null); // "cantor" | "musico"
   const [pw,setPw]=React.useState("");
+  const [nomeCantor,setNomeCantor]=React.useState("");
   const [err,setErr]=React.useState(false);
+  const [errNome,setErrNome]=React.useState(false);
   const [show,setShow]=React.useState(false);
   const bg="#0F0F1A", card="#161625", border="rgba(255,255,255,0.07)";
 
+  const NOMES_CANTORES=["Débora","Mariana","Alessandra","Uesley"];
   const tentar=()=>{
-    const usuario=USUARIOS.find(u=>u.tipo===perfil&&u.senha===pw);
-    if(usuario){
-      const session={role:usuario.role,nome:usuario.nome,perfil};
-      saveSession(session);
-      onOk(session);
+    // Cantor: valida nome + senha
+    if(perfil==="cantor"){
+      if(!nomeCantor.trim()){ setErrNome(true); setTimeout(()=>setErrNome(false),1200); return; }
+      const nomeValido=NOMES_CANTORES.find(n=>n.toLowerCase()===nomeCantor.trim().toLowerCase());
+      if(!nomeValido){ setErrNome(true); setTimeout(()=>setErrNome(false),1200); return; }
+      const usuario=USUARIOS.find(u=>u.tipo==="cantor"&&u.senha===pw);
+      if(usuario){
+        const session={role:usuario.role, nome:nomeValido, perfil};
+        saveSession(session);
+        onOk(session);
+      } else {
+        setErr(true); setPw(""); setTimeout(()=>setErr(false),1200);
+      }
     } else {
-      setErr(true); setPw(""); setTimeout(()=>setErr(false),1200);
+      // Músico: só senha
+      const usuario=USUARIOS.find(u=>u.tipo===perfil&&u.senha===pw);
+      if(usuario){
+        const session={role:usuario.role,nome:usuario.nome,perfil};
+        saveSession(session);
+        onOk(session);
+      } else {
+        setErr(true); setPw(""); setTimeout(()=>setErr(false),1200);
+      }
     }
   };
 
   const inputStyle=(hasErr)=>({width:"100%",background:hasErr?"rgba(192,57,75,0.12)":"rgba(255,255,255,0.05)",border:hasErr?"1px solid rgba(192,57,75,0.5)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 42px 12px 14px",color:"#EAE8F2",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box",transition:"all 0.2s"});
+  const inputStyleSimple=(hasErr)=>({width:"100%",background:hasErr?"rgba(192,57,75,0.12)":"rgba(255,255,255,0.05)",border:hasErr?"1px solid rgba(192,57,75,0.5)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 14px",color:"#EAE8F2",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box",transition:"all 0.2s"});
 
   return(
     <div style={{minHeight:"100vh",background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',system-ui,sans-serif",position:"relative",overflow:"hidden"}}>
@@ -294,19 +314,29 @@ function TelaAcesso({onOk}){
           </div>
         </>}
 
-        {/* PASSO 2 — Digitar senha */}
+        {/* PASSO 2 — Digitar dados */}
         {perfil&&<>
-          <button onClick={()=>{setPerfil(null);setPw("");setErr(false);}} style={{background:"none",border:"none",color:"rgba(255,255,255,0.4)",cursor:"pointer",fontSize:12,padding:"0 0 16px 0",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
+          <button onClick={()=>{setPerfil(null);setPw("");setNomeCantor("");setErr(false);setErrNome(false);}} style={{background:"none",border:"none",color:"rgba(255,255,255,0.4)",cursor:"pointer",fontSize:12,padding:"0 0 16px 0",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
             ← voltar
           </button>
           <div style={{textAlign:"center",marginBottom:20}}>
             <div style={{fontSize:32,marginBottom:6}}>{perfil==="cantor"?"🎤":"🎸"}</div>
             <div style={{fontSize:13,color:"rgba(255,255,255,0.55)"}}>
-              {perfil==="cantor"?"Senha dos cantores":"Senha dos músicos"}
+              {perfil==="cantor"?"Bem-vindo(a)! Informe seus dados":"Senha dos músicos"}
             </div>
           </div>
+
+          {/* Campo nome — só para cantores */}
+          {perfil==="cantor"&&(
+            <div style={{marginBottom:errNome?8:14}}>
+              <input value={nomeCantor} onChange={e=>{setNomeCantor(e.target.value);setErrNome(false);}} onKeyDown={e=>e.key==="Enter"&&document.getElementById("inputSenha")?.focus()} placeholder="Seu nome..." autoFocus style={inputStyleSimple(errNome)}/>
+              {errNome&&<div style={{fontSize:12,color:"#C0394B",marginTop:4,marginBottom:4}}>Nome não encontrado. Use: Débora, Mariana, Alessandra ou Uesley ❌</div>}
+            </div>
+          )}
+
+          {/* Campo senha */}
           <div style={{position:"relative",marginBottom:err?8:16}}>
-            <input type={show?"text":"password"} value={pw} onChange={e=>{setPw(e.target.value);setErr(false);}} onKeyDown={e=>e.key==="Enter"&&tentar()} placeholder="Digite a senha..." autoFocus style={inputStyle(err)}/>
+            <input id="inputSenha" type={show?"text":"password"} value={pw} onChange={e=>{setPw(e.target.value);setErr(false);}} onKeyDown={e=>e.key==="Enter"&&tentar()} placeholder="Senha..." autoFocus={perfil==="musico"} style={inputStyle(err)}/>
             <button onClick={()=>setShow(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:16,padding:0,lineHeight:1}}>{show?"🙈":"👁"}</button>
           </div>
           {err&&<div style={{fontSize:12,color:"#C0394B",textAlign:"center",marginBottom:12}}>Senha incorreta ❌</div>}
@@ -968,6 +998,7 @@ function AppMain({session,setSession}){
         <div style={{display:"flex",alignItems:"center",gap:8}} className="mobile-only-header">
           <button onClick={()=>setShowTheme(true)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",padding:"4px",color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)"}}>🎨</button>
           <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}}/>
+          <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.75)",maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{session?.nome}{isAdmin?" 👑":""}</span>
           <button onClick={()=>{clearSession();setSession(null);}} title="Sair" style={{background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.45)",borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:10,fontFamily:"inherit"}}>Sair</button>
         </div>
       </header>
