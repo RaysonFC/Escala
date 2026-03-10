@@ -65,9 +65,17 @@ const THEMES = {
 // Global ref so helper components (Ovl, MH, Fld, DatePicker) can access the current theme
 let gAccent = THEMES.gold;
 const getAccent = () => gAccent;
-const SENHA_APP = "aviva2025";
-const chkSenha = () => { try{ return localStorage.getItem("ba_auth")==="ok"; }catch(e){ return false; } };
-const setSenha = () => { try{ localStorage.setItem("ba_auth","ok"); }catch(e){} };
+// ── Perfis de acesso ──────────────────────────────────────────
+// role: "admin" | "cantor" | "musico_viewer"
+const USUARIOS = [
+  {nome:"Rayson",   tipo:"musico", senha:"rayson2025",  role:"admin"},
+  {nome:"Cantores", tipo:"cantor", senha:"aviva2025",   role:"cantor"},
+  {nome:"Músicos",  tipo:"musico", senha:"banda2025",   role:"musico_viewer"},
+];
+const LS_KEY = "ba_session_v2";
+const getSession  = ()=>{ try{ const s=localStorage.getItem(LS_KEY); return s?JSON.parse(s):null; }catch(e){ return null; } };
+const saveSession = s=>{ try{ localStorage.setItem(LS_KEY,JSON.stringify(s)); }catch(e){} };
+const clearSession= ()=>{ try{ localStorage.removeItem(LS_KEY); }catch(e){} };
 const CC = {
   quarta:{label:"Quarta-Feira",short:"Quarta",color:"#C9A84C",rgb:"201,168,76"},
   sexta:{label:"Sexta-Feira",short:"Sexta",color:"#E07B8A",rgb:"224,123,138"},
@@ -224,26 +232,69 @@ function ConfirmModal({msg,onOk,onCancel}){
 }
 
 function TelaAcesso({onOk}){
+  const [perfil,setPerfil]=React.useState(null); // "cantor" | "musico"
   const [pw,setPw]=React.useState("");
   const [err,setErr]=React.useState(false);
   const [show,setShow]=React.useState(false);
+  const bg="#0F0F1A", card="#161625", border="rgba(255,255,255,0.07)";
+
   const tentar=()=>{
-    if(pw===SENHA_APP){ setSenha(); onOk(); }
-    else{ setErr(true); setPw(""); setTimeout(()=>setErr(false),1200); }
+    const usuario=USUARIOS.find(u=>u.tipo===perfil&&u.senha===pw);
+    if(usuario){
+      const session={role:usuario.role,nome:usuario.nome,perfil};
+      saveSession(session);
+      onOk(session);
+    } else {
+      setErr(true); setPw(""); setTimeout(()=>setErr(false),1200);
+    }
   };
+
+  const inputStyle=(hasErr)=>({width:"100%",background:hasErr?"rgba(192,57,75,0.12)":"rgba(255,255,255,0.05)",border:hasErr?"1px solid rgba(192,57,75,0.5)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 42px 12px 14px",color:"#EAE8F2",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box",transition:"all 0.2s"});
+
   return(
-    <div style={{minHeight:"100vh",background:"#0F0F1A",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',system-ui,sans-serif"}}>
+    <div style={{minHeight:"100vh",background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',system-ui,sans-serif"}}>
       <div style={{fontSize:52,marginBottom:8,animation:"emojiBeat 1.4s ease-in-out infinite",display:"inline-block"}}>🎵</div>
       <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:26,fontWeight:700,color:"#EAE8F2",marginBottom:4}}>Banda Aviva</div>
-      <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:40}}>Ministério de Música</div>
-      <div style={{width:"100%",maxWidth:320,background:"#161625",borderRadius:18,padding:28,border:"1px solid rgba(255,255,255,0.07)",boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
-        <div style={{fontSize:14,fontWeight:600,color:"#EAE8F2",marginBottom:18,textAlign:"center"}}>🔒 Acesso restrito</div>
-        <div style={{position:"relative",marginBottom:16}}>
-          <input type={show?"text":"password"} value={pw} onChange={e=>{setPw(e.target.value);setErr(false);}} onKeyDown={e=>e.key==="Enter"&&tentar()} placeholder="Digite a senha..." autoFocus style={{width:"100%",background:err?"rgba(192,57,75,0.12)":"rgba(255,255,255,0.05)",border:err?"1px solid rgba(192,57,75,0.5)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 42px 12px 14px",color:"#EAE8F2",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box",transition:"all 0.2s"}}/>
-          <button onClick={()=>setShow(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:16,padding:0,lineHeight:1}}>{show?"🙈":"👁"}</button>
-        </div>
-        {err&&<div style={{fontSize:12,color:"#C0394B",textAlign:"center",marginBottom:12}}>Senha incorreta ❌</div>}
-        <button onClick={tentar} style={{width:"100%",background:"linear-gradient(135deg,#C9A84C,#E8C96A)",color:"#0F0F1A",border:"none",borderRadius:10,padding:"13px",cursor:"pointer",fontWeight:700,fontSize:15,fontFamily:"inherit"}}>Entrar</button>
+      <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:36}}>Ministério de Música</div>
+
+      <div style={{width:"100%",maxWidth:340,background:card,borderRadius:18,padding:28,border:`1px solid ${border}`,boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
+
+        {/* PASSO 1 — Escolher perfil */}
+        {!perfil&&<>
+          <div style={{fontSize:13,fontWeight:600,color:"rgba(255,255,255,0.5)",textAlign:"center",marginBottom:20,letterSpacing:1,textTransform:"uppercase"}}>Você é...</div>
+          <div style={{display:"flex",gap:12,marginBottom:8}}>
+            {[
+              {tipo:"cantor", label:"Cantor / Cantora", icon:"🎤", desc:"Acesso completo"},
+              {tipo:"musico", label:"Músico",            icon:"🎸", desc:"Apenas visualização"},
+            ].map(op=>(
+              <button key={op.tipo} onClick={()=>{setPerfil(op.tipo);setPw("");setErr(false);}} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:14,padding:"18px 10px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6,transition:"all 0.2s",fontFamily:"inherit"}}>
+                <span style={{fontSize:32}}>{op.icon}</span>
+                <span style={{fontSize:12,fontWeight:700,color:"#EAE8F2"}}>{op.label}</span>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{op.desc}</span>
+              </button>
+            ))}
+          </div>
+        </>}
+
+        {/* PASSO 2 — Digitar senha */}
+        {perfil&&<>
+          <button onClick={()=>{setPerfil(null);setPw("");setErr(false);}} style={{background:"none",border:"none",color:"rgba(255,255,255,0.4)",cursor:"pointer",fontSize:12,padding:"0 0 16px 0",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
+            ← voltar
+          </button>
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{fontSize:32,marginBottom:6}}>{perfil==="cantor"?"🎤":"🎸"}</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.55)"}}>
+              {perfil==="cantor"?"Senha dos cantores":"Senha dos músicos"}
+            </div>
+          </div>
+          <div style={{position:"relative",marginBottom:err?8:16}}>
+            <input type={show?"text":"password"} value={pw} onChange={e=>{setPw(e.target.value);setErr(false);}} onKeyDown={e=>e.key==="Enter"&&tentar()} placeholder="Digite a senha..." autoFocus style={inputStyle(err)}/>
+            <button onClick={()=>setShow(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"rgba(255,255,255,0.35)",cursor:"pointer",fontSize:16,padding:0,lineHeight:1}}>{show?"🙈":"👁"}</button>
+          </div>
+          {err&&<div style={{fontSize:12,color:"#C0394B",textAlign:"center",marginBottom:12}}>Senha incorreta ❌</div>}
+          <button onClick={tentar} style={{width:"100%",background:"linear-gradient(135deg,#C9A84C,#E8C96A)",color:"#0F0F1A",border:"none",borderRadius:10,padding:"13px",cursor:"pointer",fontWeight:700,fontSize:15,fontFamily:"inherit"}}>Entrar</button>
+        </>}
+
       </div>
     </div>
   );
@@ -382,7 +433,16 @@ function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
               style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}
+              onError={()=>setInline("err")}
             />
+            {/* Fallback visível quando iframe emite erro ou bloqueio */}
+            <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,background:"#111",pointerEvents:"none"}}>
+              <span style={{fontSize:13,color:"rgba(255,255,255,0.3)"}}>Se o vídeo não carregar:</span>
+              <a href={"https://www.youtube.com/watch?v="+id} target="_blank" rel="noreferrer"
+                style={{background:"rgba(204,0,0,0.85)",color:"#fff",borderRadius:8,padding:"10px 20px",fontSize:13,fontWeight:700,textDecoration:"none",pointerEvents:"all",display:"flex",alignItems:"center",gap:8}}>
+                ▶ Abrir no YouTube
+              </a>
+            </div>
           </div>
           {/* Transpose inline */}
           <div style={{background:"rgba(0,0,0,0.4)",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"}}>
@@ -450,14 +510,16 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
           {emoji}
           <span style={{position:"absolute",bottom:0,right:-4,fontSize:14,background:"rgba(255,255,255,0.15)",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>✎</span>
         </div>
-        {/* Nome clicável */}
-        {editingName
+        {/* Nome — editável só se não for soEmojiMode */}
+        {!soEmojiMode&&editingName
           ? <input autoFocus value={nome} onChange={e=>setNome(e.target.value)} onBlur={()=>setEditingName(false)} onKeyDown={e=>{if(e.key==="Enter")setEditingName(false);}} style={{background:getAccent().light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"6px 12px",color:getAccent().light_theme?"#1A1028":getAccent().text,fontSize:18,fontWeight:700,textAlign:"center",width:"100%",fontFamily:"inherit",outline:"none"}}/>
-          : <div onClick={()=>setEditingName(true)} style={{fontSize:18,fontWeight:700,color:getAccent().light_theme?"#1A1028":getAccent().text,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6}}>
-              {nome} <span style={{fontSize:12,color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)"}}>✎</span>
+          : <div onClick={()=>!soEmojiMode&&setEditingName(true)} style={{fontSize:18,fontWeight:700,color:getAccent().light_theme?"#1A1028":getAccent().text,cursor:soEmojiMode?"default":"pointer",display:"inline-flex",alignItems:"center",gap:6}}>
+              {nome} {!soEmojiMode&&<span style={{fontSize:12,color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)"}}>✎</span>}
             </div>
         }
-        <div style={{fontSize:10,color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)",marginTop:4}}>Toque no emoji ou nome para editar</div>
+        <div style={{fontSize:10,color:getAccent().light_theme?"rgba(107,53,184,0.6)":"rgba(255,255,255,0.3)",marginTop:4}}>
+          {soEmojiMode?"Toque no emoji para personalizar":"Toque no emoji ou nome para editar"}
+        </div>
       </div>
 
       {/* Histórico de louvores */}
@@ -485,8 +547,8 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
       )}
 
       <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
-        <button style={bDanger} onClick={()=>onDelete(idx)}>🗑 Remover</button>
-        <div style={{display:"flex",gap:8}}>
+        {!soEmojiMode&&<button style={bDanger} onClick={()=>onDelete(idx)}>🗑 Remover</button>}
+        <div style={{display:"flex",gap:8,marginLeft:soEmojiMode?"auto":"0"}}>
           <button style={bGhost} onClick={onClose}>Cancelar</button>
           <button style={bGold} onClick={()=>onSave({...cantor,nome:nome.trim(),emoji},idx)}>Salvar</button>
         </div>
@@ -496,7 +558,7 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
 }
 
 /* ── Músico Edit Modal ── */
-function MusicoModal({musico,idx,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger}){
+function MusicoModal({musico,idx,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger,soEmojiMode=false}){
   const [nome,setNome]=useState(musico.nome);
   const [inst,setInst]=useState(musico.instrumento);
   const [emoji,setEmoji]=useState(musico.emoji);
@@ -510,9 +572,9 @@ function MusicoModal({musico,idx,onSave,onDelete,onClose,accent,bGold,bGhost,bDa
         </div>
       </div>
       <Fld label="Nome" value={nome} onChange={e=>setNome(e.target.value)}/>
-      <Fld label="Instrumento" as="select" value={inst} onChange={e=>setInst(e.target.value)}>
+      {!soEmojiMode&&<Fld label="Instrumento" as="select" value={inst} onChange={e=>setInst(e.target.value)}>
         {["Bateria","Guitarra","Teclado","Contra Baixo","Violão","Baixo","Saxofone","Outro"].map(i=><option key={i}>{i}</option>)}
-      </Fld>
+      </Fld>}
       <div style={{marginBottom:12}}>
         <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>Emoji</label>
         <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
@@ -522,8 +584,8 @@ function MusicoModal({musico,idx,onSave,onDelete,onClose,accent,bGold,bGhost,bDa
         </div>
       </div>
       <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
-        <button style={bDanger} onClick={()=>onDelete(idx)}>🗑 Remover</button>
-        <div style={{display:"flex",gap:8}}>
+        {!soEmojiMode&&<button style={bDanger} onClick={()=>onDelete(idx)}>🗑 Remover</button>}
+        <div style={{display:"flex",gap:8,marginLeft:soEmojiMode?"auto":"0"}}>
           <button style={bGhost} onClick={onClose}>Cancelar</button>
           <button style={bGold} onClick={()=>onSave({...musico,nome:nome.trim(),instrumento:inst,emoji},idx)}>Salvar</button>
         </div>
@@ -542,8 +604,12 @@ function App(){
   const [favs,setFavs]=useState(INIT_FAVS);
   const [themeKey,setThemeKey]=useState("gold");
   const [tab,setTab]=useState("calendario");
-  const [autenticado,setAutenticado]=useState(chkSenha);
-  const [confirm,setConfirm]=useState(null); // {msg,onOk}
+  const [session,setSession]=useState(getSession); // {role,nome,perfil} | null
+  const role=session?.role||null;
+  // helpers de permissão
+  const canEdit  = role==="admin"||role==="cantor";
+  const isAdmin  = role==="admin";
+  const [confirm,setConfirm]=useState(null);
   const askConfirm=(msg,onOk)=>setConfirm({msg,onOk});
   const [selId,setSelId]=useState(null);
   const [playL,setPlayL]=useState(null);
@@ -633,7 +699,13 @@ function App(){
   const showToast=(msg,ok=true)=>{ setToast({msg,ok}); setTimeout(()=>setToast(null),2500); };
   const accent=THEMES[themeKey]||THEMES.gold;
   gAccent=accent;
-  if(!autenticado) return <TelaAcesso onOk={()=>setAutenticado(true)}/>;
+  if(!session) return <TelaAcesso onOk={s=>setSession(s)}/>;
+  // Banner modo visualização (definido aqui para uso inline no JSX)
+  const ViewerBanner=()=>role==="musico_viewer"?(
+    <div style={{background:"rgba(155,111,212,0.12)",borderBottom:"1px solid rgba(155,111,212,0.2)",padding:"6px 16px",textAlign:"center",fontSize:11,color:"rgba(155,111,212,0.9)",letterSpacing:0.5}}>
+      👁 Modo visualização — edições bloqueadas
+    </div>
+  ):null;
   const bGold={background:"linear-gradient(135deg,"+accent.accent+","+accent.light+")",color:"#0F0F1A",border:"none",borderRadius:10,padding:"9px 18px",cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"inherit",whiteSpace:"nowrap"};
   const bGhost={background:accent.light_theme?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.05)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"rgba(0,0,0,0.55)":"rgba(255,255,255,0.55)",borderRadius:8,padding:"8px 15px",cursor:"pointer",fontSize:13,fontFamily:"inherit"};
   const bDanger={background:"rgba(192,57,75,0.08)",border:"1px solid rgba(192,57,75,0.25)",color:"#C0394B",borderRadius:8,padding:"7px 13px",cursor:"pointer",fontSize:12,fontFamily:"inherit"};
@@ -645,8 +717,8 @@ function App(){
   const sel=selId?getC(selId):null;
 
   // Ações culto
-  const toggleCantor=(cid,nome)=>{ const c=getC(cid); if(!c)return; updC({...c,cantores:c.cantores.includes(nome)?c.cantores.filter(n=>n!==nome):[...c.cantores,nome]}); };
-  const toggleMusico=(cid,nome)=>{ const c=getC(cid); if(!c)return; const ms=c.musicos||[]; updC({...c,musicos:ms.includes(nome)?ms.filter(n=>n!==nome):[...ms,nome]}); };
+  const toggleCantor=(cid,nome)=>{ if(!canEdit)return; const c=getC(cid); if(!c)return; updC({...c,cantores:c.cantores.includes(nome)?c.cantores.filter(n=>n!==nome):[...c.cantores,nome]}); };
+  const toggleMusico=(cid,nome)=>{ if(!canEdit)return; const c=getC(cid); if(!c)return; const ms=c.musicos||[]; updC({...c,musicos:ms.includes(nome)?ms.filter(n=>n!==nome):[...ms,nome]}); };
   const toggleLembrete=async cid=>{
     const c=getC(cid); if(!c)return;
     const novoVal=!c.lembrete;
@@ -677,7 +749,7 @@ function App(){
   const doAddLouvor=(cid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:[...c.louvores,{...l,id:uid()}]}); setNLF(null); showToast("Louvor adicionado ✓"); };
   const doEditLouvor=(cid,lid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:c.louvores.map(x=>x.id===lid?{...x,...l}:x)}); setELF(null); showToast("Louvor atualizado ✓"); };
   const doRemLouvor=(cid,lid)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:c.louvores.filter(l=>l.id!==lid)}); };
-  const moveLouvor=(cid,idx,dir)=>{ const c=getC(cid); if(!c)return; const arr=[...c.louvores]; const ni=idx+dir; if(ni<0||ni>=arr.length)return; [arr[idx],arr[ni]]=[arr[ni],arr[idx]]; updC({...c,louvores:arr}); };
+  const moveLouvor=(cid,idx,dir)=>{ if(!canEdit)return; const c=getC(cid); if(!c)return; const arr=[...c.louvores]; const ni=idx+dir; if(ni<0||ni>=arr.length)return; [arr[idx],arr[ni]]=[arr[ni],arr[idx]]; updC({...c,louvores:arr}); };
   const isFav=l=>favs.some(f=>f.titulo===l.titulo&&f.artista===l.artista);
   const toggleFav=l=>{ const ex=favs.find(f=>f.titulo===l.titulo&&f.artista===l.artista); if(ex){setFavs(p=>p.filter(f=>f.id!==ex.id));showToast("Removido dos favoritos",false);}else{setFavs(p=>[...p,{...l,id:uid()}]);showToast("★ Favorito adicionado");} };
 
@@ -872,14 +944,19 @@ function App(){
           <div style={{width:1,height:20,background:"rgba(255,255,255,0.1)",margin:"0 6px"}}/>
           <button onClick={()=>setShowTheme(true)} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",padding:"0 6px",color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)"}}>🎨</button>
           <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}} title="Sincronizado"/>
+          <div style={{width:"1px",height:16,background:"rgba(255,255,255,0.12)",margin:"0 2px"}}/>
+          <span style={{fontSize:11,fontWeight:600,color:accent.light_theme?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.55)"}}>{session?.nome}{isAdmin?" 👑":""}</span>
+          <button onClick={()=>{clearSession();setSession(null);}} title="Sair" style={{background:"rgba(255,255,255,0.08)",border:"none",color:accent.light_theme?"rgba(255,255,255,0.7)":"rgba(255,255,255,0.45)",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:10,fontFamily:"inherit"}}>Sair</button>
         </div>
         {/* Mobile: só ícones de ação no header */}
         <div style={{display:"flex",alignItems:"center",gap:8}} className="mobile-only-header">
           <button onClick={()=>setShowTheme(true)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",padding:"4px",color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)"}}>🎨</button>
           <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}}/>
+          <button onClick={()=>{clearSession();setSession(null);}} title="Sair" style={{background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.45)",borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:10,fontFamily:"inherit"}}>Sair</button>
         </div>
       </header>
 
+      <ViewerBanner/>
       {/* Nav inferior mobile */}
       <nav className="mobile-nav" style={{position:"fixed",bottom:0,left:0,right:0,zIndex:200,background:accent.bgHeader.replace("0.97","0.98"),backdropFilter:"blur(20px)",borderTop:accent.light_theme?"1px solid rgba(0,0,0,0.1)":"1px solid rgba(255,255,255,0.08)",display:"none",justifyContent:"space-around",alignItems:"center",padding:"8px 0 max(8px,env(safe-area-inset-bottom))"}}>
         {NAVS.map(n=>(
@@ -900,7 +977,7 @@ function App(){
                 <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Ministério de Música</div>
                 <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,margin:0}}>Calendário</h1>
               </div>
-              <button style={bGold} onClick={()=>setNCF({data:today,tipo:"domingo",modo:"unico",tema:"",campanha:"",repeticoes:4})}>+ Novo Culto</button>
+              {canEdit&&<button style={bGold} onClick={()=>setNCF({data:today,tipo:"domingo",modo:"unico",tema:"",campanha:"",repeticoes:4})}>+ Novo Culto</button>}
             </div>
 
             {/* Escala da semana */}
@@ -1030,12 +1107,12 @@ function App(){
                     return <div style={{fontSize:10,color:"#6BBFA3",marginBottom:10,fontWeight:600}}>✅ Escala completa</div>;
                   })()}
                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                    <button onClick={()=>setEditCulto({...c})} style={{...bGhost,padding:"6px 12px",fontSize:13}} title="Editar culto">✎</button>
-                    <button onClick={()=>toggleLembrete(c.id)} style={{...bGhost,padding:"6px 12px",fontSize:12}} title={c.lembrete?"Lembrete ativo":"Ativar lembrete"}>{c.lembrete?"🔔":"🔕"}</button>
+                    {canEdit&&<button onClick={()=>setEditCulto({...c})} style={{...bGhost,padding:"6px 12px",fontSize:13}} title="Editar culto">✎</button>}
+                    {canEdit&&<button onClick={()=>toggleLembrete(c.id)} style={{...bGhost,padding:"6px 12px",fontSize:12}} title={c.lembrete?"Lembrete ativo":"Ativar lembrete"}>{c.lembrete?"🔔":"🔕"}</button>}
                     <button onClick={()=>{
                       const novo={...c,id:"c"+Date.now(),data:c.data,campanha:c.campanha?(c.campanha+" (cópia)"):"",louvores:c.louvores.map(l=>({...l,id:"l"+Date.now()+Math.random()}))};
                       setCultos(p=>[...p,novo]); showToast("Culto duplicado ✓");
-                    }} style={{...bGhost,padding:"6px 12px",fontSize:12}} title="Duplicar culto">⎘</button>
+                    }} style={{...bGhost,padding:"6px 12px",fontSize:12,display:canEdit?"":"none"}} title="Duplicar culto">⎘</button>
                     <button onClick={()=>{
                       const linhas=[];
                       linhas.push(`*${CC[c.tipo].label} — ${fmtDate(c.data)}*`);
@@ -1062,7 +1139,7 @@ function App(){
                       const texto=linhas.join("\n");
                       window.open("https://wa.me/?text="+encodeURIComponent(texto),"_blank");
                     }} style={{...bGold,padding:"6px 12px",fontSize:12,boxShadow:"none"}} title="Compartilhar no WhatsApp">📤 WhatsApp</button>
-                    <button onClick={()=>askConfirm("Remover este culto? Esta ação não pode ser desfeita.",()=>doDelCulto(c.id))} style={{...bDanger,padding:"6px 12px"}}>🗑</button>
+                    {canEdit&&<button onClick={()=>askConfirm("Remover este culto? Esta ação não pode ser desfeita.",()=>doDelCulto(c.id))} style={{...bDanger,padding:"6px 12px"}}>🗑</button>}
                   </div>
                 </div>
               </div>
@@ -1103,8 +1180,8 @@ function App(){
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                   <div style={{fontSize:12,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text}}>🎵 Louvores</div>
                   <div style={{display:"flex",gap:6}}>
-                    <button style={{...bGhost,padding:"5px 10px",fontSize:11}} onClick={()=>setFavPk(true)}>★ Favs</button>
-                    <button style={{...bGold,padding:"5px 12px",fontSize:11}} onClick={()=>setNLF({titulo:"",artista:"",ytUrl:"",tom:"",cifra:"",obs:""})}>+ Louvor</button>
+                    {canEdit&&<button style={{...bGhost,padding:"5px 10px",fontSize:11}} onClick={()=>setFavPk(true)}>★ Favs</button>}
+                    {canEdit&&<button style={{...bGold,padding:"5px 12px",fontSize:11}} onClick={()=>setNLF({titulo:"",artista:"",ytUrl:"",tom:"",cifra:"",obs:""})}>+ Louvor</button>}
                   </div>
                 </div>
                 {c.louvores.length===0&&<p style={{color:getAccent().light_theme?"rgba(0,0,0,0.30)":"rgba(255,255,255,0.25)",fontSize:12,fontStyle:"italic"}}>Nenhum louvor adicionado</p>}
@@ -1132,7 +1209,7 @@ function App(){
                   const toggleMusLouvor=nome=>{
                     const nova=selMus.includes(nome)?selMus.filter(n=>n!==nome):[...selMus,nome];
                     const cult=getC(c.id); if(!cult)return;
-                    updC({...cult,louvores:cult.louvores.map(x=>x.id===l.id?{...x,musicos:nova}:x)});
+                    if(canEdit)updC({...cult,louvores:cult.louvores.map(x=>x.id===l.id?{...x,musicos:nova}:x)});
                   };
                   const salvar=()=>{
                     if(tomMudou){
@@ -1178,9 +1255,9 @@ function App(){
                               {vidOpen?"■":"▶"}
                             </button>
                           )}
-                          <button onClick={e=>{e.stopPropagation();setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}});}}
+                          <button onClick={e=>{e.stopPropagation();if(canEdit)setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}});}}
                             style={{width:28,height:28,borderRadius:"50%",background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.07)",border:accent.light_theme?"1px solid rgba(0,0,0,0.1)":"1px solid rgba(255,255,255,0.1)",color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.45)",fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✎</button>
-                          <button onClick={e=>{e.stopPropagation();askConfirm("Remover este louvor da escala?",()=>doRemLouvor(c.id,l.id));}}
+                          <button onClick={e=>{e.stopPropagation();if(canEdit)askConfirm("Remover este louvor da escala?",()=>doRemLouvor(c.id,l.id));}}
                             style={{width:28,height:28,borderRadius:"50%",background:"rgba(192,57,75,0.1)",border:"1px solid rgba(192,57,75,0.2)",color:"#C0394B",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
                           <span style={{color:accent.light_theme?"rgba(0,0,0,0.25)":"rgba(255,255,255,0.2)",fontSize:13,transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(180deg)":"none",marginLeft:2}}>▾</span>
                         </div>
@@ -1191,6 +1268,13 @@ function App(){
                         <div style={{borderTop:"1px solid rgba(255,255,255,0.05)"}}>
                           <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000"}}>
                             <iframe src={"https://www.youtube.com/embed/"+getYTId(l.ytUrl)+"?autoplay=1&rel=0&playsinline=1"} title={l.titulo} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}/>
+                            {/* Fallback sempre disponível */}
+                            <div style={{position:"absolute",bottom:8,right:8,pointerEvents:"all"}}>
+                              <a href={"https://www.youtube.com/watch?v="+getYTId(l.ytUrl)} target="_blank" rel="noreferrer"
+                                style={{background:"rgba(0,0,0,0.75)",color:"rgba(255,255,255,0.7)",borderRadius:6,padding:"4px 10px",fontSize:10,fontWeight:700,textDecoration:"none",display:"flex",alignItems:"center",gap:5,border:"1px solid rgba(255,255,255,0.15)"}}>
+                                ▶ YouTube
+                              </a>
+                            </div>
                           </div>
                           <div style={{background:"rgba(0,0,0,0.5)",padding:"8px 14px",display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"}}>
                             <button onClick={()=>setPlayerTranspose(p=>p-1)} style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:accent.light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",color:getAccent().light_theme?"#1A1028":accent.text,borderRadius:8,width:32,height:32,fontSize:18,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
@@ -1495,7 +1579,7 @@ function App(){
                 <div style={{fontSize:10,letterSpacing:2.5,color:accent.accent,textTransform:"uppercase",fontWeight:600,marginBottom:4}}>Ministério de Música</div>
                 <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:28,fontWeight:700,color:getAccent().light_theme?"#1A1028":accent.text,margin:0}}>Escalas</h1>
               </div>
-              <button style={bGold} onClick={()=>setShowAddC(true)}>+ Cantor</button>
+              <button style={{...bGold,display:canEdit?"":"none"}} onClick={()=>setShowAddC(true)}>+ Cantor</button>
             </div>
             {/* Busca */}
             <div style={{display:"flex",background:accent.bgCard,border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,overflow:"hidden",marginBottom:20}}>
@@ -1515,7 +1599,7 @@ function App(){
                   .map(l=>[l.titulo,l])
                 ).values()].slice(0,5);
                 return(
-                  <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
+                  <div key={ct.id} onClick={()=>{if(canEdit)setEditCI(i);}} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                       <span className={emojiClass("",ct.emoji)+" emoji-glow"} style={{fontSize:26,display:"inline-block"}}>{ct.emoji}</span>
                       <div>
@@ -1541,13 +1625,13 @@ function App(){
                 <div style={{fontSize:10,letterSpacing:2,color:getAccent().light_theme?"rgba(0,0,0,0.60)":"rgba(255,255,255,0.6)",textTransform:"uppercase",fontWeight:600}}>🎸 MÚSICOS</div>
                 <span style={{color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:showMusicos?"rotate(180deg)":"none"}}>▾</span>
               </button>
-              {showMusicos&&<button style={{...bGold,padding:"5px 12px",fontSize:11,boxShadow:"none"}} onClick={()=>setShowAddM(true)}>+ Músico</button>}
+              {showMusicos&&<button style={{...bGold,padding:"5px 12px",fontSize:11,boxShadow:"none",display:canEdit?"":"none"}} onClick={()=>setShowAddM(true)}>+ Músico</button>}
             </div>
             {showMusicos&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:10,marginBottom:24}}>
               {musicos.map((mt,i)=>{
                 const n=cultos.filter(c=>(c.musicos||[]).includes(mt.nome)).length;
                 return(
-                  <div key={mt.id} onClick={()=>setEditMI(i)} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",textAlign:"center",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
+                  <div key={mt.id} onClick={()=>{if(canEdit||(role==="musico_viewer"&&session?.nome!=="Músicos"&&mt.nome===session?.nome))setEditMI(i);}} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",textAlign:"center",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
                     <div style={{fontSize:28,marginBottom:6}}><span className={emojiClass(mt.instrumento,mt.emoji)} style={{display:"inline-block"}}>{mt.emoji}</span></div>
                     <div style={{fontSize:12,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text}}>{mt.nome}</div>
                     <div style={{fontSize:10,color:accent.accent,fontWeight:600,marginTop:2}}>{mt.instrumento}</div>
@@ -1648,7 +1732,7 @@ function App(){
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12,marginBottom:24}}>
                   {sRes.map((r,i)=>(
-                    <LCard key={i} l={r} accent={accent} isFav={isFav(r)} onFav={()=>toggleFav(r)} onPlay={setPlayL} onAdd={()=>{ setNLF({...r,obs:""}); setTab("culto"); showToast("Selecione o culto e salve"); }}/>
+                    <LCard key={i} l={r} accent={accent} isFav={isFav(r)} onFav={()=>toggleFav(r)} onPlay={setPlayL} onAdd={canEdit?()=>{ setNLF({...r,obs:""}); setTab("culto"); showToast("Selecione o culto e salve"); }:null}/>
                   ))}
                 </div>
               </>
@@ -1679,7 +1763,7 @@ function App(){
             {favs.length===0&&<p style={{color:accent.light_theme?"rgba(0,0,0,0.35)":"rgba(255,255,255,0.3)",fontSize:14,fontStyle:"italic"}}>Nenhum favorito ainda. Busque músicas e marque com ★</p>}
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
               {favs.map(l=>(
-                <LCard key={l.id} l={l} accent={accent} isFav={true} onFav={()=>toggleFav(l)} onPlay={setPlayL} onAdd={()=>{ setNLF({...l,obs:""}); setTab("culto"); showToast("Selecione o culto e salve"); }}/>
+                <LCard key={l.id} l={l} accent={accent} isFav={true} onFav={()=>toggleFav(l)} onPlay={setPlayL} onAdd={canEdit?()=>{ setNLF({...l,obs:""}); setTab("culto"); showToast("Selecione o culto e salve"); }:null}/>
               ))}
             </div>
           </div>
@@ -1695,7 +1779,7 @@ function App(){
           <MH title={playL.titulo||"Reproduzindo"} sub={playL.artista} onClose={()=>{setPlayL(null);setPlayerTranspose(0);}}/>
           {getYTId(playL.ytUrl||"")?(
             <>
-              <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000",borderRadius:12,overflow:"hidden"}}>
+              <div style={{position:"relative",width:"100%",paddingBottom:"56.25%",background:"#000",borderRadius:"12px 12px 0 0",overflow:"hidden"}}>
                 <iframe
                   src={"https://www.youtube.com/embed/"+getYTId(playL.ytUrl)+"?autoplay=1&rel=0&playsinline=1"}
                   title={playL.titulo}
@@ -1703,7 +1787,18 @@ function App(){
                   allowFullScreen
                   style={{position:"absolute",inset:0,width:"100%",height:"100%",border:"none"}}
                 />
+                <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,background:"#111",pointerEvents:"none"}}>
+                  <span style={{fontSize:12,color:"rgba(255,255,255,0.25)"}}>Se o vídeo não carregar:</span>
+                  <a href={"https://www.youtube.com/watch?v="+getYTId(playL.ytUrl)} target="_blank" rel="noreferrer"
+                    style={{background:"rgba(204,0,0,0.85)",color:"#fff",borderRadius:8,padding:"9px 18px",fontSize:13,fontWeight:700,textDecoration:"none",pointerEvents:"all",display:"flex",alignItems:"center",gap:7}}>
+                    ▶ Abrir no YouTube
+                  </a>
+                </div>
               </div>
+              <a href={"https://www.youtube.com/watch?v="+getYTId(playL.ytUrl)} target="_blank" rel="noreferrer"
+                style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"6px",background:"rgba(204,0,0,0.08)",color:"rgba(255,100,100,0.7)",fontSize:11,textDecoration:"none",borderBottom:"1px solid rgba(204,0,0,0.15)",borderRadius:"0 0 8px 8px",marginBottom:10}}>
+                ▶ Não carregou? Abrir no YouTube
+              </a>
 
               {/* Transpose no player */}
               {(()=>{
@@ -1832,7 +1927,7 @@ function App(){
       {editMI!==null&&musicos[editMI]&&(
         <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setEditMI(null)}>
           <MH title="Editar Músico" onClose={()=>setEditMI(null)}/>
-          <MusicoModal musico={musicos[editMI]} idx={editMI} onSave={saveMusicoEdit} onDelete={deleteMusicoAt} onClose={()=>setEditMI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger}/>
+          <MusicoModal musico={musicos[editMI]} idx={editMI} onSave={saveMusicoEdit} onDelete={deleteMusicoAt} onClose={()=>setEditMI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger} soEmojiMode={!canEdit}/>
         </Ovl>
       )}
 
