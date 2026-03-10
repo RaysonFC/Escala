@@ -1097,43 +1097,56 @@ function AppMain({session,setSession}){
               );
             })()}
 
-            {/* ── Bot de alerta — só admin ── */}
+                                    {/* ── Bot de alerta — só admin ── */}
             {isAdmin&&(()=>{
+              const fmt=d=>{ const dd=new Date(d); return dd.toISOString().split("T")[0]; };
               const now=new Date(today);
-              const diaSemana=now.getDay();
-              const inicioSemana=new Date(now); inicioSemana.setDate(now.getDate()-diaSemana);
-              const fimSemana=new Date(inicioSemana); fimSemana.setDate(inicioSemana.getDate()+6);
-              const fmt=d=>d.toISOString().split("T")[0];
-              // Dias que DEVEM ter culto nessa semana: Dom(0), Qua(3), Sex(5), Sáb(6)
-              const diasCulto=[0,3,5,6];
-              const nomesDow={0:"Domingo",3:"Quarta",5:"Sexta",6:"Sabado"};
-              const faltando=diasCulto.map(dow=>{
-                const d=new Date(inicioSemana); d.setDate(inicioSemana.getDate()+dow);
-                const ds=fmt(d);
-                // Verifica a semana TODA, sem ignorar dias passados
-                const c=cultos.find(x=>x.data===ds);
-                if(!c) return {data:ds,label:nomesDow[dow]};
-                if(!c.cantores||c.cantores.length===0) return {data:ds,label:nomesDow[dow]};
+              const dow=now.getDay(); // 0=Dom,1=Seg,2=Ter,3=Qua,4=Qui,5=Sex,6=Sab
+
+              // Acha a Quarta desta semana (próxima ou hoje)
+              const diff=(3-dow+7)%7;
+              const qDate=new Date(now); qDate.setDate(now.getDate()+diff);
+              const datas={
+                Quarta: fmt(qDate),
+                Sexta:  fmt(new Date(qDate).setDate(qDate.getDate()+2)&&new Date(qDate.getTime()+2*86400000)),
+                Sabado: fmt(new Date(qDate.getTime()+3*86400000)),
+                Domingo:fmt(new Date(qDate.getTime()+4*86400000)),
+              };
+
+              // Olha os cultos do Firebase e verifica cada data
+              const problemas=Object.entries(datas).map(([label,ds])=>{
+                const card=cultos.find(c=>c.data===ds);
+                if(!card) return {label,msg:"sem card criado"};
+                if(!card.cantores||card.cantores.length===0) return {label,msg:"sem cantores escalados"};
                 return null;
               }).filter(Boolean);
-              if(!faltando.length) return(
+
+              if(!problemas.length) return(
                 <div style={{background:"rgba(76,175,125,0.1)",border:"1px solid rgba(76,175,125,0.25)",borderRadius:12,padding:"12px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:18}}>✅</span>
-                  <span style={{fontSize:13,color:"rgba(76,175,125,0.9)",fontWeight:600}}>Escala da semana completa!</span>
+                  <span>✅</span>
+                  <span style={{fontSize:13,color:"rgba(76,175,125,0.9)",fontWeight:600}}>Semana completa! Todos os cultos têm escala.</span>
                 </div>
               );
-              const diasTxt=faltando.map(f=>f.label).join(", ");
-              const msg="Paz, Missionaria! Aqui e o Robozinho da Banda\n\nOs seguintes cultos desta semana ainda nao tem escala completa: *"+diasTxt+"*\n\nPoderia lancar a escala no app?";
+
+              const msgLinhas=problemas.map(p=>"- "+p.label+": "+p.msg).join("\n");
+              const msg="Paz, Missionaria! Aqui e o Robozinho da Banda\n\nAinda falta atencao nos cultos desta semana:\n"+msgLinhas+"\n\nPoderia atualizar no app? Obrigado!";
               const waUrl="https://wa.me/5592984859079?text="+encodeURIComponent(msg);
+
               return(
-                <div style={{background:`rgba(${accent.rgb},0.08)`,border:`1px solid rgba(${accent.rgb},0.2)`,borderRadius:12,padding:"14px 16px",marginBottom:20}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
-                    <div>
-                      <div style={{fontSize:12,fontWeight:700,color:accent.accent,marginBottom:3}}>🤖 Alerta de Escala</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>Faltando: <span style={{color:"rgba(255,180,0,0.9)",fontWeight:600}}>{diasTxt}</span></div>
+                <div style={{background:`rgba(${accent.rgb},0.08)`,border:`1px solid rgba(${accent.rgb},0.25)`,borderRadius:12,padding:"14px 16px",marginBottom:20}}>
+                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:700,color:accent.accent,marginBottom:8}}>🤖 Alerta de Escala</div>
+                      {problemas.map((p,i)=>(
+                        <div key={i} style={{fontSize:12,color:"rgba(255,200,0,0.9)",marginBottom:4,display:"flex",gap:6}}>
+                          <span>⚠️</span>
+                          <span><b>{p.label}</b> — {p.msg}</span>
+                        </div>
+                      ))}
                     </div>
-                    <a href={waUrl} target="_blank" rel="noreferrer" style={{background:"#25D366",color:"white",border:"none",borderRadius:10,padding:"9px 16px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit",textDecoration:"none",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                      <span style={{fontSize:16}}>💬</span> Avisar Débora
+                    <a href={waUrl} target="_blank" rel="noreferrer"
+                      style={{background:"#25D366",color:"white",borderRadius:10,padding:"10px 16px",fontSize:12,fontWeight:700,fontFamily:"inherit",textDecoration:"none",display:"flex",alignItems:"center",gap:6,flexShrink:0,whiteSpace:"nowrap"}}>
+                      💬 Avisar Débora
                     </a>
                   </div>
                 </div>
