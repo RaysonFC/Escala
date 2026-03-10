@@ -1104,14 +1104,16 @@ function AppMain({session,setSession}){
               const inicioSemana=new Date(now); inicioSemana.setDate(now.getDate()-diaSemana);
               const fimSemana=new Date(inicioSemana); fimSemana.setDate(inicioSemana.getDate()+6);
               const fmt=d=>d.toISOString().split("T")[0];
-              // Dias que DEVEM ter culto nessa semana: Qua(3), Sex(5), Sáb(6), Dom(0)
+              // Dias que DEVEM ter culto nessa semana: Dom(0), Qua(3), Sex(5), Sáb(6)
               const diasCulto=[0,3,5,6];
+              const nomesDow={0:"Domingo",3:"Quarta",5:"Sexta",6:"Sabado"};
               const faltando=diasCulto.map(dow=>{
                 const d=new Date(inicioSemana); d.setDate(inicioSemana.getDate()+dow);
-                const ds=fmt(d); if(ds<today) return null; // dia já passou
+                const ds=fmt(d);
+                // Verifica a semana TODA, sem ignorar dias passados
                 const c=cultos.find(x=>x.data===ds);
-                if(!c) return {data:ds,motivo:"sem culto criado"};
-                if(!c.cantores||c.cantores.length===0) return {data:ds,motivo:"sem cantores escalados"};
+                if(!c) return {data:ds,label:nomesDow[dow]};
+                if(!c.cantores||c.cantores.length===0) return {data:ds,label:nomesDow[dow]};
                 return null;
               }).filter(Boolean);
               if(!faltando.length) return(
@@ -1120,8 +1122,7 @@ function AppMain({session,setSession}){
                   <span style={{fontSize:13,color:"rgba(76,175,125,0.9)",fontWeight:600}}>Escala da semana completa!</span>
                 </div>
               );
-              const nomes={0:"Domingo",3:"Quarta",5:"Sexta",6:"Sábado"};
-              const diasTxt=faltando.map(f=>{ const d=new Date(f.data+"T12:00"); return nomes[d.getDay()]||f.data; }).join(", ");
+              const diasTxt=faltando.map(f=>f.label).join(", ");
               const msg="Paz, Missionaria! Aqui e o Robozinho da Banda\n\nOs seguintes cultos desta semana ainda nao tem escala completa: *"+diasTxt+"*\n\nPoderia lancar a escala no app?";
               const waUrl="https://wa.me/5592984859079?text="+encodeURIComponent(msg);
               return(
