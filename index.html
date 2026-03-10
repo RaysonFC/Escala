@@ -252,12 +252,45 @@ function TelaAcesso({onOk}){
   const inputStyle=(hasErr)=>({width:"100%",background:hasErr?"rgba(192,57,75,0.12)":"rgba(255,255,255,0.05)",border:hasErr?"1px solid rgba(192,57,75,0.5)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"12px 42px 12px 14px",color:"#EAE8F2",fontSize:15,fontFamily:"inherit",outline:"none",boxSizing:"border-box",transition:"all 0.2s"});
 
   return(
-    <div style={{minHeight:"100vh",background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',system-ui,sans-serif"}}>
+    <div style={{minHeight:"100vh",background:bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'DM Sans',system-ui,sans-serif",position:"relative",overflow:"hidden"}}>
+
+      {/* ── Aurora + onda de maré ── */}
+      <style>{`
+        @keyframes aurora1{0%,100%{transform:translateX(0) translateY(0) scale(1);opacity:0.45;}50%{transform:translateX(8%) translateY(-5%) scale(1.08);opacity:0.65;}}
+        @keyframes aurora2{0%,100%{transform:translateX(0) translateY(0) scale(1);opacity:0.38;}50%{transform:translateX(-7%) translateY(6%) scale(1.1);opacity:0.55;}}
+        @keyframes aurora3{0%,100%{transform:translateX(0) scale(1);opacity:0.25;}50%{transform:translateX(5%) scale(1.06);opacity:0.40;}}
+        @keyframes tide{
+          0%   {transform:translateX(-100%) scaleY(1);   opacity:0;}
+          15%  {opacity:1;}
+          50%  {transform:translateX(10%) scaleY(1.15);  opacity:0.85;}
+          85%  {opacity:1;}
+          100% {transform:translateX(110%) scaleY(1);    opacity:0;}
+        }
+        @keyframes tide2{
+          0%   {transform:translateX(110%) scaleY(1);    opacity:0;}
+          15%  {opacity:0.7;}
+          50%  {transform:translateX(-10%) scaleY(1.1);  opacity:0.6;}
+          85%  {opacity:0.7;}
+          100% {transform:translateX(-100%) scaleY(1);   opacity:0;}
+        }
+      `}</style>
+
+      {/* Aurora — roxo topo esquerdo */}
+      <div style={{position:"absolute",width:"75%",height:"65%",top:"-20%",left:"-20%",background:"radial-gradient(ellipse at center,rgba(130,60,220,0.75) 0%,transparent 65%)",filter:"blur(55px)",animation:"aurora1 11s ease-in-out infinite",pointerEvents:"none"}}/>
+      {/* Aurora — dourado baixo direito */}
+      <div style={{position:"absolute",width:"70%",height:"60%",bottom:"-20%",right:"-15%",background:"radial-gradient(ellipse at center,rgba(200,145,35,0.65) 0%,transparent 65%)",filter:"blur(60px)",animation:"aurora2 14s ease-in-out infinite",pointerEvents:"none"}}/>
+      {/* Aurora — índigo centro */}
+      <div style={{position:"absolute",width:"85%",height:"45%",top:"28%",left:"8%",background:"radial-gradient(ellipse at center,rgba(70,40,170,0.5) 0%,transparent 60%)",filter:"blur(70px)",animation:"aurora3 17s ease-in-out infinite",pointerEvents:"none"}}/>
+
+      {/* Onda de maré 1 — esquerda → direita → volta */}
+      <div style={{position:"absolute",left:0,right:0,top:"38%",height:"22%",background:"linear-gradient(90deg,transparent 0%,rgba(150,80,255,0.18) 30%,rgba(200,150,50,0.22) 55%,rgba(150,80,255,0.18) 75%,transparent 100%)",filter:"blur(28px)",animation:"tide 9s ease-in-out infinite",pointerEvents:"none"}}/>
+      {/* Onda de maré 2 — direita → esquerda (defasada) */}
+      <div style={{position:"absolute",left:0,right:0,top:"45%",height:"16%",background:"linear-gradient(90deg,transparent 0%,rgba(100,60,200,0.14) 25%,rgba(220,170,40,0.18) 55%,rgba(100,60,200,0.14) 80%,transparent 100%)",filter:"blur(35px)",animation:"tide2 12s ease-in-out infinite",animationDelay:"3s",pointerEvents:"none"}}/>
       <img src="https://i.ibb.co/svHKfZj8/images-20260308-072313-0000.png" alt="Banda Aviva" style={{width:110,height:110,objectFit:"contain",marginBottom:12,borderRadius:16}}/>
       <div style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:26,fontWeight:700,color:"#EAE8F2",marginBottom:4}}>Banda Aviva</div>
       <div style={{fontSize:10,letterSpacing:2,color:"rgba(255,255,255,0.35)",textTransform:"uppercase",marginBottom:36}}>Ministério Avivamento da Fé</div>
 
-      <div style={{width:"100%",maxWidth:340,background:card,borderRadius:18,padding:28,border:`1px solid ${border}`,boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
+      <div style={{width:"100%",maxWidth:340,background:"rgba(18,18,32,0.92)",borderRadius:18,padding:28,border:"1px solid rgba(255,255,255,0.12)",boxShadow:"0 24px 80px rgba(0,0,0,0.75)",backdropFilter:"blur(16px)"}}>
 
         {/* PASSO 1 — Escolher perfil */}
         {!perfil&&<>
