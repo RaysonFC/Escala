@@ -754,6 +754,7 @@ function AppMain({session,setSession}){
   const [confirm,setConfirm]=useState(null);
   const askConfirm=(msg,onOk)=>setConfirm({msg,onOk});
   const [selId,setSelId]=useState(null);
+  const [prevTab,setPrevTab]=useState("calendario");
   const [playL,setPlayL]=useState(null);
   const [toast,setToast]=useState(null);
   const [showTheme,setShowTheme]=useState(false);
@@ -794,6 +795,7 @@ function AppMain({session,setSession}){
   const [calMonth,setCalMonth]=useState(()=>{ const d=new Date(); return{y:d.getFullYear(),m:d.getMonth()}; });
   const [cartazes,setCartazes]=useState([]);
   const [cartazAberto,setCartazAberto]=useState(null);
+  const [carIdx,setCarIdx]=useState(0);
   const [showAddCartaz,setShowAddCartaz]=useState(false);
   const [linkCartaz,setLinkCartaz]=useState("");
   const [nomeCartaz,setNomeCartaz]=useState("");
@@ -854,6 +856,13 @@ function AppMain({session,setSession}){
   },[tab,selId,playL,showTheme,editCI,editMI,showAddC,showAddM,newCF,newLF,showFavPk]);
 
   const showToast=(msg,ok=true)=>{ setToast({msg,ok}); setTimeout(()=>setToast(null),2500); };
+  // Carrossel automático
+  useEffect(()=>{
+    if(cartazes.length<=1)return;
+    const t=setInterval(()=>setCarIdx(i=>(i+1)%cartazes.length),3000);
+    return()=>clearInterval(t);
+  },[cartazes.length]);
+
   const accent=THEMES[themeKey]||THEMES.gold;
   gAccent=accent;
   // Banner modo visualização (definido aqui para uso inline no JSX)
@@ -1170,20 +1179,50 @@ function AppMain({session,setSession}){
                     </div>
                   )}
 
-                  <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:8,scrollbarWidth:"none",WebkitOverflowScrolling:"touch",scrollSnapType:"x mandatory"}}>
-                    {cartazes.map(c=>(
-                      <div key={c.id} onClick={()=>setCartazAberto(c)} style={{flexShrink:0,position:"relative",width:cardW,height:cardH,minWidth:cardW,borderRadius:16,overflow:"hidden",border:`1px solid rgba(${accent.rgb},0.25)`,cursor:"pointer",scrollSnapAlign:"start",boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>
-                        <img src={c.url} alt={c.nome} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                        {isAdmin&&(
-                          <button onClick={e=>{e.stopPropagation();askConfirm("Remover este cartaz?",()=>setCartazes(p=>p.filter(x=>x.id!==c.id)));}}
-                            style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.65)",border:"none",color:"white",borderRadius:"50%",width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,backdropFilter:"blur(4px)"}}>✕</button>
+                  {/* Carrossel automático */}
+                  {(()=>{
+                    const len=cartazes.length;
+                    if(!len)return null;
+                    const prev2=cartazes[((carIdx-1)+len)%len];
+                    const curr2=cartazes[carIdx];
+                    const next2=cartazes[(carIdx+1)%len];
+                    const visible=len===1?[curr2]:len===2?[curr2,next2]:[prev2,curr2,next2];
+                    return(
+                      <div style={{marginBottom:8}}>
+                        <div style={{display:"flex",gap:12,overflow:"hidden",justifyContent:"center"}}>
+                          {visible.map((c,vi)=>{
+                            const isCurr=c.id===curr2.id;
+                            return(
+                              <div key={c.id+"-"+vi} onClick={()=>setCartazAberto(c)}
+                                style={{flexShrink:0,position:"relative",width:cardW,height:cardH,minWidth:cardW,
+                                  borderRadius:16,overflow:"hidden",cursor:"pointer",
+                                  border:`1px solid rgba(${accent.rgb},${isCurr?"0.5":"0.15"})`,
+                                  opacity:isCurr?1:0.5,transform:isCurr?"scale(1)":"scale(0.93)",
+                                  transition:"all 0.4s ease"}}>
+                                <img src={c.url} alt={c.nome} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                                {isAdmin&&(
+                                  <button onClick={e=>{e.stopPropagation();askConfirm("Remover este cartaz?",()=>setCartazes(p=>p.filter(x=>x.id!==c.id)));}}
+                                    style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.65)",border:"none",color:"white",borderRadius:"50%",width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1,backdropFilter:"blur(4px)"}}>✕</button>
+                                )}
+                                <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"20px 10px 8px",background:"linear-gradient(transparent,rgba(0,0,0,0.7))",fontSize:10,color:"rgba(255,255,255,0.8)",textAlign:"center",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.nome}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {len>1&&(
+                          <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:8}}>
+                            {cartazes.map((_,i)=>(
+                              <div key={i} onClick={()=>setCarIdx(i)}
+                                style={{width:i===carIdx?16:6,height:6,borderRadius:3,cursor:"pointer",transition:"all 0.3s",
+                                  background:i===carIdx?accent.accent:"rgba(255,255,255,0.2)"}}/>
+                            ))}
+                          </div>
                         )}
-                        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"20px 10px 8px",background:"linear-gradient(transparent,rgba(0,0,0,0.7))",fontSize:10,color:"rgba(255,255,255,0.8)",textAlign:"center",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.nome}</div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()}
 
-                  {/* Lightbox */}
+                                    {/* Lightbox */}
                   {cartazAberto&&(
                     <div onClick={()=>setCartazAberto(null)} style={{position:"fixed",inset:0,zIndex:900,background:"rgba(0,0,0,0.92)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:16,backdropFilter:"blur(8px)"}}>
                       <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",marginBottom:12}}>{cartazAberto.nome}</div>
@@ -1276,7 +1315,7 @@ function AppMain({session,setSession}){
                     const temLouvores=c.louvores.length>0;
                     const completo=temCantores&&temMusicos&&temLouvores;
                     return(
-                      <div key={c.id} onClick={()=>{setSelId(c.id);setTab("culto");}} className="ccard" style={{background:accent.light_theme?"rgba(0,0,0,0.02)":"rgba(255,255,255,0.03)",border:`1px solid rgba(${cf.rgb},0.2)`,borderLeft:`3px solid ${cf.color}`,borderRadius:10,padding:"12px 14px",marginBottom:8,cursor:"pointer",transition:"all 0.15s"}}>
+                      <div key={c.id} onClick={()=>{setPrevTab(tab);setSelId(c.id);setTab("culto");}} className="ccard" style={{background:accent.light_theme?"rgba(0,0,0,0.02)":"rgba(255,255,255,0.03)",border:`1px solid rgba(${cf.rgb},0.2)`,borderLeft:`3px solid ${cf.color}`,borderRadius:10,padding:"12px 14px",marginBottom:8,cursor:"pointer",transition:"all 0.15s"}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
                           <div style={{flex:1}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -1308,7 +1347,7 @@ function AppMain({session,setSession}){
                   {proximos.map(c=>{
                     const cf=CC[c.tipo];
                     return(
-                      <div key={c.id} onClick={()=>{setSelId(c.id);setTab("culto");}} className="pill" style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:10,border:`1px solid rgba(${cf.rgb},0.3)`,background:`rgba(${cf.rgb},0.05)`,cursor:"pointer",minWidth:120}}>
+                      <div key={c.id} onClick={()=>{setPrevTab(tab);setSelId(c.id);setTab("culto");}} className="pill" style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:10,border:`1px solid rgba(${cf.rgb},0.3)`,background:`rgba(${cf.rgb},0.05)`,cursor:"pointer",minWidth:120}}>
                         <div style={{width:6,height:6,borderRadius:2,background:cf.color,flexShrink:0}}/>
                         <div style={{flex:1}}>
                           <div style={{fontSize:11,fontWeight:600,color:getAccent().light_theme?"#1A1028":accent.text}}>{cf.short}</div>
@@ -1351,9 +1390,24 @@ function AppMain({session,setSession}){
         {/* ══ CULTO DETALHE ══ */}
         {tab==="culto"&&sel&&(()=>{
           const c=getC(sel.id)||sel; const cf=CC[c.tipo];
+          const _sorted=[...cultos].sort((a,b)=>a.data.localeCompare(b.data));
+          const _ci=_sorted.findIndex(x=>x.id===c.id);
+          const prevC=_ci>0?_sorted[_ci-1]:null;
+          const nextC=_ci<_sorted.length-1?_sorted[_ci+1]:null;
+          let _sx=null;
           return(
-            <div style={{animation:"fadeUp 0.3s ease"}}>
-              <button onClick={()=>setTab("calendario")} style={{...bGhost,marginBottom:16,padding:"6px 14px",fontSize:12}}>← Voltar</button>
+            <div style={{animation:"fadeUp 0.3s ease"}}
+              onTouchStart={e=>{_sx=e.touches[0].clientX;}}
+              onTouchEnd={e=>{const dx=e.changedTouches[0].clientX-(_sx||0);_sx=null;if(dx>60&&prevC)setSelId(prevC.id);if(dx+60<0&&nextC)setSelId(nextC.id);}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:8}}>
+                <button onClick={()=>{setTab(prevTab);setSelId(null);}} style={{...bGhost,padding:"6px 14px",fontSize:12}}>← Voltar</button>
+                <div style={{display:"flex",gap:6}}>
+                  <button onClick={()=>prevC&&setSelId(prevC.id)} disabled={!prevC}
+                    style={{...bGhost,padding:"5px 12px",fontSize:12,opacity:prevC?1:0.3}}>‹ Anterior</button>
+                  <button onClick={()=>nextC&&setSelId(nextC.id)} disabled={!nextC}
+                    style={{...bGhost,padding:"5px 12px",fontSize:12,opacity:nextC?1:0.3}}>Próximo ›</button>
+                </div>
+              </div>
               {/* Header culto */}
               <div style={{background:accent.bgCard,border:`1px solid rgba(${cf.rgb},0.2)`,borderTop:`3px solid ${cf.color}`,borderRadius:14,padding:18,marginBottom:14}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
@@ -1981,7 +2035,7 @@ function AppMain({session,setSession}){
                                   })}
                                 </div>
                               </div>
-                              <button onClick={()=>{setSelId(c.id);setTab("culto");}} style={{background:"none",border:"none",color:accent.accent,cursor:"pointer",fontSize:11,fontFamily:"inherit",padding:0}}>Ver detalhes →</button>
+                              <button onClick={()=>{setPrevTab(tab);setSelId(c.id);setTab("culto");}} style={{background:"none",border:"none",color:accent.accent,cursor:"pointer",fontSize:11,fontFamily:"inherit",padding:0}}>Ver detalhes →</button>
                             </div>
                           )}
                         </div>
