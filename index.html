@@ -642,6 +642,64 @@ function MusicoModal({musico,idx,onSave,onDelete,onClose,accent,bGold,bGhost,bDa
 /* ══════════════════════════════════════════
    APP PRINCIPAL
 ══════════════════════════════════════════ */
+/* ── Cifra Popup ── */
+function CifraPopup({louvor,onClose}){
+  const accent=getAccent();
+  const [scroll,setScroll]=React.useState(false);
+  const [vel,setVel]=React.useState(40);
+  const scrollRef=React.useRef(null);
+  const animRef=React.useRef(null);
+  React.useEffect(()=>{
+    const el=scrollRef.current;
+    if(!el)return;
+    if(!scroll){cancelAnimationFrame(animRef.current);return;}
+    let last=null;
+    const step=ts=>{
+      if(last!==null){
+        const delta=ts-last;
+        el.scrollTop+=vel*(delta/1000);
+        if(el.scrollTop+el.clientHeight>=el.scrollHeight-2){setScroll(false);return;}
+      }
+      last=ts;
+      animRef.current=requestAnimationFrame(step);
+    };
+    animRef.current=requestAnimationFrame(step);
+    return()=>cancelAnimationFrame(animRef.current);
+  },[scroll,vel]);
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:300,display:"flex",flexDirection:"column"}}
+      onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{background:accent.bgCard,borderRadius:"20px 20px 0 0",marginTop:"auto",maxHeight:"92vh",display:"flex",flexDirection:"column",width:"100%",maxWidth:700,marginLeft:"auto",marginRight:"auto"}}>
+        <div style={{padding:"16px 16px 12px",borderBottom:`1px solid ${accent.border}`,display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:14,fontWeight:700,color:accent.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>𝄞 {louvor.titulo}</div>
+            {louvor.artista&&<div style={{fontSize:11,color:accent.textSub,marginTop:2}}>{louvor.artista}</div>}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+            {scroll&&(
+              <div style={{display:"flex",alignItems:"center",gap:5}}>
+                <button onClick={()=>setVel(v=>Math.max(5,v-10))} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                <span style={{fontSize:10,color:accent.textSub,minWidth:24,textAlign:"center"}}>{vel}</span>
+                <button onClick={()=>setVel(v=>Math.min(200,v+10))} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+              </div>
+            )}
+            <button onClick={()=>setScroll(s=>!s)}
+              style={{background:scroll?`rgba(${accent.rgb},0.2)`:"rgba(255,255,255,0.08)",border:scroll?`1px solid rgba(${accent.rgb},0.5)`:"1px solid rgba(255,255,255,0.12)",color:scroll?accent.accent:accent.textSub,borderRadius:10,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+              {scroll?"⏸ Parar":"▶ Auto"}
+            </button>
+            <button onClick={onClose}
+              style={{background:"rgba(255,255,255,0.06)",border:"none",color:"rgba(255,255,255,0.5)",borderRadius:"50%",width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          </div>
+        </div>
+        <div ref={scrollRef} style={{overflowY:"auto",flex:1,padding:"16px 20px"}}>
+          <pre style={{margin:0,fontFamily:"'Courier New',monospace",fontSize:14,lineHeight:1.9,color:accent.text,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{louvor.cifra}</pre>
+          <div style={{height:80}}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppMain({session,setSession}){
   const [cantores,setCantores]=useState(INIT_CANTORES);
   const [musicos,setMusicos]=useState(INIT_MUSICOS);
@@ -2192,70 +2250,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
   }
 </script>
 </body>
-</html>/* ── Cifra Popup ── */
-function CifraPopup({louvor,onClose}){
-  const accent=getAccent();
-  const [scroll,setScroll]=React.useState(false);
-  const [vel,setVel]=React.useState(40);
-  const scrollRef=React.useRef(null);
-  const animRef=React.useRef(null);
-
-  React.useEffect(()=>{
-    const el=scrollRef.current;
-    if(!el)return;
-    if(!scroll){ cancelAnimationFrame(animRef.current); return; }
-    let last=null;
-    const step=ts=>{
-      if(last!==null){
-        const delta=ts-last;
-        el.scrollTop+=vel*(delta/1000);
-        if(el.scrollTop+el.clientHeight>=el.scrollHeight-2){
-          setScroll(false); return;
-        }
-      }
-      last=ts;
-      animRef.current=requestAnimationFrame(step);
-    };
-    animRef.current=requestAnimationFrame(step);
-    return()=>cancelAnimationFrame(animRef.current);
-  },[scroll,vel]);
-
-  return(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:300,display:"flex",flexDirection:"column"}}
-      onClick={e=>{ if(e.target===e.currentTarget){ onClose(); }}}>
-      <div style={{background:accent.bgCard,borderRadius:"20px 20px 0 0",marginTop:"auto",maxHeight:"92vh",display:"flex",flexDirection:"column",width:"100%",maxWidth:700,marginLeft:"auto",marginRight:"auto"}}>
-        {/* Header */}
-        <div style={{padding:"16px 16px 12px",borderBottom:`1px solid ${accent.border}`,display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:14,fontWeight:700,color:accent.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>𝄞 {louvor.titulo}</div>
-            {louvor.artista&&<div style={{fontSize:11,color:accent.textSub,marginTop:2}}>{louvor.artista}</div>}
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-            {scroll&&(
-              <div style={{display:"flex",alignItems:"center",gap:5}}>
-                <button onClick={()=>setVel(v=>Math.max(5,v-10))} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
-                <span style={{fontSize:10,color:accent.textSub,minWidth:24,textAlign:"center"}}>{vel}</span>
-                <button onClick={()=>setVel(v=>Math.min(200,v+10))} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
-              </div>
-            )}
-            <button onClick={()=>setScroll(s=>!s)}
-              style={{background:scroll?`rgba(${accent.rgb},0.2)`:"rgba(255,255,255,0.08)",border:scroll?`1px solid rgba(${accent.rgb},0.5)`:"1px solid rgba(255,255,255,0.12)",color:scroll?accent.accent:accent.textSub,borderRadius:10,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-              {scroll?"⏸ Parar":"▶ Auto"}
-            </button>
-            <button onClick={onClose}
-              style={{background:"rgba(255,255,255,0.06)",border:"none",color:"rgba(255,255,255,0.5)",borderRadius:"50%",width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-          </div>
-        </div>
-        {/* Cifra */}
-        <div ref={scrollRef} style={{overflowY:"auto",flex:1,padding:"16px 20px"}}>
-          <pre style={{margin:0,fontFamily:"'Courier New',monospace",fontSize:14,lineHeight:1.9,color:accent.text,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
-            {louvor.cifra}
-          </pre>
-          <div style={{height:80}}/>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
+</html>
