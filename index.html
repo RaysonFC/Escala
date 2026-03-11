@@ -371,12 +371,12 @@ function MH({title,sub,onClose}){
   );
 }
 
-function Fld({label,value,onChange,placeholder,as,children,type="text"}){
+function Fld({label,value,onChange,placeholder,as,children,type="text",rows=4,mono=false}){
   const base={width:"100%",colorScheme:getAccent().light_theme?"light":"dark",background:getAccent().light_theme?`rgba(${getAccent().rgb},0.06)`+"":"rgba(255,255,255,0.05)",border:getAccent().light_theme?"1px solid rgba(0,0,0,0.12)":"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 13px",color:getAccent().text,fontSize:14,fontFamily:"inherit",outline:"none",marginBottom:12};
   return(
     <div>
       {label&&<label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:5}}>{label}</label>}
-      {as==="textarea"?<textarea value={value} onChange={onChange} placeholder={placeholder} rows={3} style={{...base,resize:"vertical"}}/>
+      {as==="textarea"?<textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows} style={{...base,resize:"vertical",fontFamily:mono?"'Courier New',monospace":"inherit",fontSize:mono?13:14}}/>
        :as==="select"?<select value={value} onChange={onChange} style={base}>{children}</select>
        :<input type={type} value={value} onChange={onChange} placeholder={placeholder} style={base}/>}
     </div>
@@ -686,6 +686,9 @@ function AppMain({session,setSession}){
   const [transposeMap,setTransposeMap]=useState({}); // {louvorId: tomAtual}
   const [playerTranspose,setPlayerTranspose]=useState(0); // semitons no player
   const [escalaFiltro,setEscalaFiltro]=useState(""); // filtro aba escalas
+  const [cifraAberta,setCifraAberta]=useState(null); // louvor com cifra aberta
+  const [cifraScroll,setCifraScroll]=useState(false); // rolagem automática ligada
+  const [cifraVel,setCifraVel]=useState(40); // velocidade px/s
 
   const loaded=useRef({cant:false,mus:false,cult:false,favs:false});
   const fromFb=useRef({cant:false,mus:false,cult:false,favs:false});
@@ -1431,6 +1434,13 @@ function AppMain({session,setSession}){
                               {vidOpen?"■":"▶"}
                             </button>
                           )}
+                          {l.cifra&&(
+                            <button onClick={e=>{e.stopPropagation();setCifraAberta(l);setCifraScroll(false);}}
+                              style={{width:28,height:28,borderRadius:"50%",background:`rgba(${accent.rgb},0.15)`,border:`1px solid rgba(${accent.rgb},0.35)`,color:accent.accent,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}
+                              title="Ver cifra">
+                              𝄞
+                            </button>
+                          )}
                           <button onClick={e=>{e.stopPropagation();if(canEdit)setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}});}}
                             style={{width:28,height:28,borderRadius:"50%",background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.07)",border:accent.light_theme?"1px solid rgba(0,0,0,0.1)":"1px solid rgba(255,255,255,0.1)",color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.45)",fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✎</button>
                           <button onClick={e=>{e.stopPropagation();if(canEdit)askConfirm("Remover este louvor da escala?",()=>doRemLouvor(c.id,l.id));}}
@@ -1693,6 +1703,7 @@ function AppMain({session,setSession}){
                   })()}
                 </div>
               </div>
+              <Fld label="Cifra (cole aqui)" as="textarea" rows={8} mono={true} value={editLF.louvor.cifra||""} onChange={e=>setELF(p=>({...p,louvor:{...p.louvor,cifra:e.target.value}}))} placeholder={"Am        G\nVerso 1:\nEle é fiel...\n\n[Refrão]\nGlória..."}/>
               <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
                 <button style={bGhost} onClick={()=>setELF(null)}>Cancelar</button>
                 <button style={bGold} onClick={()=>doEditLouvor(editLF.cultoId,editLF.louvorId,editLF.louvor)} disabled={!editLF.louvor.titulo.trim()}>Salvar</button>
@@ -1948,6 +1959,69 @@ function AppMain({session,setSession}){
       </div>{/* /content */}
 
       {/* ══ MODAIS ══ */}
+
+      {/* ── Popup de Cifra ── */}
+      {cifraAberta&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:300,display:"flex",flexDirection:"column"}} onClick={e=>{if(e.target===e.currentTarget){setCifraAberta(null);setCifraScroll(false);}}}>
+          <div style={{background:accent.bgCard,borderRadius:"20px 20px 0 0",marginTop:"auto",maxHeight:"92vh",display:"flex",flexDirection:"column",width:"100%",maxWidth:700,marginLeft:"auto",marginRight:"auto"}}>
+            {/* Header */}
+            <div style={{padding:"16px 16px 12px",borderBottom:`1px solid ${accent.border}`,display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:700,color:accent.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>𝄞 {cifraAberta.titulo}</div>
+                {cifraAberta.artista&&<div style={{fontSize:11,color:accent.textSub,marginTop:2}}>{cifraAberta.artista}</div>}
+              </div>
+              {/* Controles de rolagem */}
+              <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                {cifraScroll&&(
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <button onClick={()=>setCifraVel(v=>Math.max(5,v-10))} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                    <span style={{fontSize:10,color:accent.textSub,minWidth:24,textAlign:"center"}}>{cifraVel}</span>
+                    <button onClick={()=>setCifraVel(v=>Math.min(200,v+10))} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:14,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                  </div>
+                )}
+                <button onClick={()=>setCifraScroll(s=>!s)}
+                  style={{background:cifraScroll?`rgba(${accent.rgb},0.2)`:"rgba(255,255,255,0.08)",border:cifraScroll?`1px solid rgba(${accent.rgb},0.5)`:"1px solid rgba(255,255,255,0.12)",color:cifraScroll?accent.accent:accent.textSub,borderRadius:10,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
+                  {cifraScroll?"⏸ Parar":"▶ Auto"}
+                </button>
+                <button onClick={()=>{setCifraAberta(null);setCifraScroll(false);}}
+                  style={{background:"rgba(255,255,255,0.06)",border:"none",color:"rgba(255,255,255,0.5)",borderRadius:"50%",width:30,height:30,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
+            </div>
+            {/* Conteúdo da cifra com auto-scroll */}
+            {(()=>{
+              const scrollRef=React.useRef(null);
+              const animRef=React.useRef(null);
+              React.useEffect(()=>{
+                const el=scrollRef.current;
+                if(!el)return;
+                if(!cifraScroll){ cancelAnimationFrame(animRef.current); return; }
+                let last=null;
+                const step=ts=>{
+                  if(last!==null){
+                    const delta=ts-last;
+                    el.scrollTop+=cifraVel*(delta/1000);
+                    if(el.scrollTop+el.clientHeight>=el.scrollHeight-2){
+                      setCifraScroll(false); return;
+                    }
+                  }
+                  last=ts;
+                  animRef.current=requestAnimationFrame(step);
+                };
+                animRef.current=requestAnimationFrame(step);
+                return()=>cancelAnimationFrame(animRef.current);
+              },[cifraScroll,cifraVel]);
+              return(
+                <div ref={scrollRef} style={{overflowY:"auto",flex:1,padding:"16px"}}>
+                  <pre style={{margin:0,fontFamily:"'Courier New',monospace",fontSize:14,lineHeight:1.8,color:accent.text,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
+                    {cifraAberta.cifra}
+                  </pre>
+                  <div style={{height:60}}/>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Player YouTube */}
       {playL&&(
