@@ -1178,7 +1178,6 @@ function AppMain({session,setSession}){
                     </div>
                   )}
 
-                  {/* Carrossel automático */}
                   {(()=>{
                     const len=cartazes.length;
                     if(!len)return null;
@@ -1234,7 +1233,7 @@ function AppMain({session,setSession}){
             })()}
 
                                                 {/* ── Bot de alerta — só admin ── */}
-            {isAdmin&&(()=>{
+            {(isAdmin||role==="cantor")&&(()=>{
               // Data de hoje no formato YYYY-MM-DD
               const now=new Date(today+"T12:00:00");
               const dow=now.getDay(); // 0=Dom,1=Seg,2=Ter,3=Qua,4=Qui,5=Sex,6=Sab
@@ -1246,11 +1245,8 @@ function AppMain({session,setSession}){
                 return d.toISOString().split("T")[0];
               };
 
-              // Domingo desta semana (início da semana)
+              // Domingo desta semana
               const domingo=new Date(now.getTime()); domingo.setDate(now.getDate()-dow);
-
-              // Ciclo: Quarta, Sexta, Sábado, Domingo desta semana
-              // Só inclui dias que ainda não passaram (>= hoje)
               const todayStr=today;
               const cicloBase=[
                 {label:"Quarta",  ds:addDias(domingo,3)},
@@ -1278,7 +1274,8 @@ function AppMain({session,setSession}){
               const msg="Paz, Missionaria! Aqui e o Robozinho da Banda\n\nAinda falta atencao nos cultos desta semana:\n"+msgLinhas+"\n\nPoderia atualizar no app? Obrigado!";
               const waUrl="https://wa.me/5592984859079?text="+encodeURIComponent(msg);
 
-              return(
+              // Renderização diferente por role
+              if(isAdmin) return(
                 <div style={{background:`rgba(${accent.rgb},0.08)`,border:`1px solid rgba(${accent.rgb},0.25)`,borderRadius:12,padding:"14px 16px",marginBottom:20}}>
                   <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
                     <div style={{flex:1}}>
@@ -1293,6 +1290,25 @@ function AppMain({session,setSession}){
                       style={{background:"#25D366",color:"white",borderRadius:10,padding:"10px 16px",fontSize:12,fontWeight:700,fontFamily:"inherit",textDecoration:"none",display:"flex",alignItems:"center",gap:6,flexShrink:0,whiteSpace:"nowrap"}}>
                       💬 Avisar Débora
                     </a>
+                  </div>
+                </div>
+              );
+              // Cantor vê balão do Bot-Aviva
+              return(
+                <div style={{background:"rgba(37,211,102,0.08)",border:"1px solid rgba(37,211,102,0.3)",borderRadius:12,padding:"14px 16px",marginBottom:20}}>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+                    <div style={{fontSize:22,flexShrink:0}}>🤖</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#25D366",marginBottom:6}}>Bot-Aviva</div>
+                      <div style={{fontSize:13,color:"rgba(255,255,255,0.85)",marginBottom:10,lineHeight:1.5}}>
+                        Paz missionaria, aqui e o Bot-aviva , poderia verificar essas escalas pendentes?
+                      </div>
+                      {problemas.map((p,i)=>(
+                        <div key={i} style={{fontSize:12,color:"rgba(255,200,0,0.9)",marginBottom:4,display:"flex",gap:6}}>
+                          <span>⚠️</span><span><b>{p.label}</b> — {p.msg}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               );
