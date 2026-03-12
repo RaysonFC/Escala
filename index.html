@@ -856,7 +856,6 @@ function AppMain({session,setSession}){
   },[tab,selId,playL,showTheme,editCI,editMI,showAddC,showAddM,newCF,newLF,showFavPk]);
 
   const showToast=(msg,ok=true)=>{ setToast({msg,ok}); setTimeout(()=>setToast(null),2500); };
-  // Carrossel automático
   useEffect(()=>{
     if(cartazes.length<=1)return;
     const t=setInterval(()=>setCarIdx(i=>(i+1)%cartazes.length),3000);
@@ -1247,16 +1246,19 @@ function AppMain({session,setSession}){
                 return d.toISOString().split("T")[0];
               };
 
-              // Próxima Quarta (ou hoje se já for Quarta)
-              const diffQ=(3-dow+7)%7;
-              const quarta=new Date(now.getTime()); quarta.setDate(now.getDate()+diffQ);
+              // Domingo desta semana (início da semana)
+              const domingo=new Date(now.getTime()); domingo.setDate(now.getDate()-dow);
 
-              const ciclo=[
-                {label:"Quarta",  ds:addDias(quarta,0)},
-                {label:"Sexta",   ds:addDias(quarta,2)},
-                {label:"Sabado",  ds:addDias(quarta,3)},
-                {label:"Domingo", ds:addDias(quarta,4)},
+              // Ciclo: Quarta, Sexta, Sábado, Domingo desta semana
+              // Só inclui dias que ainda não passaram (>= hoje)
+              const todayStr=today;
+              const cicloBase=[
+                {label:"Quarta",  ds:addDias(domingo,3)},
+                {label:"Sexta",   ds:addDias(domingo,5)},
+                {label:"Sabado",  ds:addDias(domingo,6)},
+                {label:"Domingo", ds:addDias(domingo,7)},
               ];
+              const ciclo=cicloBase.filter(x=>x.ds>=todayStr);
 
               const problemas=ciclo.map(({label,ds})=>{
                 const card=cultos.find(c=>c.data===ds);
