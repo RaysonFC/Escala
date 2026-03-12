@@ -68,10 +68,10 @@ const getAccent = () => gAccent;
 // ── Perfis de acesso ──────────────────────────────────────────
 // role: "admin" | "cantor" | "musico_viewer"
 const USUARIOS = [
-  {nome:"Rayson",     tipo:"musico", senha:"rayson2025",  role:"admin"},
-  {nome:"Cantores",   tipo:"cantor", senha:"aviva2025",   role:"cantor"},
-  {nome:"Músicos",    tipo:"musico", senha:"banda2025",   role:"musico_viewer"},
-  {nome:"Sonoplasta", tipo:"som",    senha:"som2025",     role:"som_viewer"},
+  {nome:"Rayson",     tipo:"musico", senha:"rayson2026",  role:"admin"},
+  {nome:"Cantores",   tipo:"cantor", senha:"aviva2026",   role:"cantor"},
+  {nome:"Músicos",    tipo:"musico", senha:"banda2026",   role:"musico_viewer"},
+  {nome:"Sonoplasta", tipo:"som",    senha:"som2026",     role:"som_viewer"},
 ];
 const LS_KEY = "ba_session_v2";
 const getSession  = ()=>{ try{ const s=localStorage.getItem(LS_KEY); return s?JSON.parse(s):null; }catch(e){ return null; } };
