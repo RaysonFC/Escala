@@ -1335,6 +1335,7 @@ function AppMain({session,setSession}){
   const [cultos,setCultos]=useState(INIT_CULTOS);
   const [favs,setFavs]=useState(INIT_FAVS);
   const [themeKey,setThemeKey]=useState("gold");
+  const [appFontSize,setAppFontSize]=useState(()=>{ try{ const f=localStorage.getItem("esc_fontsize"); return f?parseInt(f):14; }catch(e){ return 14; } });
   const [tab,setTab]=useState("calendario");
   const role=session?.role||null;
   // helpers de permissão
@@ -1443,6 +1444,7 @@ function AppMain({session,setSession}){
     fbSet("cartazes",cartazes);
   },[cartazes]);
   useEffect(()=>{ try{localStorage.setItem("esc_theme",themeKey);}catch{} },[themeKey]);
+  useEffect(()=>{ try{localStorage.setItem("esc_fontsize",String(appFontSize));}catch{} },[appFontSize]);
 
   // ── Botão voltar do Android ──
   useEffect(()=>{
@@ -1656,13 +1658,16 @@ function AppMain({session,setSession}){
   );
 
   return (
-    <div style={{minHeight:"100vh",background:accent.bg,color:accent.text,fontFamily:"'DM Sans',system-ui,sans-serif"}}>
+    <div className="app-root" style={{minHeight:"100vh",background:accent.bg,color:accent.text,fontFamily:"'DM Sans',system-ui,sans-serif",fontSize:appFontSize}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;600&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
         input,select,textarea{font-family:inherit;}
         input,select,textarea{color:inherit;} input::placeholder,textarea::placeholder{color:rgba(128,128,128,0.5);}
         option{background:inherit;}
+        :root{--fs-zoom:${(appFontSize/14).toFixed(3)};}
+        .app-root{zoom:var(--fs-zoom);}
+        .app-root .emoji-singer,.app-root .emoji-drum,.app-root .emoji-guitar,.app-root .emoji-keys,.app-root .emoji-bass,.app-root .emoji-default,.app-root .emoji-glow{zoom:calc(1/var(--fs-zoom));}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -2920,6 +2925,32 @@ function AppMain({session,setSession}){
                 </div>
               </button>
             ))}
+          </div>
+
+          {/* Tamanho da fonte */}
+          <div style={{marginTop:20,borderTop:`1px solid ${accent.border}`,paddingTop:16}}>
+            <div style={{fontSize:10,letterSpacing:1.5,color:accent.light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",textTransform:"uppercase",fontWeight:600,marginBottom:12}}>Tamanho da Fonte</div>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <button onClick={()=>setAppFontSize(f=>Math.max(11,f-1))}
+                style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:`1px solid ${accent.border}`,color:accent.text,borderRadius:8,width:36,height:36,cursor:"pointer",fontSize:18,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,flexShrink:0}}>A−</button>
+              <div style={{flex:1,position:"relative",height:6,background:accent.light_theme?"rgba(0,0,0,0.08)":"rgba(255,255,255,0.1)",borderRadius:3}}>
+                <div style={{position:"absolute",left:0,top:0,height:"100%",borderRadius:3,background:`linear-gradient(90deg,${accent.accent},${accent.light})`,width:`${((appFontSize-11)/(22-11))*100}%`,transition:"width 0.15s"}}/>
+                {[11,13,14,16,18,20,22].map(s=>(
+                  <button key={s} onClick={()=>setAppFontSize(s)}
+                    style={{position:"absolute",top:"50%",left:`${((s-11)/(22-11))*100}%`,transform:"translate(-50%,-50%)",width:s===appFontSize?16:10,height:s===appFontSize?16:10,borderRadius:"50%",background:s===appFontSize?accent.accent:accent.light_theme?"rgba(0,0,0,0.25)":"rgba(255,255,255,0.3)",border:s===appFontSize?`2px solid ${accent.light}`:"none",cursor:"pointer",transition:"all 0.15s",padding:0}}/>
+                ))}
+              </div>
+              <button onClick={()=>setAppFontSize(f=>Math.min(22,f+1))}
+                style={{background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.08)",border:`1px solid ${accent.border}`,color:accent.text,borderRadius:8,width:36,height:36,cursor:"pointer",fontSize:18,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,flexShrink:0}}>A+</button>
+              <span style={{fontSize:13,fontWeight:700,color:accent.accent,minWidth:36,textAlign:"center"}}>{appFontSize}px</span>
+              <button onClick={()=>setAppFontSize(14)}
+                style={{background:"none",border:`1px solid ${accent.border}`,color:accent.light_theme?"rgba(0,0,0,0.4)":"rgba(255,255,255,0.35)",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>Reset</button>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:6,paddingLeft:48,paddingRight:90}}>
+              <span style={{fontSize:9,color:accent.light_theme?"rgba(0,0,0,0.3)":"rgba(255,255,255,0.25)"}}>A</span>
+              <span style={{fontSize:11,color:accent.light_theme?"rgba(0,0,0,0.3)":"rgba(255,255,255,0.25)"}}>A</span>
+              <span style={{fontSize:13,color:accent.light_theme?"rgba(0,0,0,0.3)":"rgba(255,255,255,0.25)"}}>A</span>
+            </div>
           </div>
         </Ovl>
       )}
