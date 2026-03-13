@@ -1373,6 +1373,31 @@ function AppMain({session,setSession}){
   const [cifraScroll,setCifraScroll]=useState(false); // rolagem automática ligada
   const [cifraVel,setCifraVel]=useState(40); // velocidade px/s
 
+  const [showLog,setShowLog]=useState(false);
+  const [logEntries,setLogEntries]=useState([]);
+
+  // ── Registrar acesso no Firebase ──
+  useEffect(()=>{
+    if(!session)return;
+    const roleColor={admin:"#C9A84C",cantor:"#9B6FD4",som_viewer:"#5BA3D9",musico_viewer:"#888"};
+    const roleLabel={admin:"👑 Admin",cantor:"🎤 Cantor",som_viewer:"🎚 Sonoplasta",musico_viewer:"🎸 Músico"};
+    const entry={nome:session.nome,perfil:roleLabel[session.role]||session.role,cor:roleColor[session.role]||"#888",ts:new Date().toISOString()};
+    db.collection("app").doc("accessLog").get().then(s=>{
+      let arr=[];
+      try{ if(s.exists) arr=JSON.parse(s.data().dados); }catch(e){}
+      arr=[entry,...arr].slice(0,300);
+      db.collection("app").doc("accessLog").set({dados:JSON.stringify(arr)}).catch(()=>{});
+    }).catch(()=>{});
+  },[]);
+
+  const loadLog=()=>{
+    db.collection("app").doc("accessLog").get().then(s=>{
+      try{ if(s.exists) setLogEntries(JSON.parse(s.data().dados)); }catch(e){ setLogEntries([]); }
+    }).catch(()=>setLogEntries([]));
+    setShowLog(true);
+  };
+  const clearLog=()=>{ db.collection("app").doc("accessLog").set({dados:"[]"}).then(()=>{ setLogEntries([]); }); };
+
   const loaded=useRef({cant:false,mus:false,cult:false,favs:false});
   const fromFb=useRef({cant:false,mus:false,cult:false,favs:false});
   const [fbReady,setFbReady]=useState(false);
@@ -1696,6 +1721,7 @@ function AppMain({session,setSession}){
           <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}} title="Sincronizado"/>
           <div style={{width:"1px",height:16,background:"rgba(255,255,255,0.12)",margin:"0 2px"}}/>
           <span style={{fontSize:11,fontWeight:600,color:accent.light_theme?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.55)"}}>{session?.nome}{isAdmin?" 👑":""}</span>
+          {isAdmin&&<button onClick={loadLog} title="Log de acessos" style={{background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.3)",color:"#C9A84C",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:10,fontFamily:"inherit",fontWeight:700}}>📋 Log</button>}
           <button onClick={()=>{clearSession();setSession(null);}} title="Sair" style={{background:"rgba(255,255,255,0.08)",border:"none",color:accent.light_theme?"rgba(255,255,255,0.7)":"rgba(255,255,255,0.45)",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:10,fontFamily:"inherit"}}>Sair</button>
         </div>
         {/* Mobile: só ícones de ação no header */}
@@ -1703,6 +1729,7 @@ function AppMain({session,setSession}){
           <button onClick={()=>setShowTheme(true)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",padding:"4px",color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)"}}>🎨</button>
           <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}}/>
           <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.75)",maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{session?.nome}{isAdmin?" 👑":""}</span>
+          {isAdmin&&<button onClick={loadLog} title="Log" style={{background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.3)",color:"#C9A84C",borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:10,fontFamily:"inherit",fontWeight:700}}>📋</button>}
           <button onClick={()=>{clearSession();setSession(null);}} title="Sair" style={{background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.45)",borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:10,fontFamily:"inherit"}}>Sair</button>
         </div>
       </header>
@@ -2038,7 +2065,7 @@ function AppMain({session,setSession}){
                       const texto=linhas.join("\n");
                       window.open("https://wa.me/?text="+encodeURIComponent(texto),"_blank");
                     }} style={{...bGold,padding:"6px 12px",fontSize:12,boxShadow:"none"}} title="Compartilhar no WhatsApp">📤 WhatsApp</button>
-                    {canEdit&&<button onClick={()=>askConfirm("Remover este culto? Esta ação não pode ser desfeita.",()=>doDelCulto(c.id))} style={{...bDanger,padding:"6px 12px"}}>🗑</button>}
+                    {isAdmin&&<button onClick={()=>askConfirm("Remover este culto? Esta ação não pode ser desfeita.",()=>doDelCulto(c.id))} style={{...bDanger,padding:"6px 12px"}}>🗑</button>}
                   </div>
                 </div>
               </div>
@@ -2163,8 +2190,8 @@ function AppMain({session,setSession}){
                           )}
                           <button onClick={e=>{e.stopPropagation();if(canEdit)setELF({cultoId:c.id,louvorId:l.id,louvor:{...l}});}}
                             style={{width:28,height:28,borderRadius:"50%",background:accent.light_theme?"rgba(0,0,0,0.06)":"rgba(255,255,255,0.07)",border:accent.light_theme?"1px solid rgba(0,0,0,0.1)":"1px solid rgba(255,255,255,0.1)",color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.45)",fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✎</button>
-                          <button onClick={e=>{e.stopPropagation();if(canEdit)askConfirm("Remover este louvor da escala?",()=>doRemLouvor(c.id,l.id));}}
-                            style={{width:28,height:28,borderRadius:"50%",background:"rgba(192,57,75,0.1)",border:"1px solid rgba(192,57,75,0.2)",color:"#C0394B",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+                          {isAdmin&&<button onClick={e=>{e.stopPropagation();askConfirm("Remover este louvor da escala?",()=>doRemLouvor(c.id,l.id));}}
+                            style={{width:28,height:28,borderRadius:"50%",background:"rgba(192,57,75,0.1)",border:"1px solid rgba(192,57,75,0.2)",color:"#C0394B",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>}
                           <span style={{color:accent.light_theme?"rgba(0,0,0,0.25)":"rgba(255,255,255,0.2)",fontSize:13,transition:"transform 0.2s",display:"inline-block",transform:isOpen?"rotate(180deg)":"none",marginLeft:2}}>▾</span>
                         </div>
                       </div>
@@ -2886,6 +2913,32 @@ function AppMain({session,setSession}){
                 </div>
               </button>
             ))}
+          </div>
+        </Ovl>
+      )}
+
+      {/* Log de Acessos — só admin */}
+      {showLog&&isAdmin&&(
+        <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setShowLog(false)} wide>
+          <MH title="📋 Log de Acessos" onClose={()=>setShowLog(false)}/>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <span style={{fontSize:12,color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)"}}>{logEntries.length} registro{logEntries.length!==1?"s":""}</span>
+            {logEntries.length>0&&<button onClick={()=>askConfirm("Limpar todo o histórico de acessos?",clearLog)} style={{...bDanger,padding:"5px 12px",fontSize:12}}>🗑 Limpar histórico</button>}
+          </div>
+          {logEntries.length===0&&<p style={{color:accent.light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",fontSize:13,textAlign:"center",padding:"20px 0"}}>Nenhum acesso registrado.</p>}
+          <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:"60vh",overflowY:"auto"}}>
+            {logEntries.map((e,i)=>{
+              const dt=new Date(e.ts);
+              const data=dt.toLocaleDateString("pt-BR");
+              const hora=dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+              return(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:10,background:accent.light_theme?"rgba(0,0,0,0.03)":"rgba(255,255,255,0.03)",border:`1px solid rgba(255,255,255,0.06)`,borderLeft:`3px solid ${e.cor||"#888"}`}}>
+                  <span style={{fontSize:12,fontWeight:700,color:e.cor||"#888",minWidth:110,whiteSpace:"nowrap"}}>{e.perfil||e.role}</span>
+                  <span style={{fontSize:13,fontWeight:600,color:accent.text,flex:1}}>{e.nome}</span>
+                  <span style={{fontSize:11,color:accent.light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)",whiteSpace:"nowrap"}}>{data} {hora}</span>
+                </div>
+              );
+            })}
           </div>
         </Ovl>
       )}
