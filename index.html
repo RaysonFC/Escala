@@ -541,7 +541,6 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
   const [emoji,setEmoji]=useState(cantor.emoji);
   const [pickingEmoji,setPickingEmoji]=useState(false);
   const [editingName,setEditingName]=useState(false);
-  const [expandido,setExpandido]=useState(null);
   const _ativosM=cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===cantor.nome));
   const _salvosM=cantor.historicoLouvores||[];
   const historico=[...new Map(
@@ -591,32 +590,23 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
           <label style={{fontSize:10,letterSpacing:1.5,color:getAccent().light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)",textTransform:"uppercase",fontWeight:600,display:"block",marginBottom:8}}>🎵 Louvores cantados</label>
           <div style={{background:getAccent().light_theme?"rgba(0,0,0,0.02)":"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:6,maxHeight:200,overflowY:"auto"}}>
             {historico.map((l,i)=>{
-              const aberto=expandido===i;
               const temCifra=l.cifra&&l.cifra.trim();
               return(
-                <div key={i} style={{borderRadius:10,overflow:"hidden",border:`1px solid ${aberto?getAccent().accent:"rgba(255,255,255,0.06)"}`,marginBottom:4,transition:"border 0.2s"}}>
-                  <div onClick={()=>temCifra&&setExpandido(aberto?null:i)}
-                    style={{display:"flex",alignItems:"center",gap:8,justifyContent:"space-between",padding:"9px 10px",cursor:temCifra?"pointer":"default",background:aberto?`rgba(${getAccent().rgb},0.08)`:"transparent"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,overflow:"hidden",flex:1}}>
-                      <span style={{color:getAccent().accent,flexShrink:0,fontSize:12}}>♪</span>
-                      <div style={{overflow:"hidden"}}>
-                        <div style={{fontSize:12,fontWeight:aberto?600:400,color:getAccent().light_theme?"#1A1028":getAccent().text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo}</div>
-                        {l.artista&&<div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{l.artista}</div>}
-                      </div>
-                    </div>
-                    <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                      {l.tom&&<span style={{fontSize:10,fontWeight:700,color:getAccent().accent,background:"rgba("+getAccent().rgb+",0.12)",borderRadius:6,padding:"2px 7px"}}>{l.tom}</span>}
-                      {temCifra&&<span style={{fontSize:11,color:aberto?getAccent().accent:"rgba(255,255,255,0.25)",display:"inline-block",transform:aberto?"rotate(180deg)":"rotate(0deg)",transition:"transform 0.25s"}}>▾</span>}
-                      {!temCifra&&<span style={{fontSize:9,color:"rgba(255,255,255,0.15)"}}>—</span>}
+                <div key={i} onClick={()=>temCifra&&setCifraAberta(l)}
+                  style={{borderRadius:10,border:`1px solid rgba(255,255,255,0.06)`,marginBottom:4,padding:"9px 10px",cursor:temCifra?"pointer":"default",display:"flex",alignItems:"center",gap:8,justifyContent:"space-between",transition:"background 0.15s",background:"transparent"}}
+                  onMouseEnter={e=>{if(temCifra)e.currentTarget.style.background=`rgba(${getAccent().rgb},0.07)`;}}
+                  onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,overflow:"hidden",flex:1}}>
+                    <span style={{color:getAccent().accent,flexShrink:0,fontSize:12}}>♪</span>
+                    <div style={{overflow:"hidden"}}>
+                      <div style={{fontSize:12,color:getAccent().light_theme?"#1A1028":getAccent().text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo}</div>
+                      {l.artista&&<div style={{fontSize:10,color:getAccent().light_theme?"rgba(0,0,0,0.42)":"rgba(255,255,255,0.35)"}}>{l.artista}</div>}
                     </div>
                   </div>
-                  {aberto&&temCifra&&(
-                    <div style={{padding:"10px 12px 14px",borderTop:`1px solid rgba(${getAccent().rgb},0.15)`,background:`rgba(${getAccent().rgb},0.04)`}}>
-                      <pre style={{fontFamily:"'Courier New',monospace",fontSize:11,lineHeight:1.9,margin:0,whiteSpace:"pre-wrap",overflowX:"auto"}}>
-                        {renderCifra(l.cifra,getAccent())}
-                      </pre>
-                    </div>
-                  )}
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                    {l.tom&&<span style={{fontSize:10,fontWeight:700,color:getAccent().accent,background:"rgba("+getAccent().rgb+",0.12)",borderRadius:6,padding:"2px 7px"}}>{l.tom}</span>}
+                    {temCifra&&<span style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>𝄞</span>}
+                  </div>
                 </div>
               );
             })}
