@@ -1382,6 +1382,8 @@ function AppMain({session,setSession}){
 
   const [showLog,setShowLog]=useState(false);
   const [logEntries,setLogEntries]=useState([]);
+  const [showMenu,setShowMenu]=useState(false);
+  const [showBackup,setShowBackup]=useState(false);
 
   // ── Registrar acesso no Firebase ──
   useEffect(()=>{
@@ -1431,13 +1433,13 @@ function AppMain({session,setSession}){
     fbGet("cultos",null).then(v=>{ if(!v) fbSet("cultos",INIT_CULTOS); });
     fbGet("favs",null).then(v=>{ if(!v) fbSet("favs",INIT_FAVS); });
     // Timeout de segurança — se Firebase demorar mais de 5s, entra mesmo assim
-    setTimeout(()=>setFbReady(true), 5000);
+    setTimeout(()=>setFbReady(true), 12000);
     return()=>{ uC(); uM(); uCu(); uF(); };
   },[]);
 
-  useEffect(()=>{ if(!loaded.current.cant)return; if(fromFb.current.cant){fromFb.current.cant=false;return;} fbSet("cantores",cantores); },[cantores]);
-  useEffect(()=>{ if(!loaded.current.mus)return; if(fromFb.current.mus){fromFb.current.mus=false;return;} fbSet("musicos",musicos); },[musicos]);
-  useEffect(()=>{ if(!loaded.current.cult)return; if(fromFb.current.cult){fromFb.current.cult=false;return;} fbSet("cultos",cultos); },[cultos]);
+  useEffect(()=>{ if(!loaded.current.cant)return; if(fromFb.current.cant){fromFb.current.cant=false;return;} if(cantores.length===0)return; fbSet("cantores",cantores); try{localStorage.setItem("ba_bkp_cantores",JSON.stringify({cantores,ts:new Date().toISOString()}));}catch(e){} },[cantores]);
+  useEffect(()=>{ if(!loaded.current.mus)return; if(fromFb.current.mus){fromFb.current.mus=false;return;} if(musicos.length===0)return; fbSet("musicos",musicos); try{localStorage.setItem("ba_bkp_musicos",JSON.stringify({musicos,ts:new Date().toISOString()}));}catch(e){} },[musicos]);
+  useEffect(()=>{ if(!loaded.current.cult)return; if(fromFb.current.cult){fromFb.current.cult=false;return;} if(cultos.length===0)return; fbSet("cultos",cultos); try{const s={cultos,ts:new Date().toISOString()};localStorage.setItem("ba_bkp_cultos",JSON.stringify(s));}catch(e){} },[cultos]);
   useEffect(()=>{ if(!loaded.current.favs)return; if(fromFb.current.favs){fromFb.current.favs=false;return;} fbSet("favs",favs); },[favs]);
   useEffect(()=>{
     if(!loaded.current.cant) return; // aguarda Firebase estar pronto
@@ -1668,6 +1670,7 @@ function AppMain({session,setSession}){
         :root{--fs-zoom:${(appFontSize/14).toFixed(3)};}
         .app-root{zoom:var(--fs-zoom);}
         .app-root .emoji-singer,.app-root .emoji-drum,.app-root .emoji-guitar,.app-root .emoji-keys,.app-root .emoji-bass,.app-root .emoji-default,.app-root .emoji-glow{zoom:calc(1/var(--fs-zoom));}
+        @keyframes slideInRight{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -1733,16 +1736,17 @@ function AppMain({session,setSession}){
           <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}} title="Sincronizado"/>
           <div style={{width:"1px",height:16,background:"rgba(255,255,255,0.12)",margin:"0 2px"}}/>
           <span style={{fontSize:11,fontWeight:600,color:accent.light_theme?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.55)"}}>{session?.nome}{isAdmin?" 👑":""}</span>
+          {isAdmin&&<button onClick={()=>setShowBackup(true)} title="Backup e restauração" style={{background:"rgba(56,189,248,0.12)",border:"1px solid rgba(56,189,248,0.3)",color:"#38BDF8",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:10,fontFamily:"inherit",fontWeight:700,marginRight:4}}>💾 Backup</button>}
           {isAdmin&&<button onClick={loadLog} title="Log de acessos" style={{background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.3)",color:"#C9A84C",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:10,fontFamily:"inherit",fontWeight:700}}>📋 Log</button>}
           <button onClick={()=>{clearSession();setSession(null);}} title="Sair" style={{background:"rgba(255,255,255,0.08)",border:"none",color:accent.light_theme?"rgba(255,255,255,0.7)":"rgba(255,255,255,0.45)",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:10,fontFamily:"inherit"}}>Sair</button>
         </div>
         {/* Mobile: só ícones de ação no header */}
         <div style={{display:"flex",alignItems:"center",gap:8}} className="mobile-only-header">
-          <button onClick={()=>setShowTheme(true)} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",padding:"4px",color:accent.light_theme?"rgba(0,0,0,0.45)":"rgba(255,255,255,0.4)"}}>🎨</button>
-          <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)"}}/>
-          <span style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.75)",maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{session?.nome}{isAdmin?" 👑":""}</span>
-          {isAdmin&&<button onClick={loadLog} title="Log" style={{background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.3)",color:"#C9A84C",borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:10,fontFamily:"inherit",fontWeight:700}}>📋</button>}
-          <button onClick={()=>{clearSession();setSession(null);}} title="Sair" style={{background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.45)",borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:10,fontFamily:"inherit"}}>Sair</button>
+          <button onClick={()=>setShowMenu(true)} style={{background:"none",border:"none",cursor:"pointer",padding:"6px 4px",display:"flex",flexDirection:"column",gap:5,alignItems:"center",justifyContent:"center"}}>
+            <span style={{display:"block",width:22,height:2,background:"rgba(255,255,255,0.8)",borderRadius:2}}/>
+            <span style={{display:"block",width:22,height:2,background:"rgba(255,255,255,0.8)",borderRadius:2}}/>
+            <span style={{display:"block",width:22,height:2,background:"rgba(255,255,255,0.8)",borderRadius:2}}/>
+          </button>
         </div>
       </header>
 
@@ -2725,6 +2729,251 @@ function AppMain({session,setSession}){
       {/* ══ MODAIS ══ */}
 
       {/* ── Popup de Cifra ── */}
+
+      {/* ══ MODAL BACKUP ══ */}
+      {showBackup&&isAdmin&&(()=>{
+        // Ler backups do localStorage
+        const lerBkp=(key,label)=>{
+          try{
+            const s=localStorage.getItem(key);
+            if(!s)return null;
+            const d=JSON.parse(s);
+            return{...d,label};
+          }catch(e){return null;}
+        };
+        const bkpCultos   = lerBkp("ba_bkp_cultos","Cultos");
+        const bkpCantores = lerBkp("ba_bkp_cantores","Cantores");
+        const bkpMusicos  = lerBkp("ba_bkp_musicos","Músicos");
+
+        const fmtTs=ts=>{
+          if(!ts)return"—";
+          try{
+            const d=new Date(ts);
+            return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+          }catch(e){return ts;}
+        };
+
+        const exportarJSON=async()=>{
+          const dados={
+            exportadoEm:new Date().toISOString(),
+            cultos,cantores,musicos,favs
+          };
+          const json=JSON.stringify(dados,null,2);
+          const nomeArquivo="banda-aviva-backup-"+new Date().toISOString().split("T")[0]+".json";
+          // Tentar File System Access API (Chrome/Edge — mostra seletor de pasta nativo)
+          if(window.showSaveFilePicker){
+            try{
+              const fh=await window.showSaveFilePicker({
+                suggestedName:nomeArquivo,
+                types:[{description:"Arquivo de Backup",accept:{"application/json":[".json"]}}],
+              });
+              const ws=await fh.createWritable();
+              await ws.write(json);
+              await ws.close();
+              showToast("Backup salvo com sucesso ✓");
+              return;
+            }catch(e){
+              if(e.name==="AbortError") return; // usuário cancelou
+              // fallback abaixo se der outro erro
+            }
+          }
+          // Fallback para navegadores sem suporte (Safari, Firefox)
+          const blob=new Blob([json],{type:"application/json"});
+          const url=URL.createObjectURL(blob);
+          const a=document.createElement("a");
+          a.href=url; a.download=nomeArquivo;
+          a.click(); URL.revokeObjectURL(url);
+          showToast("Backup exportado ✓");
+        };
+
+        const restaurarFirebase=(tipo)=>{
+          if(tipo==="cultos"&&bkpCultos?.cultos?.length>0){
+            askConfirm(`Restaurar ${bkpCultos.cultos.length} cultos do backup local (${fmtTs(bkpCultos.ts)})?`,()=>{
+              setCultos(bkpCultos.cultos);
+              fbSet("cultos",bkpCultos.cultos);
+              showToast("Cultos restaurados ✓");
+            });
+          } else if(tipo==="cantores"&&bkpCantores?.cantores?.length>0){
+            askConfirm(`Restaurar ${bkpCantores.cantores.length} cantores do backup local?`,()=>{
+              setCantores(bkpCantores.cantores);
+              fbSet("cantores",bkpCantores.cantores);
+              showToast("Cantores restaurados ✓");
+            });
+          } else if(tipo==="musicos"&&bkpMusicos?.musicos?.length>0){
+            askConfirm(`Restaurar ${bkpMusicos.musicos.length} músicos do backup local?`,()=>{
+              setMusicos(bkpMusicos.musicos);
+              fbSet("musicos",bkpMusicos.musicos);
+              showToast("Músicos restaurados ✓");
+            });
+          } else {
+            showToast("Nenhum backup disponível para este item",false);
+          }
+        };
+
+        const importarJSON=(e)=>{
+          const file=e.target.files[0];
+          if(!file)return;
+          const reader=new FileReader();
+          reader.onload=ev=>{
+            try{
+              const dados=JSON.parse(ev.target.result);
+              if(!dados.cultos&&!dados.cantores&&!dados.musicos){showToast("Arquivo inválido",false);return;}
+              askConfirm(`Importar backup de ${fmtTs(dados.exportadoEm)}? Isso substituirá os dados atuais.`,()=>{
+                if(dados.cultos?.length>0){setCultos(dados.cultos);fbSet("cultos",dados.cultos);}
+                if(dados.cantores?.length>0){setCantores(dados.cantores);fbSet("cantores",dados.cantores);}
+                if(dados.musicos?.length>0){setMusicos(dados.musicos);fbSet("musicos",dados.musicos);}
+                if(dados.favs){setFavs(dados.favs);fbSet("favs",dados.favs);}
+                showToast("Backup importado com sucesso ✓");
+                setShowBackup(false);
+              });
+            }catch(err){showToast("Erro ao ler arquivo",false);}
+          };
+          reader.readAsText(file);
+        };
+
+        const accent2=getAccent();
+        return(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setShowBackup(false)}>
+            <div style={{background:accent2.bgCard,borderRadius:18,width:"100%",maxWidth:440,maxHeight:"88vh",overflowY:"auto",border:`1px solid rgba(56,189,248,0.3)`}} onClick={e=>e.stopPropagation()}>
+
+              {/* Header */}
+              <div style={{padding:"18px 20px 14px",borderBottom:`1px solid ${accent2.border}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:16,fontWeight:700,color:accent2.text}}>💾 Backup & Restauração</div>
+                  <div style={{fontSize:11,color:accent2.textSub,marginTop:2}}>3 camadas de proteção dos seus dados</div>
+                </div>
+                <button onClick={()=>setShowBackup(false)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:accent2.textSub,borderRadius:8,padding:"4px 10px",fontSize:16,cursor:"pointer"}}>✕</button>
+              </div>
+
+              <div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:16}}>
+
+                {/* CAMADA 1 - Backup automático localStorage */}
+                <div style={{background:`rgba(${accent2.rgb},0.06)`,border:`1px solid rgba(${accent2.rgb},0.15)`,borderRadius:12,padding:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:accent2.accent,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>🔄 Camada 1 — Backup Automático Local</div>
+                  <div style={{fontSize:11,color:accent2.textSub,marginBottom:12,lineHeight:1.5}}>Salvo automaticamente neste dispositivo toda vez que os dados mudam.</div>
+                  {[
+                    {tipo:"cultos",   bkp:bkpCultos,   count:bkpCultos?.cultos?.length,   icon:"📅"},
+                    {tipo:"cantores", bkp:bkpCantores, count:bkpCantores?.cantores?.length, icon:"🎤"},
+                    {tipo:"musicos",  bkp:bkpMusicos,  count:bkpMusicos?.musicos?.length,   icon:"🎸"},
+                  ].map(item=>(
+                    <div key={item.tipo} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${accent2.border}`}}>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:600,color:accent2.text}}>{item.icon} {item.bkp?.label||item.tipo} {item.count!=null?`(${item.count} registros)`:""}</div>
+                        <div style={{fontSize:10,color:accent2.textSub}}>{item.bkp?fmtTs(item.bkp.ts):"Sem backup local ainda"}</div>
+                      </div>
+                      {item.bkp&&item.count>0&&(
+                        <button onClick={()=>restaurarFirebase(item.tipo)}
+                          style={{background:"rgba(56,189,248,0.15)",border:"1px solid rgba(56,189,248,0.3)",color:"#38BDF8",borderRadius:8,padding:"4px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:600,flexShrink:0}}>
+                          Restaurar
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* CAMADA 2 - Exportar JSON */}
+                <div style={{background:"rgba(34,197,94,0.06)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:12,padding:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#4ADE80",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>📤 Camada 2 — Exportar Arquivo</div>
+                  <div style={{fontSize:11,color:accent2.textSub,marginBottom:12,lineHeight:1.5}}>Baixa um arquivo .json com todos os dados. Guarde no Google Drive ou WhatsApp.</div>
+                  <button onClick={exportarJSON}
+                    style={{width:"100%",background:"rgba(34,197,94,0.15)",border:"1px solid rgba(34,197,94,0.3)",color:"#4ADE80",borderRadius:10,padding:"10px 0",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                    ⬇ Baixar Backup Completo (.json)
+                  </button>
+                </div>
+
+                {/* CAMADA 3 - Importar JSON */}
+                <div style={{background:"rgba(251,146,60,0.06)",border:"1px solid rgba(251,146,60,0.2)",borderRadius:12,padding:14}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#FB923C",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>📥 Camada 3 — Restaurar de Arquivo</div>
+                  <div style={{fontSize:11,color:accent2.textSub,marginBottom:12,lineHeight:1.5}}>Restaura dados a partir de um arquivo .json exportado anteriormente.</div>
+                  <label style={{display:"block",width:"100%",background:"rgba(251,146,60,0.15)",border:"1px solid rgba(251,146,60,0.3)",color:"#FB923C",borderRadius:10,padding:"10px 0",fontSize:13,fontWeight:700,cursor:"pointer",textAlign:"center",fontFamily:"inherit"}}>
+                    📂 Selecionar Arquivo .json
+                    <input type="file" accept=".json" onChange={importarJSON} style={{display:"none"}}/>
+                  </label>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+
+      {/* ══ MENU HAMBÚRGUER MOBILE ══ */}
+      {showMenu&&(
+        <div style={{position:"fixed",inset:0,zIndex:600,display:"flex"}} onClick={()=>setShowMenu(false)}>
+          <div style={{flex:1,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(4px)"}}/>
+          <div style={{width:270,background:getAccent().bgCard,borderLeft:`1px solid rgba(${getAccent().rgb},0.25)`,display:"flex",flexDirection:"column",animation:"slideInRight 0.22s ease",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+
+            {/* Cabeçalho */}
+            <div style={{padding:"22px 20px 16px",borderBottom:`1px solid ${getAccent().border}`,display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:700,color:getAccent().text}}>{session?.nome}{isAdmin?" 👑":""}</div>
+                <div style={{fontSize:11,color:getAccent().textSub,marginTop:3}}>
+                  {isAdmin?"Administrador":session?.role==="cantor"?"Cantor(a)":session?.role==="som_viewer"?"Sonoplasta":"Músico"}
+                </div>
+              </div>
+              <button onClick={()=>setShowMenu(false)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:getAccent().textSub,borderRadius:8,width:34,height:34,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>✕</button>
+            </div>
+
+            {/* Status Firebase */}
+            <div style={{padding:"10px 20px",borderBottom:`1px solid ${getAccent().border}`,display:"flex",alignItems:"center",gap:8}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:"#4CAF7D",boxShadow:"0 0 8px rgba(76,175,125,0.6)",flexShrink:0}}/>
+              <span style={{fontSize:12,color:getAccent().textSub}}>Firebase sincronizado</span>
+            </div>
+
+            {/* Aparência */}
+            <div style={{padding:"16px 20px 8px"}}>
+              <div style={{fontSize:9,letterSpacing:2,color:getAccent().accent,textTransform:"uppercase",fontWeight:700,marginBottom:10}}>Aparência</div>
+              <button onClick={()=>{setShowTheme(true);setShowMenu(false);}}
+                style={{width:"100%",background:`rgba(${getAccent().rgb},0.07)`,border:`1px solid rgba(${getAccent().rgb},0.15)`,borderRadius:10,padding:"12px 14px",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+                <span style={{fontSize:20}}>🎨</span>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:getAccent().text}}>Temas e Cores</div>
+                  <div style={{fontSize:10,color:getAccent().textSub,marginTop:1}}>Personalizar visual</div>
+                </div>
+              </button>
+            </div>
+
+            {/* Admin */}
+            {isAdmin&&(
+              <div style={{padding:"16px 20px 8px"}}>
+                <div style={{fontSize:9,letterSpacing:2,color:getAccent().accent,textTransform:"uppercase",fontWeight:700,marginBottom:10}}>Administração</div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  <button onClick={()=>{setShowBackup(true);setShowMenu(false);}}
+                    style={{width:"100%",background:"rgba(56,189,248,0.08)",border:"1px solid rgba(56,189,248,0.2)",borderRadius:10,padding:"12px 14px",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+                    <span style={{fontSize:20}}>💾</span>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600,color:"#38BDF8"}}>Backup & Restauração</div>
+                      <div style={{fontSize:10,color:getAccent().textSub,marginTop:1}}>Exportar e importar dados</div>
+                    </div>
+                  </button>
+                  <button onClick={()=>{loadLog();setShowMenu(false);}}
+                    style={{width:"100%",background:"rgba(201,168,76,0.08)",border:"1px solid rgba(201,168,76,0.2)",borderRadius:10,padding:"12px 14px",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+                    <span style={{fontSize:20}}>📋</span>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600,color:"#C9A84C"}}>Log de Acessos</div>
+                      <div style={{fontSize:10,color:getAccent().textSub,marginTop:1}}>Histórico de entradas</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div style={{flex:1}}/>
+
+            {/* Sair */}
+            <div style={{padding:"16px 20px",borderTop:`1px solid ${getAccent().border}`,flexShrink:0}}>
+              <button onClick={()=>{clearSession();setSession(null);setShowMenu(false);}}
+                style={{width:"100%",background:"rgba(220,50,50,0.08)",border:"1px solid rgba(220,50,50,0.2)",borderRadius:10,padding:"12px 14px",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+                <span style={{fontSize:20}}>🚪</span>
+                <span style={{fontSize:13,fontWeight:600,color:"#f87171"}}>Sair da conta</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {cifraAberta&&<CifraPopup louvor={cifraAberta} onClose={()=>setCifraAberta(null)}/>}
 
       {/* Player YouTube */}
