@@ -1421,9 +1421,9 @@ function AppMain({session,setSession}){
   const markReady=()=>{ readyCount.current+=1; if(readyCount.current>=4) setFbReady(true); };
 
   useEffect(()=>{
-    const uC=fbListen("cantores",d=>{ fromFb.current.cant=true; setCantores(d.map(normCantor)); if(!loaded.current.cant){loaded.current.cant=true;markReady();} });
-    const uM=fbListen("musicos",d=>{ fromFb.current.mus=true; setMusicos(d.map(m=>({...m}))); if(!loaded.current.mus){loaded.current.mus=true;markReady();} });
-    const uCu=fbListen("cultos",d=>{ fromFb.current.cult=true; setCultos(d); if(!loaded.current.cult){loaded.current.cult=true;markReady();} });
+    const uC=fbListen("cantores",d=>{ fromFb.current.cant=true; setCantores(d.map(normCantor)); if(!loaded.current.cant){loaded.current.cant=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_cantores",JSON.stringify({cantores:d.map(normCantor),ts:new Date().toISOString()}));}catch(e){} });
+    const uM=fbListen("musicos",d=>{ fromFb.current.mus=true; setMusicos(d.map(m=>({...m}))); if(!loaded.current.mus){loaded.current.mus=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_musicos",JSON.stringify({musicos:d.map(m=>({...m})),ts:new Date().toISOString()}));}catch(e){} });
+    const uCu=fbListen("cultos",d=>{ fromFb.current.cult=true; setCultos(d); if(!loaded.current.cult){loaded.current.cult=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_cultos",JSON.stringify({cultos:d,ts:new Date().toISOString()}));}catch(e){} });
     const uF=fbListen("favs",d=>{ fromFb.current.favs=true; setFavs(d); if(!loaded.current.favs){loaded.current.favs=true;markReady();} });
     // Cartazes — carrega do Firebase (compartilhado entre todos)
     fbGet("cartazes",[]).then(v=>{ if(Array.isArray(v)) setCartazes(v); });
@@ -2787,26 +2787,28 @@ function AppMain({session,setSession}){
         };
 
         const restaurarFirebase=(tipo)=>{
-          if(tipo==="cultos"&&bkpCultos?.cultos?.length>0){
-            askConfirm(`Restaurar ${bkpCultos.cultos.length} cultos do backup local (${fmtTs(bkpCultos.ts)})?`,()=>{
-              setCultos(bkpCultos.cultos);
-              fbSet("cultos",bkpCultos.cultos);
-              showToast("Cultos restaurados ✓");
-            });
-          } else if(tipo==="cantores"&&bkpCantores?.cantores?.length>0){
-            askConfirm(`Restaurar ${bkpCantores.cantores.length} cantores do backup local?`,()=>{
-              setCantores(bkpCantores.cantores);
-              fbSet("cantores",bkpCantores.cantores);
-              showToast("Cantores restaurados ✓");
-            });
-          } else if(tipo==="musicos"&&bkpMusicos?.musicos?.length>0){
-            askConfirm(`Restaurar ${bkpMusicos.musicos.length} músicos do backup local?`,()=>{
-              setMusicos(bkpMusicos.musicos);
-              fbSet("musicos",bkpMusicos.musicos);
-              showToast("Músicos restaurados ✓");
-            });
-          } else {
-            showToast("Nenhum backup disponível para este item",false);
+          const doRestore=(dados,setFn,fbKey,label)=>{
+            // Marca como vindo do Firebase para não re-salvar em loop
+            if(fbKey==="cultos")  fromFb.current.cult=true;
+            if(fbKey==="cantores")fromFb.current.cant=true;
+            if(fbKey==="musicos") fromFb.current.mus=true;
+            setFn(dados);
+            fbSet(fbKey,dados);
+            showToast(label+" restaurados ✓");
+            setShowBackup(false);
+          };
+          if(tipo==="cultos"){
+            if(!bkpCultos?.cultos?.length){showToast("Sem backup de cultos disponível",false);return;}
+            askConfirm(`Restaurar ${bkpCultos.cultos.length} cultos do backup de ${fmtTs(bkpCultos.ts)}?`,
+              ()=>doRestore(bkpCultos.cultos,setCultos,"cultos","Cultos"));
+          } else if(tipo==="cantores"){
+            if(!bkpCantores?.cantores?.length){showToast("Sem backup de cantores disponível",false);return;}
+            askConfirm(`Restaurar ${bkpCantores.cantores.length} cantores do backup de ${fmtTs(bkpCantores.ts)}?`,
+              ()=>doRestore(bkpCantores.cantores,setCantores,"cantores","Cantores"));
+          } else if(tipo==="musicos"){
+            if(!bkpMusicos?.musicos?.length){showToast("Sem backup de músicos disponível",false);return;}
+            askConfirm(`Restaurar ${bkpMusicos.musicos.length} músicos do backup de ${fmtTs(bkpMusicos.ts)}?`,
+              ()=>doRestore(bkpMusicos.musicos,setMusicos,"musicos","Músicos"));
           }
         };
 
