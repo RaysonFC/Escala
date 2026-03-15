@@ -536,7 +536,7 @@ function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
 }
 
 /* ── Cantor Edit Modal ── */
-function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger,soEmojiMode=false}){
+function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger,soEmojiMode=false,onAbrirCifra}){
   const [nome,setNome]=useState(cantor.nome);
   const [emoji,setEmoji]=useState(cantor.emoji);
   const [pickingEmoji,setPickingEmoji]=useState(false);
@@ -592,7 +592,7 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
             {historico.map((l,i)=>{
               const temCifra=l.cifra&&l.cifra.trim();
               return(
-                <div key={i} onClick={()=>temCifra&&setCifraAberta(l)}
+                <div key={i} onClick={()=>temCifra&&onAbrirCifra&&onAbrirCifra(l)}
                   style={{borderRadius:10,border:`1px solid rgba(255,255,255,0.06)`,marginBottom:4,padding:"9px 10px",cursor:temCifra?"pointer":"default",display:"flex",alignItems:"center",gap:8,justifyContent:"space-between",transition:"background 0.15s",background:"transparent"}}
                   onMouseEnter={e=>{if(temCifra)e.currentTarget.style.background=`rgba(${getAccent().rgb},0.07)`;}}
                   onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}>
@@ -3142,7 +3142,7 @@ function AppMain({session,setSession}){
       {editCI!==null&&cantores[editCI]&&(
         <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setEditCI(null)}>
           <MH title="Editar Cantor" onClose={()=>setEditCI(null)}/>
-          <CantorModal cantor={cantores[editCI]} idx={editCI} cultos={cultos} onSave={saveCantorEdit} onDelete={deleteCantorAt} onClose={()=>setEditCI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger} soEmojiMode={!canEdit}/>
+          <CantorModal cantor={cantores[editCI]} idx={editCI} cultos={cultos} onSave={saveCantorEdit} onDelete={deleteCantorAt} onClose={()=>setEditCI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger} soEmojiMode={!canEdit} onAbrirCifra={setCifraAberta}/>
         </Ovl>
       )}
 
