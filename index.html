@@ -541,10 +541,11 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
   const [emoji,setEmoji]=useState(cantor.emoji);
   const [pickingEmoji,setPickingEmoji]=useState(false);
   const [editingName,setEditingName]=useState(false);
+  const _ativosM=cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===cantor.nome));
+  const _salvosM=cantor.historicoLouvores||[];
   const historico=[...new Map(
-    cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===cantor.nome))
-    .map(l=>[l.titulo,l])
-  ).values()];
+    [..._ativosM,..._salvosM].map(l=>[l.titulo?.toLowerCase().trim(),l])
+  ).values()].slice(0,50);
 
   // Modo picker de emoji
   if(pickingEmoji) return(
@@ -2561,12 +2562,11 @@ function AppMain({session,setSession}){
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:10,marginBottom:24}}>
               {cantores.map((ct,i)=>{
                 const n=cultos.filter(c=>c.cantores.includes(ct.nome)).length;
-                // Todos os louvores que esse cantor já cantou
-                const louvoresAtivos=cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===ct.nome));
-                const louvoresSalvos=ct.historicoLouvores||[];
+                // Louvores dos cultos ativos + histórico salvo (cultos deletados)
+                const _ativos=cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===ct.nome));
+                const _salvos=ct.historicoLouvores||[];
                 const historico=[...new Map(
-                  [...louvoresAtivos,...louvoresSalvos]
-                  .map(l=>[l.titulo?.toLowerCase().trim(),l])
+                  [..._ativos,..._salvos].map(l=>[l.titulo?.toLowerCase().trim(),l])
                 ).values()].slice(0,50);
                 return(
                   <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
