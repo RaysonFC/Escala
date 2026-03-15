@@ -1421,9 +1421,9 @@ function AppMain({session,setSession}){
   const markReady=()=>{ readyCount.current+=1; if(readyCount.current>=4) setFbReady(true); };
 
   useEffect(()=>{
-    const uC=fbListen("cantores",d=>{ fromFb.current.cant=true; setCantores(d.map(normCantor)); if(!loaded.current.cant){loaded.current.cant=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_cantores",JSON.stringify({cantores:d.map(normCantor),ts:new Date().toISOString()}));}catch(e){} });
-    const uM=fbListen("musicos",d=>{ fromFb.current.mus=true; setMusicos(d.map(m=>({...m}))); if(!loaded.current.mus){loaded.current.mus=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_musicos",JSON.stringify({musicos:d.map(m=>({...m})),ts:new Date().toISOString()}));}catch(e){} });
-    const uCu=fbListen("cultos",d=>{ fromFb.current.cult=true; setCultos(d); if(!loaded.current.cult){loaded.current.cult=true;markReady();} try{if(d.length>0){localStorage.setItem("ba_bkp_cultos",JSON.stringify({cultos:d,ts:new Date().toISOString()}));localStorage.setItem("ba_bkp_cultos_prev",localStorage.getItem("ba_bkp_cultos")||"");}}catch(e){} });
+    const uC=fbListen("cantores",d=>{ fromFb.current.cant=true; setCantores(d.map(normCantor)); if(!loaded.current.cant){loaded.current.cant=true;markReady();} try{ if(d.length>0){ const prev=localStorage.getItem("ba_bkp_cantores"); const prevLen=prev?JSON.parse(prev).cantores?.length||0:0; if(d.length>=prevLen){ localStorage.setItem("ba_bkp_cantores",JSON.stringify({cantores:d.map(normCantor),ts:new Date().toISOString()})); } } }catch(e){} });
+    const uM=fbListen("musicos",d=>{ fromFb.current.mus=true; setMusicos(d.map(m=>({...m}))); if(!loaded.current.mus){loaded.current.mus=true;markReady();} try{ if(d.length>0){ const prev=localStorage.getItem("ba_bkp_musicos"); const prevLen=prev?JSON.parse(prev).musicos?.length||0:0; if(d.length>=prevLen){ localStorage.setItem("ba_bkp_musicos",JSON.stringify({musicos:d.map(m=>({...m})),ts:new Date().toISOString()})); } } }catch(e){} });
+    const uCu=fbListen("cultos",d=>{ fromFb.current.cult=true; setCultos(d); if(!loaded.current.cult){loaded.current.cult=true;markReady();} try{ if(d.length>0){ const prev=localStorage.getItem("ba_bkp_cultos"); const prevLen=prev?JSON.parse(prev).cultos?.length||0:0; if(d.length>=prevLen){ localStorage.setItem("ba_bkp_cultos",JSON.stringify({cultos:d,ts:new Date().toISOString()})); } } }catch(e){} });
     const uF=fbListen("favs",d=>{ fromFb.current.favs=true; setFavs(d); if(!loaded.current.favs){loaded.current.favs=true;markReady();} });
     // Cartazes — carrega do Firebase (compartilhado entre todos)
     fbGet("cartazes",[]).then(v=>{ if(Array.isArray(v)) setCartazes(v); });
@@ -1437,9 +1437,9 @@ function AppMain({session,setSession}){
     return()=>{ uC(); uM(); uCu(); uF(); };
   },[]);
 
-  useEffect(()=>{ if(!loaded.current.cant)return; if(fromFb.current.cant){fromFb.current.cant=false;return;} if(cantores.length===0)return; fbSet("cantores",cantores); },[cantores]);
-  useEffect(()=>{ if(!loaded.current.mus)return; if(fromFb.current.mus){fromFb.current.mus=false;return;} if(musicos.length===0)return; fbSet("musicos",musicos); },[musicos]);
-  useEffect(()=>{ if(!loaded.current.cult)return; if(fromFb.current.cult){fromFb.current.cult=false;return;} if(cultos.length===0)return; fbSet("cultos",cultos); },[cultos]);
+  useEffect(()=>{ if(!loaded.current.cant)return; if(fromFb.current.cant){fromFb.current.cant=false;return;} if(cantores.length===0)return; fbSet("cantores",cantores); try{localStorage.setItem("ba_bkp_cantores",JSON.stringify({cantores,ts:new Date().toISOString()}));}catch(e){} },[cantores]);
+  useEffect(()=>{ if(!loaded.current.mus)return; if(fromFb.current.mus){fromFb.current.mus=false;return;} if(musicos.length===0)return; fbSet("musicos",musicos); try{localStorage.setItem("ba_bkp_musicos",JSON.stringify({musicos,ts:new Date().toISOString()}));}catch(e){} },[musicos]);
+  useEffect(()=>{ if(!loaded.current.cult)return; if(fromFb.current.cult){fromFb.current.cult=false;return;} if(cultos.length===0)return; fbSet("cultos",cultos); try{const s={cultos,ts:new Date().toISOString()};localStorage.setItem("ba_bkp_cultos",JSON.stringify(s));}catch(e){} },[cultos]);
   useEffect(()=>{ if(!loaded.current.favs)return; if(fromFb.current.favs){fromFb.current.favs=false;return;} fbSet("favs",favs); },[favs]);
   useEffect(()=>{
     if(!loaded.current.cant) return; // aguarda Firebase estar pronto
@@ -2854,14 +2854,21 @@ function AppMain({session,setSession}){
                   <div style={{fontSize:11,fontWeight:700,color:accent2.accent,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>🔄 Camada 1 — Backup Automático Local</div>
                   <div style={{fontSize:11,color:accent2.textSub,marginBottom:12,lineHeight:1.5}}>Salvo automaticamente neste dispositivo toda vez que os dados mudam.</div>
                   {[
-                    {tipo:"cultos",   bkp:bkpCultos,   count:bkpCultos?.cultos?.length,   icon:"📅"},
-                    {tipo:"cantores", bkp:bkpCantores, count:bkpCantores?.cantores?.length, icon:"🎤"},
-                    {tipo:"musicos",  bkp:bkpMusicos,  count:bkpMusicos?.musicos?.length,   icon:"🎸"},
-                  ].map(item=>(
-                    <div key={item.tipo} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${accent2.border}`}}>
+                    {tipo:"cultos",   bkp:bkpCultos,   count:bkpCultos?.cultos?.length,   atual:cultos.length,   icon:"📅"},
+                    {tipo:"cantores", bkp:bkpCantores, count:bkpCantores?.cantores?.length, atual:cantores.length, icon:"🎤"},
+                    {tipo:"musicos",  bkp:bkpMusicos,  count:bkpMusicos?.musicos?.length,   atual:musicos.length,  icon:"🎸"},
+                  ].map(item=>{
+                    const temDiff=item.count!=null&&item.count>item.atual;
+                    return(
+                    <div key={item.tipo} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${accent2.border}`,background:temDiff?"rgba(248,113,113,0.05)":"transparent",borderRadius:temDiff?8:0,padding:temDiff?"10px 8px":"10px 0"}}>
                       <div>
-                        <div style={{fontSize:12,fontWeight:600,color:accent2.text}}>{item.icon} {item.bkp?.label||item.tipo} {item.count!=null?`(${item.count} registros)`:""}</div>
-                        <div style={{fontSize:10,color:accent2.textSub}}>{item.bkp?fmtTs(item.bkp.ts):"Sem backup local ainda"}</div>
+                        <div style={{fontSize:12,fontWeight:700,color:temDiff?"#f87171":accent2.text}}>
+                          {item.icon} {item.bkp?.label||item.tipo}
+                          {item.count!=null&&` — backup: ${item.count}`}
+                          {item.count!=null&&<span style={{color:accent2.textSub,fontWeight:400}}> / atual: {item.atual}</span>}
+                        </div>
+                        {temDiff&&<div style={{fontSize:10,color:"#f87171",fontWeight:600,marginTop:2}}>⚠️ {item.count-item.atual} item(s) apagado(s) — pode restaurar!</div>}
+                        <div style={{fontSize:10,color:accent2.textSub,marginTop:2}}>{item.bkp?fmtTs(item.bkp.ts):"Sem backup local ainda"}</div>
                       </div>
                       {item.bkp&&item.count>0&&(
                         <button onClick={()=>restaurarFirebase(item.tipo)}
@@ -2870,7 +2877,8 @@ function AppMain({session,setSession}){
                         </button>
                       )}
                     </div>
-                  ))}
+                  );})
+                  }
                 </div>
 
                 {/* CAMADA 2 - Exportar JSON */}
