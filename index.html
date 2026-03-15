@@ -54,7 +54,7 @@ const daysUntil = ds=>{ const d=Math.round((new Date(ds+"T00:00")-new Date().set
 const mkL = (titulo="",artista="",ytUrl="",tom="")=>({id:uid(),titulo,artista,ytUrl,tom,cifra:"",obs:""});
 const mkC = (data,tipo,tema="",campanha="")=>({id:uid(),data,tipo,tema,campanha,cantores:[],musicos:[],louvores:[],obs:"",lembrete:false});
 const mkCantor = (nome,emoji="🎤")=>({id:uid(),nome,emoji,louvoresFav:[]});
-const normCantor = c=>typeof c==="string"?mkCantor(c):{louvoresFav:[],...c};
+const normCantor = c=>typeof c==="string"?mkCantor(c):{louvoresFav:[],historicoLouvores:[],...c};
 
 /* ── Constantes ── */
 const THEMES = {
@@ -1421,9 +1421,9 @@ function AppMain({session,setSession}){
   const markReady=()=>{ readyCount.current+=1; if(readyCount.current>=4) setFbReady(true); };
 
   useEffect(()=>{
-    const uC=fbListen("cantores",d=>{ fromFb.current.cant=true; setCantores(d.map(normCantor)); if(!loaded.current.cant){loaded.current.cant=true;markReady();} try{ if(d.length>0){ const prev=localStorage.getItem("ba_bkp_cantores"); const prevLen=prev?JSON.parse(prev).cantores?.length||0:0; if(d.length>=prevLen){ localStorage.setItem("ba_bkp_cantores",JSON.stringify({cantores:d.map(normCantor),ts:new Date().toISOString()})); } } }catch(e){} });
-    const uM=fbListen("musicos",d=>{ fromFb.current.mus=true; setMusicos(d.map(m=>({...m}))); if(!loaded.current.mus){loaded.current.mus=true;markReady();} try{ if(d.length>0){ const prev=localStorage.getItem("ba_bkp_musicos"); const prevLen=prev?JSON.parse(prev).musicos?.length||0:0; if(d.length>=prevLen){ localStorage.setItem("ba_bkp_musicos",JSON.stringify({musicos:d.map(m=>({...m})),ts:new Date().toISOString()})); } } }catch(e){} });
-    const uCu=fbListen("cultos",d=>{ fromFb.current.cult=true; setCultos(d); if(!loaded.current.cult){loaded.current.cult=true;markReady();} try{ if(d.length>0){ const prev=localStorage.getItem("ba_bkp_cultos"); const prevLen=prev?JSON.parse(prev).cultos?.length||0:0; if(d.length>=prevLen){ localStorage.setItem("ba_bkp_cultos",JSON.stringify({cultos:d,ts:new Date().toISOString()})); } } }catch(e){} });
+    const uC=fbListen("cantores",d=>{ fromFb.current.cant=true; setCantores(d.map(normCantor)); if(!loaded.current.cant){loaded.current.cant=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_cantores",JSON.stringify({cantores:d.map(normCantor),ts:new Date().toISOString()}));}catch(e){} });
+    const uM=fbListen("musicos",d=>{ fromFb.current.mus=true; setMusicos(d.map(m=>({...m}))); if(!loaded.current.mus){loaded.current.mus=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_musicos",JSON.stringify({musicos:d.map(m=>({...m})),ts:new Date().toISOString()}));}catch(e){} });
+    const uCu=fbListen("cultos",d=>{ fromFb.current.cult=true; setCultos(d); if(!loaded.current.cult){loaded.current.cult=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_cultos",JSON.stringify({cultos:d,ts:new Date().toISOString()}));}catch(e){} });
     const uF=fbListen("favs",d=>{ fromFb.current.favs=true; setFavs(d); if(!loaded.current.favs){loaded.current.favs=true;markReady();} });
     // Cartazes — carrega do Firebase (compartilhado entre todos)
     fbGet("cartazes",[]).then(v=>{ if(Array.isArray(v)) setCartazes(v); });
@@ -1529,7 +1529,25 @@ function AppMain({session,setSession}){
     }
     updC({...c,lembrete:novoVal});
   };
-  const doDelCulto=cid=>{ setCultos(p=>p.filter(c=>c.id!==cid)); setSelId(null); setTab("calendario"); showToast("Culto removido",false); };
+  const doDelCulto=cid=>{
+    const cultoADeletar=getC(cid);
+    if(cultoADeletar&&cultoADeletar.louvores?.length>0){
+      setCantores(prev=>{
+        const atualizados=prev.map(ct=>{
+          const louvoresDoCulto=cultoADeletar.louvores.filter(l=>l.cantor===ct.nome);
+          if(!louvoresDoCulto.length)return ct;
+          const histAtual=ct.historicoLouvores||[];
+          const titulosExist=new Set(histAtual.map(l=>l.titulo?.toLowerCase().trim()));
+          const novos=louvoresDoCulto.filter(l=>!titulosExist.has(l.titulo?.toLowerCase().trim()));
+          if(!novos.length)return ct;
+          return{...ct,historicoLouvores:[...histAtual,...novos].slice(0,50)};
+        });
+        fbSet("cantores",atualizados);
+        return atualizados;
+      });
+    }
+    setCultos(p=>p.filter(c=>c.id!==cid)); setSelId(null); setTab("calendario"); showToast("Culto removido",false);
+  };
   const doSaveEditCulto=ec=>{ updC(ec); setEditCulto(null); showToast("Culto atualizado ✓"); };
   const doAddLouvor=(cid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:[...c.louvores,{...l,id:uid()}]}); setNLF(null); showToast("Louvor adicionado ✓"); };
   const doEditLouvor=(cid,lid,l)=>{ const c=getC(cid); if(!c)return; updC({...c,louvores:c.louvores.map(x=>x.id===lid?{...x,...l}:x)}); setELF(null); showToast("Louvor atualizado ✓"); };
@@ -2544,10 +2562,12 @@ function AppMain({session,setSession}){
               {cantores.map((ct,i)=>{
                 const n=cultos.filter(c=>c.cantores.includes(ct.nome)).length;
                 // Todos os louvores que esse cantor já cantou
+                const louvoresAtivos=cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===ct.nome));
+                const louvoresSalvos=ct.historicoLouvores||[];
                 const historico=[...new Map(
-                  cultos.flatMap(c=>c.louvores.filter(l=>l.cantor===ct.nome))
-                  .map(l=>[l.titulo,l])
-                ).values()].slice(0,5);
+                  [...louvoresAtivos,...louvoresSalvos]
+                  .map(l=>[l.titulo?.toLowerCase().trim(),l])
+                ).values()].slice(0,50);
                 return(
                   <div key={ct.id} onClick={()=>setEditCI(i)} className="ccard" style={{background:accent.bgCard,border:n>0?`1px solid rgba(${accent.rgb},0.4)`:accent.light_theme?"1px solid rgba(107,53,184,0.1)":"1px solid rgba(255,255,255,0.07)",boxShadow:accent.light_theme?"0 2px 12px rgba(107,53,184,0.1)":"none",borderRadius:12,padding:"14px 10px",cursor:"pointer",transition:"all 0.15s",position:"relative"}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -2854,21 +2874,14 @@ function AppMain({session,setSession}){
                   <div style={{fontSize:11,fontWeight:700,color:accent2.accent,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>🔄 Camada 1 — Backup Automático Local</div>
                   <div style={{fontSize:11,color:accent2.textSub,marginBottom:12,lineHeight:1.5}}>Salvo automaticamente neste dispositivo toda vez que os dados mudam.</div>
                   {[
-                    {tipo:"cultos",   bkp:bkpCultos,   count:bkpCultos?.cultos?.length,   atual:cultos.length,   icon:"📅"},
-                    {tipo:"cantores", bkp:bkpCantores, count:bkpCantores?.cantores?.length, atual:cantores.length, icon:"🎤"},
-                    {tipo:"musicos",  bkp:bkpMusicos,  count:bkpMusicos?.musicos?.length,   atual:musicos.length,  icon:"🎸"},
-                  ].map(item=>{
-                    const temDiff=item.count!=null&&item.count>item.atual;
-                    return(
-                    <div key={item.tipo} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:`1px solid ${accent2.border}`,background:temDiff?"rgba(248,113,113,0.05)":"transparent",borderRadius:temDiff?8:0,padding:temDiff?"10px 8px":"10px 0"}}>
+                    {tipo:"cultos",   bkp:bkpCultos,   count:bkpCultos?.cultos?.length,   icon:"📅"},
+                    {tipo:"cantores", bkp:bkpCantores, count:bkpCantores?.cantores?.length, icon:"🎤"},
+                    {tipo:"musicos",  bkp:bkpMusicos,  count:bkpMusicos?.musicos?.length,   icon:"🎸"},
+                  ].map(item=>(
+                    <div key={item.tipo} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${accent2.border}`}}>
                       <div>
-                        <div style={{fontSize:12,fontWeight:700,color:temDiff?"#f87171":accent2.text}}>
-                          {item.icon} {item.bkp?.label||item.tipo}
-                          {item.count!=null&&` — backup: ${item.count}`}
-                          {item.count!=null&&<span style={{color:accent2.textSub,fontWeight:400}}> / atual: {item.atual}</span>}
-                        </div>
-                        {temDiff&&<div style={{fontSize:10,color:"#f87171",fontWeight:600,marginTop:2}}>⚠️ {item.count-item.atual} item(s) apagado(s) — pode restaurar!</div>}
-                        <div style={{fontSize:10,color:accent2.textSub,marginTop:2}}>{item.bkp?fmtTs(item.bkp.ts):"Sem backup local ainda"}</div>
+                        <div style={{fontSize:12,fontWeight:600,color:accent2.text}}>{item.icon} {item.bkp?.label||item.tipo} {item.count!=null?`(${item.count} registros)`:""}</div>
+                        <div style={{fontSize:10,color:accent2.textSub}}>{item.bkp?fmtTs(item.bkp.ts):"Sem backup local ainda"}</div>
                       </div>
                       {item.bkp&&item.count>0&&(
                         <button onClick={()=>restaurarFirebase(item.tipo)}
@@ -2877,8 +2890,7 @@ function AppMain({session,setSession}){
                         </button>
                       )}
                     </div>
-                  );})
-                  }
+                  ))}
                 </div>
 
                 {/* CAMADA 2 - Exportar JSON */}
