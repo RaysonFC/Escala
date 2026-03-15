@@ -536,7 +536,7 @@ function LCard({l,accent,isFav,onFav,onPlay,onAdd,compact}){
 }
 
 /* ── Cantor Edit Modal ── */
-function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger,soEmojiMode=false,onAbrirCifra}){
+function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGhost,bDanger,soEmojiMode=false,onAbrirCifra,onRemoverLouvor}){
   const [nome,setNome]=useState(cantor.nome);
   const [emoji,setEmoji]=useState(cantor.emoji);
   const [pickingEmoji,setPickingEmoji]=useState(false);
@@ -592,11 +592,9 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
             {historico.map((l,i)=>{
               const temCifra=l.cifra&&l.cifra.trim();
               return(
-                <div key={i} onClick={()=>temCifra&&onAbrirCifra&&onAbrirCifra(l)}
-                  style={{borderRadius:10,border:`1px solid rgba(255,255,255,0.06)`,marginBottom:4,padding:"9px 10px",cursor:temCifra?"pointer":"default",display:"flex",alignItems:"center",gap:8,justifyContent:"space-between",transition:"background 0.15s",background:"transparent"}}
-                  onMouseEnter={e=>{if(temCifra)e.currentTarget.style.background=`rgba(${getAccent().rgb},0.07)`;}}
-                  onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,overflow:"hidden",flex:1}}>
+                <div key={i} style={{borderRadius:10,border:`1px solid rgba(255,255,255,0.06)`,marginBottom:4,padding:"9px 10px",display:"flex",alignItems:"center",gap:8,justifyContent:"space-between",background:"transparent"}}>
+                  <div onClick={()=>temCifra&&onAbrirCifra&&onAbrirCifra(l)}
+                    style={{display:"flex",alignItems:"center",gap:6,overflow:"hidden",flex:1,cursor:temCifra?"pointer":"default"}}>
                     <span style={{color:getAccent().accent,flexShrink:0,fontSize:12}}>♪</span>
                     <div style={{overflow:"hidden"}}>
                       <div style={{fontSize:12,color:getAccent().light_theme?"#1A1028":getAccent().text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo}</div>
@@ -605,7 +603,8 @@ function CantorModal({cantor,idx,cultos,onSave,onDelete,onClose,accent,bGold,bGh
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
                     {l.tom&&<span style={{fontSize:10,fontWeight:700,color:getAccent().accent,background:"rgba("+getAccent().rgb+",0.12)",borderRadius:6,padding:"2px 7px"}}>{l.tom}</span>}
-                    {temCifra&&<span style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>𝄞</span>}
+                    {temCifra&&<span onClick={()=>onAbrirCifra&&onAbrirCifra(l)} style={{fontSize:13,color:"rgba(255,255,255,0.4)",cursor:"pointer",padding:"2px 4px"}}>𝄞</span>}
+                    {onRemoverLouvor&&<button onClick={e=>{e.stopPropagation();onRemoverLouvor(l.titulo);}} style={{background:"rgba(220,50,50,0.12)",border:"1px solid rgba(220,50,50,0.2)",color:"#f87171",borderRadius:6,width:22,height:22,cursor:"pointer",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontFamily:"inherit",padding:0,lineHeight:1}}>✕</button>}
                   </div>
                 </div>
               );
@@ -730,7 +729,7 @@ function CifraPopup({louvor,onClose}){
 
   return(
     <div onClick={function(e){if(e.target===e.currentTarget)onClose();}}
-      style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:300,display:"flex",flexDirection:"column"}}>
+      style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:700,display:"flex",flexDirection:"column"}}>
       <div style={{background:accent.bgCard,borderRadius:"20px 20px 0 0",marginTop:"auto",maxHeight:"92vh",display:"flex",flexDirection:"column",width:"100%",maxWidth:700,marginLeft:"auto",marginRight:"auto"}}>
         <div style={{padding:"16px",borderBottom:"1px solid "+accent.border,display:"flex",alignItems:"center",gap:10,flexShrink:0,flexWrap:"wrap"}}>
           <div style={{flex:1,minWidth:0}}>
@@ -3142,7 +3141,15 @@ function AppMain({session,setSession}){
       {editCI!==null&&cantores[editCI]&&(
         <Ovl bg={accent.bgCard} border={`1px solid ${accent.border}`} onClose={()=>setEditCI(null)}>
           <MH title="Editar Cantor" onClose={()=>setEditCI(null)}/>
-          <CantorModal cantor={cantores[editCI]} idx={editCI} cultos={cultos} onSave={saveCantorEdit} onDelete={deleteCantorAt} onClose={()=>setEditCI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger} soEmojiMode={!canEdit} onAbrirCifra={setCifraAberta}/>
+          <CantorModal cantor={cantores[editCI]} idx={editCI} cultos={cultos} onSave={saveCantorEdit} onDelete={deleteCantorAt} onClose={()=>setEditCI(null)} accent={accent} bGold={bGold} bGhost={bGhost} bDanger={bDanger} soEmojiMode={!canEdit}
+          onAbrirCifra={setCifraAberta}
+          onRemoverLouvor={titulo=>{
+            const ct=cantores[editCI]; if(!ct)return;
+            const novoHist=(ct.historicoLouvores||[]).filter(l=>l.titulo?.toLowerCase().trim()!==titulo?.toLowerCase().trim());
+            const atualizado={...ct,historicoLouvores:novoHist};
+            setCantores(p=>p.map((c,i)=>i===editCI?atualizado:c));
+            fbSet("cantores",cantores.map((c,i)=>i===editCI?atualizado:c));
+          }}/>
         </Ovl>
       )}
 
