@@ -708,6 +708,35 @@ function CifraPopup({louvor,onClose}){
   const [scrolling,setScrolling]=React.useState(false);
   const [vel,setVel]=React.useState(3);
   const [fontSize,setFontSize]=React.useState(17);
+  const [semitons,setSemitons]=React.useState(0);
+  const NOTAS=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const ENARMONICOS={"Db":"C#","Eb":"D#","Fb":"E","Gb":"F#","Ab":"G#","Bb":"A#","Cb":"B"};
+  const normNota=function(n){return ENARMONICOS[n]||n;};
+  function transposeAcorde(acorde,st){
+    if(st===0)return acorde;
+    var m=acorde.match(/^([A-G][#b]?)(.*?)(\/([A-G][#b]?))?$/);
+    if(!m)return acorde;
+    var raiz=m[1],mod=m[2]||"",baixo=m[4]||"";
+    var idx=NOTAS.indexOf(normNota(raiz));
+    if(idx<0)return acorde;
+    var novaRaiz=NOTAS[(idx+st+120)%12];
+    var resultado=novaRaiz+mod;
+    if(baixo){var bi=NOTAS.indexOf(normNota(baixo));if(bi>=0)resultado+="/"+NOTAS[(bi+st+120)%12];}
+    return resultado;
+  }
+  function transposeCifra(texto,st){
+    if(!texto||st===0)return texto;
+    var reAcorde=/^[A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]?(\/[A-G][#b]?)?$/;
+    return texto.split("
+").map(function(line){
+      var tokens=line.split(/(\s+)/);
+      var words=tokens.filter(function(t){return t.trim();});
+      var isAc=words.length>0&&words.filter(function(t){return reAcorde.test(t);}).length/words.length>=0.5;
+      if(!isAc)return line;
+      return tokens.map(function(t){return t.trim()&&reAcorde.test(t.trim())?transposeAcorde(t.trim(),st):t;}).join("");
+    }).join("
+");
+  }
   const divRef=React.useRef(null);
   const timerRef=React.useRef(null);
 
@@ -745,7 +774,20 @@ function CifraPopup({louvor,onClose}){
             {louvor.artista&&<div style={{fontSize:11,color:accent.textSub,marginTop:2}}>{louvor.artista}</div>}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0,flexWrap:"wrap"}}>
-            {/* Controle de fonte */}
+            {/* Tom */}
+            <div style={{display:"flex",alignItems:"center",gap:4,borderRight:"1px solid rgba(255,255,255,0.1)",paddingRight:8}}>
+              <button onClick={function(){setSemitons(function(s){return s-1;});}}
+                style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{"−"}</button>
+              <div style={{textAlign:"center",minWidth:36}}>
+                <div style={{fontSize:13,fontWeight:700,color:semitons!==0?accent.accent:"rgba(255,255,255,0.35)",lineHeight:1}}>{semitons>0?"+"+semitons:semitons}</div>
+                <div style={{fontSize:8,color:"rgba(255,255,255,0.3)",textTransform:"uppercase",letterSpacing:0.5}}>{"tom"}</div>
+              </div>
+              <button onClick={function(){setSemitons(function(s){return s+1;});}}
+                style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{"+"}</button>
+              {semitons!==0&&<button onClick={function(){setSemitons(0);}}
+                style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",cursor:"pointer",fontSize:11,fontFamily:"inherit",padding:"0 2px",lineHeight:1}}>{"↺"}</button>}
+            </div>
+            {/* Fonte */}
             <div style={{display:"flex",alignItems:"center",gap:4,borderRight:"1px solid rgba(255,255,255,0.1)",paddingRight:8}}>
               <button onClick={function(){setFontSize(function(f){return Math.max(12,f-1);});}}
                 style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:13,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{"A−"}</button>
@@ -769,7 +811,7 @@ function CifraPopup({louvor,onClose}){
         </div>
         <div ref={divRef} style={{overflowY:"auto",flex:1,padding:"16px 20px"}}>
           <pre style={{margin:0,fontFamily:"'Courier New',monospace",fontSize:fontSize,lineHeight:2.1,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
-            {renderCifra(louvor.cifra||"",accent)}
+            {renderCifra(transposeCifra(louvor.cifra||"",semitons),accent)}
           </pre>
           <div style={{height:80}}/>
         </div>
