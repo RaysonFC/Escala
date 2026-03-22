@@ -41,9 +41,36 @@ const FB_CFG = {
 };
 if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
 const db = firebase.firestore();
-const fbSet = async(col,data)=>{ try{ await db.collection("app").doc(col).set({dados:JSON.stringify(data)}); }catch(e){console.error(e);} };
-const fbListen = (col,cb)=>db.collection("app").doc(col).onSnapshot(s=>{ if(s.exists){ try{cb(JSON.parse(s.data().dados));}catch(e){} } });
-const fbGet = async(col,fb)=>{ try{ const s=await db.collection("app").doc(col).get(); if(s.exists)return JSON.parse(s.data().dados); }catch(e){} return fb; };
+// Ativar cache offline — dados persistem mesmo sem internet
+db.enablePersistence({synchronizeTabs:true}).catch(err=>{
+  if(err.code==="failed-precondition"){
+    // Múltiplas abas abertas — usa sem persistência
+    console.warn("Firestore offline: múltiplas abas");
+  } else if(err.code==="unimplemented"){
+    console.warn("Firestore offline: navegador não suporta");
+  }
+});
+const fbSet = async(col,data)=>{
+  try{
+    // Firebase enfileira automaticamente quando offline e envia quando reconectar
+    db.collection("app").doc(col).set({dados:JSON.stringify(data)});
+  }catch(e){console.error("fbSet erro:",e);}
+};
+const fbListen = (col,cb)=>db.collection("app").doc(col).onSnapshot({includeMetadataChanges:false},s=>{ if(s.exists){ try{cb(JSON.parse(s.data().dados));}catch(e){} } });
+const fbGet = async(col,fb)=>{
+  try{
+    // Tenta servidor; se offline usa cache local automaticamente
+    const s=await db.collection("app").doc(col).get({source:"default"});
+    if(s.exists)return JSON.parse(s.data().dados);
+  }catch(e){
+    try{
+      // Fallback explícito para cache local
+      const s=await db.collection("app").doc(col).get({source:"cache"});
+      if(s.exists)return JSON.parse(s.data().dados);
+    }catch(e2){}
+  }
+  return fb;
+};
 
 /* ── Helpers ── */
 const uid = ()=>Math.random().toString(36).slice(2,9);
