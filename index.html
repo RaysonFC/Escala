@@ -734,8 +734,7 @@ function CifraPopup({louvor,onClose}){
       var isAc=words.length>0&&words.filter(function(t){return reAcorde.test(t);}).length/words.length>=0.5;
       if(!isAc)return line;
       return tokens.map(function(t){return t.trim()&&reAcorde.test(t.trim())?transposeAcorde(t.trim(),st):t;}).join("");
-    }).join("
-");
+    }).join("\n");
   }
   const divRef=React.useRef(null);
   const timerRef=React.useRef(null);
