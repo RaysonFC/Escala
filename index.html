@@ -708,6 +708,7 @@ function CifraPopup({louvor,onClose}){
   const [scrolling,setScrolling]=React.useState(false);
   const [vel,setVel]=React.useState(3);
   const [fontSize,setFontSize]=React.useState(17);
+  const [semitons,setSemitons]=React.useState(0);
   const divRef=React.useRef(null);
   const timerRef=React.useRef(null);
 
@@ -726,6 +727,40 @@ function CifraPopup({louvor,onClose}){
     }, ms);
     return function(){ clearInterval(timerRef.current); };
   },[scrolling, vel]);
+
+  var NOTAS_TR=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  var ENAR={"Db":"C#","Eb":"D#","Fb":"E","Gb":"F#","Ab":"G#","Bb":"A#","Cb":"B"};
+  var normN=function(n){return ENAR[n]||n;};
+  var trAcorde=function(ac,st){
+    if(st===0)return ac;
+    var m=ac.match(/^([A-G][#b]?)(.*?)(\/([A-G][#b]?))?$/);
+    if(!m)return ac;
+    var r=m[1],mod=m[2]||"",bx=m[4]||"";
+    var i=NOTAS_TR.indexOf(normN(r));
+    if(i<0)return ac;
+    var res=NOTAS_TR[(i+st+120)%12]+mod;
+    if(bx){var bi=NOTAS_TR.indexOf(normN(bx));if(bi>=0)res+="/"+NOTAS_TR[(bi+st+120)%12];}
+    return res;
+  };
+  var trCifra=function(txt,st){
+    if(!txt||st===0)return txt;
+    var re=/^[A-G][#b]?(m|maj|min|dim|aug|sus|add)?[0-9]?(\/[A-G][#b]?)?$/;
+    var lines=txt.split("\n");
+    var out=[];
+    for(var li=0;li<lines.length;li++){
+      var line=lines[li];
+      var toks=line.split(/(\s+)/);
+      var words=toks.filter(function(t){return t.trim().length>0;});
+      var hits=words.filter(function(t){return re.test(t);}).length;
+      var isAc=words.length>0&&hits/words.length>=0.5;
+      if(!isAc){out.push(line);continue;}
+      var newLine=toks.map(function(t){
+        return(t.trim().length>0&&re.test(t.trim()))?trAcorde(t.trim(),st):t;
+      }).join("");
+      out.push(newLine);
+    }
+    return out.join("\n");
+  };
 
   var toggleScroll = function(){
     var el = divRef.current;
@@ -746,6 +781,17 @@ function CifraPopup({louvor,onClose}){
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0,flexWrap:"wrap"}}>
             {/* Controle de fonte */}
+            <div style={{display:"flex",alignItems:"center",gap:4,borderRight:"1px solid rgba(255,255,255,0.1)",paddingRight:8}}>
+              <button onClick={function(){setSemitons(function(s){return s-1;});}}
+                style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{"−"}</button>
+              <div style={{textAlign:"center",minWidth:32}}>
+                <div style={{fontSize:12,fontWeight:700,color:semitons!==0?accent.accent:"rgba(255,255,255,0.35)",lineHeight:1}}>{semitons>0?"+"+semitons:semitons}</div>
+                <div style={{fontSize:8,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",letterSpacing:0.5}}>{"tom"}</div>
+              </div>
+              <button onClick={function(){setSemitons(function(s){return s+1;});}}
+                style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:16,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{"+"}</button>
+              {semitons!==0&&<button onClick={function(){setSemitons(0);}} style={{background:"none",border:"none",color:"rgba(255,255,255,0.3)",cursor:"pointer",fontSize:11,fontFamily:"inherit",padding:"2px"}}>{"↺"}</button>}
+            </div>
             <div style={{display:"flex",alignItems:"center",gap:4,borderRight:"1px solid rgba(255,255,255,0.1)",paddingRight:8}}>
               <button onClick={function(){setFontSize(function(f){return Math.max(12,f-1);});}}
                 style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:accent.text,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:13,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{"A−"}</button>
@@ -769,7 +815,7 @@ function CifraPopup({louvor,onClose}){
         </div>
         <div ref={divRef} style={{overflowY:"auto",flex:1,padding:"16px 20px"}}>
           <pre style={{margin:0,fontFamily:"'Courier New',monospace",fontSize:fontSize,lineHeight:2.1,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>
-            {renderCifra(louvor.cifra||"",accent)}
+            {renderCifra(trCifra(louvor.cifra||"",semitons),accent)}
           </pre>
           <div style={{height:80}}/>
         </div>
