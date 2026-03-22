@@ -1888,9 +1888,20 @@ function AppMain({session,setSession}){
                 return d.toISOString().split("T")[0];
               };
 
+              // Domingo desta semana (JS: 0=Dom, 1=Seg...6=Sáb)
+              // dow=0 significa hoje É domingo → domingo desta semana = hoje
               const domingo=new Date(now.getTime()); domingo.setDate(now.getDate()-dow);
               const todayStr=today;
-              const cicloBase=[{label:"Quarta",ds:addDias(domingo,3)},{label:"Sexta",ds:addDias(domingo,5)},{label:"Sabado",ds:addDias(domingo,6)},{label:"Domingo",ds:addDias(domingo,7)}];
+              // Domingo do ciclo = addDias(domingo,0) se hoje for domingo, senão addDias(domingo,7) seria próxima semana
+              // CORRETO: domingo do culto = mesmo domingo da semana (não +7)
+              const cicloBase=[
+                {label:"Quarta", ds:addDias(domingo,3)},
+                {label:"Sexta",  ds:addDias(domingo,5)},
+                {label:"Sabado", ds:addDias(domingo,6)},
+                {label:"Domingo",ds:addDias(domingo,0)}, // domingo DESTA semana
+              ];
+              // Mostrar apenas dias que ainda não passaram (>= hoje)
+              // E só alertar sobre cultos futuros ou de hoje
               const ciclo=cicloBase.filter(x=>x.ds>=todayStr);
 
               const problemas=ciclo.map(({label,ds})=>{
@@ -2068,16 +2079,14 @@ function AppMain({session,setSession}){
                     const temLouvores=c.louvores.length>0;
                     const completo=temCantores&&temMusicos&&temLouvores;
                     const parcial=(temCantores||temMusicos||temLouvores)&&!completo;
-                    // Sempre mostra os 3 badges — verdes se ok, vermelhos se falta
-                    return(
-                      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10}}>
+                    if(!completo) return(
+                      <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
                         {[["🎤 Cantores",temCantores],["🎸 Músicos",temMusicos],["🎵 Louvores",temLouvores]].map(([label,ok])=>(
-                          <span key={label} style={{fontSize:10,padding:"3px 9px",borderRadius:20,background:ok?"rgba(107,191,163,0.13)":"rgba(224,123,138,0.1)",border:ok?"1px solid rgba(107,191,163,0.4)":"1px solid rgba(224,123,138,0.3)",color:ok?"#6BBFA3":"#E07B8A",fontWeight:700,whiteSpace:"nowrap"}}>
-                            {ok?"✓":"○"} {label}
-                          </span>
+                          <span key={label} style={{fontSize:10,padding:"2px 8px",borderRadius:20,background:ok?"rgba(107,191,163,0.1)":"rgba(224,123,138,0.1)",border:ok?"1px solid rgba(107,191,163,0.3)":"1px solid rgba(224,123,138,0.3)",color:ok?"#6BBFA3":"#E07B8A",fontWeight:600}}>{ok?"✓":"○"} {label}</span>
                         ))}
                       </div>
                     );
+                    return <div style={{fontSize:10,color:"#6BBFA3",marginBottom:10,fontWeight:600}}>✅ Escala completa</div>;
                   })()}
                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                     {canEdit&&<button onClick={()=>setEditCulto({...c})} style={{...bGhost,padding:"6px 12px",fontSize:13}} title="Editar culto">✎</button>}
