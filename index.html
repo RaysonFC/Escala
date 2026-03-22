@@ -41,36 +41,9 @@ const FB_CFG = {
 };
 if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
 const db = firebase.firestore();
-// Ativar cache offline — dados persistem mesmo sem internet
-db.enablePersistence({synchronizeTabs:true}).catch(err=>{
-  if(err.code==="failed-precondition"){
-    // Múltiplas abas abertas — usa sem persistência
-    console.warn("Firestore offline: múltiplas abas");
-  } else if(err.code==="unimplemented"){
-    console.warn("Firestore offline: navegador não suporta");
-  }
-});
-const fbSet = async(col,data)=>{
-  try{
-    // Firebase enfileira automaticamente quando offline e envia quando reconectar
-    db.collection("app").doc(col).set({dados:JSON.stringify(data)});
-  }catch(e){console.error("fbSet erro:",e);}
-};
-const fbListen = (col,cb)=>db.collection("app").doc(col).onSnapshot({includeMetadataChanges:false},s=>{ if(s.exists){ try{cb(JSON.parse(s.data().dados));}catch(e){} } });
-const fbGet = async(col,fb)=>{
-  try{
-    // Tenta servidor; se offline usa cache local automaticamente
-    const s=await db.collection("app").doc(col).get({source:"default"});
-    if(s.exists)return JSON.parse(s.data().dados);
-  }catch(e){
-    try{
-      // Fallback explícito para cache local
-      const s=await db.collection("app").doc(col).get({source:"cache"});
-      if(s.exists)return JSON.parse(s.data().dados);
-    }catch(e2){}
-  }
-  return fb;
-};
+const fbSet = async(col,data)=>{ try{ await db.collection("app").doc(col).set({dados:JSON.stringify(data)}); }catch(e){console.error(e);} };
+const fbListen = (col,cb)=>db.collection("app").doc(col).onSnapshot(s=>{ if(s.exists){ try{cb(JSON.parse(s.data().dados));}catch(e){} } });
+const fbGet = async(col,fb)=>{ try{ const s=await db.collection("app").doc(col).get(); if(s.exists)return JSON.parse(s.data().dados); }catch(e){} return fb; };
 
 /* ── Helpers ── */
 const uid = ()=>Math.random().toString(36).slice(2,9);
@@ -2429,6 +2402,49 @@ function AppMain({session,setSession}){
                       </optgroup>
                     </select>
                   </div>
+
+                  {/* Histórico do cantor selecionado */}
+                  {newLF.cantor&&(()=>{
+                    const ct=cantores.find(c=>c.nome===newLF.cantor);
+                    if(!ct)return null;
+                    const ativosCantor=cultos.flatMap(cu=>cu.louvores.filter(l=>l.cantor===ct.nome));
+                    const salvos=ct.historicoLouvores||[];
+                    const historicoCt=[...new Map(
+                      [...salvos,...ativosCantor].map(l=>[l.titulo?.toLowerCase().trim(),l])
+                    ).values()];
+                    if(!historicoCt.length)return null;
+                    return(
+                      <div style={{marginBottom:12}}>
+                        <label style={{fontSize:10,letterSpacing:1.5,color:accent.accent,textTransform:"uppercase",fontWeight:700,display:"block",marginBottom:6}}>
+                          ♪ Músicas de {ct.emoji} {ct.nome}
+                        </label>
+                        <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:160,overflowY:"auto",paddingRight:2}}>
+                          {historicoCt.map((l,i)=>(
+                            <button key={i} onClick={()=>setNLF(p=>({
+                              ...p,
+                              titulo:l.titulo||"",
+                              artista:l.artista||"",
+                              ytUrl:l.ytUrl||"",
+                              tom:l.tom||"",
+                              cifra:l.cifra||"",
+                              obs:l.obs||"",
+                            }))}
+                              style={{background:newLF.titulo===l.titulo?`rgba(${accent.rgb},0.18)`:`rgba(${accent.rgb},0.06)`,border:`1px solid rgba(${accent.rgb},${newLF.titulo===l.titulo?"0.5":"0.15"})`,borderRadius:8,padding:"8px 12px",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,textAlign:"left",transition:"all 0.15s"}}>
+                              <div style={{overflow:"hidden",flex:1}}>
+                                <div style={{fontSize:12,fontWeight:600,color:newLF.titulo===l.titulo?accent.accent:accent.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.titulo}</div>
+                                {l.artista&&<div style={{fontSize:10,color:accent.textSub,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{l.artista}</div>}
+                              </div>
+                              <div style={{display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+                                {l.tom&&<span style={{fontSize:10,fontWeight:700,color:accent.accent,background:`rgba(${accent.rgb},0.15)`,borderRadius:5,padding:"1px 6px"}}>{l.tom}</span>}
+                                {l.cifra&&<span style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>𝄞</span>}
+                                {newLF.titulo===l.titulo&&<span style={{fontSize:11,color:accent.accent}}>✓</span>}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Músicos que vão tocar */}
                   <div style={{marginBottom:12}}>
