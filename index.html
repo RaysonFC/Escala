@@ -1400,6 +1400,7 @@ function AppMain({session,setSession}){
   const [showLog,setShowLog]=useState(false);
   const [logEntries,setLogEntries]=useState([]);
   const [showMenu,setShowMenu]=useState(false);
+  const [pickCultoLouvor,setPickCultoLouvor]=useState(null); // louvor aguardando seleção de culto
   const [showBackup,setShowBackup]=useState(false);
 
   // ── Registrar acesso no Firebase ──
@@ -2093,9 +2094,10 @@ function AppMain({session,setSession}){
                     const temCantores=c.cantores.length>0;
                     const temMusicos=(c.musicos||[]).length>0;
                     const temLouvores=c.louvores.length>0;
-                    // Sempre mostra os 3 badges — verdes quando ok, vermelhos quando falta
-                    return(
-                      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10}}>
+                    const completo=temCantores&&temMusicos&&temLouvores;
+                    const parcial=(temCantores||temMusicos||temLouvores)&&!completo;
+                    if(!completo) return(
+                      <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
                         {[["🎤 Cantores",temCantores],["🎸 Músicos",temMusicos],["🎵 Louvores",temLouvores]].map(([label,ok])=>(
                           <span key={label} style={{fontSize:10,padding:"3px 9px",borderRadius:20,background:ok?"rgba(107,191,163,0.13)":"rgba(224,123,138,0.1)",border:ok?"1px solid rgba(107,191,163,0.4)":"1px solid rgba(224,123,138,0.3)",color:ok?"#6BBFA3":"#E07B8A",fontWeight:700,whiteSpace:"nowrap"}}>{ok?"✓":"○"} {label}</span>
                         ))}
@@ -2769,7 +2771,7 @@ function AppMain({session,setSession}){
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12,marginBottom:24}}>
                   {sRes.map((r,i)=>(
-                    <LCard key={i} l={r} accent={accent} isFav={isFav(r)} onFav={()=>toggleFav(r)} onPlay={setPlayL} onAdd={canEdit?()=>{ setNLF({...r,obs:""}); setTab("culto"); showToast("Selecione o culto e salve"); }:null}/>
+                    <LCard key={i} l={r} accent={accent} isFav={isFav(r)} onFav={()=>toggleFav(r)} onPlay={setPlayL} onAdd={canEdit?()=>setPickCultoLouvor({...r,obs:""}):null}/>
                   ))}
                 </div>
               </>
@@ -3059,6 +3061,62 @@ function AppMain({session,setSession}){
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+
+      {/* ══ MODAL SELECIONAR CULTO ══ */}
+      {pickCultoLouvor&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:600,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setPickCultoLouvor(null)}>
+          <div style={{background:accent.bgCard,borderRadius:"20px 20px 0 0",width:"100%",maxWidth:560,maxHeight:"80vh",display:"flex",flexDirection:"column",border:`1px solid rgba(${accent.rgb},0.2)`}} onClick={e=>e.stopPropagation()}>
+            {/* Header */}
+            <div style={{padding:"18px 20px 12px",borderBottom:`1px solid ${accent.border}`,flexShrink:0}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontSize:15,fontWeight:700,color:accent.text}}>Adicionar ao Culto</div>
+                  <div style={{fontSize:11,color:accent.textSub,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:260}}>🎵 {pickCultoLouvor.titulo}</div>
+                </div>
+                <button onClick={()=>setPickCultoLouvor(null)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:accent.textSub,borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"inherit"}}>✕</button>
+              </div>
+            </div>
+            {/* Lista de cultos */}
+            <div style={{overflowY:"auto",flex:1,padding:"10px 16px 20px"}}>
+              {(()=>{
+                const cultosOrdenados=[...cultos].sort((a,b)=>a.data.localeCompare(b.data));
+                const futuros=cultosOrdenados.filter(c=>c.data>=today);
+                const passados=cultosOrdenados.filter(c=>c.data<today).reverse();
+                const lista=[...futuros,...passados];
+                if(!lista.length) return(
+                  <div style={{textAlign:"center",padding:30,color:accent.textSub,fontSize:13}}>Nenhum culto cadastrado ainda.</div>
+                );
+                return lista.map(c=>{
+                  const cf=CC[c.tipo];
+                  const jatem=c.louvores.some(l=>l.titulo?.toLowerCase()===pickCultoLouvor.titulo?.toLowerCase());
+                  const diff=daysUntil(c.data);
+                  return(
+                    <button key={c.id} disabled={jatem} onClick={()=>{
+                      doAddLouvor(c.id, pickCultoLouvor);
+                      setPickCultoLouvor(null);
+                    }}
+                      style={{width:"100%",background:jatem?`rgba(${accent.rgb},0.04)`:`rgba(${accent.rgb},0.07)`,border:`1px solid rgba(${accent.rgb},${jatem?"0.08":"0.2"})`,borderRadius:12,padding:"12px 14px",cursor:jatem?"default":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,marginBottom:8,opacity:jatem?0.5:1,transition:"all 0.15s",textAlign:"left"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,overflow:"hidden"}}>
+                        <span style={{fontSize:20,flexShrink:0}}>{cf?.icon||"📅"}</span>
+                        <div style={{overflow:"hidden"}}>
+                          <div style={{fontSize:13,fontWeight:700,color:jatem?accent.textSub:accent.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{cf?.label||c.tipo} — {fmtDate(c.data)}</div>
+                          {c.tema&&<div style={{fontSize:11,color:accent.textSub,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📖 {c.tema}</div>}
+                          {jatem&&<div style={{fontSize:10,color:accent.accent,marginTop:1}}>✓ já adicionado</div>}
+                        </div>
+                      </div>
+                      <div style={{flexShrink:0,textAlign:"right"}}>
+                        {diff!==null&&<div style={{fontSize:10,fontWeight:600,color:diff===0?"#6BBFA3":diff>0?accent.accent:accent.textSub}}>{diff===0?"Hoje":diff>0?`em ${diff}d`:`há ${-diff}d`}</div>}
+                        {!jatem&&<div style={{fontSize:11,color:accent.accent,marginTop:2}}>+ Add</div>}
+                      </div>
+                    </button>
+                  );
+                });
+              })()}
+            </div>
           </div>
         </div>
       )}
