@@ -1429,6 +1429,20 @@ function AppMain({session,setSession}){
   const readyCount=useRef(0); // aguarda 4 coleções
   const markReady=()=>{ readyCount.current+=1; if(readyCount.current>=4) setFbReady(true); };
 
+  // Detectar link direto do WhatsApp (#culto=ID)
+  useEffect(()=>{
+    const abrirHash=()=>{
+      const h=window.location.hash;
+      if(h.startsWith("#culto=")){
+        const id=h.replace("#culto=","").trim();
+        if(id){ setSelId(id); setTab("culto"); window.history.replaceState(null,"",window.location.pathname+window.location.search); }
+      }
+    };
+    abrirHash();
+    window.addEventListener("hashchange",abrirHash);
+    return()=>window.removeEventListener("hashchange",abrirHash);
+  },[]);
+
   useEffect(()=>{
     const uC=fbListen("cantores",d=>{ fromFb.current.cant=true; setCantores(d.map(normCantor)); if(!loaded.current.cant){loaded.current.cant=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_cantores",JSON.stringify({cantores:d.map(normCantor),ts:new Date().toISOString()}));}catch(e){} });
     const uM=fbListen("musicos",d=>{ fromFb.current.mus=true; setMusicos(d.map(m=>({...m}))); if(!loaded.current.mus){loaded.current.mus=true;markReady();} try{if(d.length>0)localStorage.setItem("ba_bkp_musicos",JSON.stringify({musicos:d.map(m=>({...m})),ts:new Date().toISOString()}));}catch(e){} });
@@ -1888,20 +1902,9 @@ function AppMain({session,setSession}){
                 return d.toISOString().split("T")[0];
               };
 
-              // Domingo desta semana (JS: 0=Dom, 1=Seg...6=Sáb)
-              // dow=0 significa hoje É domingo → domingo desta semana = hoje
               const domingo=new Date(now.getTime()); domingo.setDate(now.getDate()-dow);
               const todayStr=today;
-              // Domingo do ciclo = addDias(domingo,0) se hoje for domingo, senão addDias(domingo,7) seria próxima semana
-              // CORRETO: domingo do culto = mesmo domingo da semana (não +7)
-              const cicloBase=[
-                {label:"Quarta", ds:addDias(domingo,3)},
-                {label:"Sexta",  ds:addDias(domingo,5)},
-                {label:"Sabado", ds:addDias(domingo,6)},
-                {label:"Domingo",ds:addDias(domingo,0)}, // domingo DESTA semana
-              ];
-              // Mostrar apenas dias que ainda não passaram (>= hoje)
-              // E só alertar sobre cultos futuros ou de hoje
+              const cicloBase=[{label:"Quarta",ds:addDias(domingo,3)},{label:"Sexta",ds:addDias(domingo,5)},{label:"Sabado",ds:addDias(domingo,6)},{label:"Domingo",ds:addDias(domingo,7)}];
               const ciclo=cicloBase.filter(x=>x.ds>=todayStr);
 
               const problemas=ciclo.map(({label,ds})=>{
@@ -2118,6 +2121,8 @@ function AppMain({session,setSession}){
                         });
                       }
                       if(c.obs){ linhas.push(""); linhas.push(`📝 ${c.obs}`); }
+                      linhas.push("");
+                      linhas.push(`🔗 Ver escala no app: https://raysonfc.github.io/Escala/#culto=${c.id}`);
                       const texto=linhas.join("\n");
                       window.open("https://wa.me/?text="+encodeURIComponent(texto),"_blank");
                     }} style={{...bGold,padding:"6px 12px",fontSize:12,boxShadow:"none"}} title="Compartilhar no WhatsApp">📤 WhatsApp</button>
